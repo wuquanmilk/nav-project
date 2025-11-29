@@ -11,7 +11,7 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 
 // Replace this placeholder with your actual Firebase User ID (UID) after registering.
 // Only this UID will have permission to edit the navigation data.
-const ADMIN_UID_PLACEHOLDER = "yzzsyEBNRyZRmj0EuZd33r7MUvQ2"; 
+const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2"; 
 
 // --- Firebase 初始化和认证 (Must be outside the component) ---
 let app;
