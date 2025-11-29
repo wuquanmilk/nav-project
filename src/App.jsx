@@ -7,15 +7,27 @@ import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, query, or
 // MUST use these global variables provided by the Canvas environment
 // --- 真实 Firebase 配置 (用于 Cloudflare Pages 部署) ---
 // 在 Cloudflare 部署时，必须直接将 Firebase 配置信息硬编码在此处。
-const REAL_FIREBASE_CONFIG = {
-    apiKey: "您的真实 apiKey",
-    authDomain: "您的真实 authDomain",
-    projectId: "您的真实 projectId",
-    storageBucket: "您的真实 storageBucket",
-    messagingSenderId: "您的真实 messagingSenderId",
-    appId: "您的真实 appId",
-    measurementId: "您的真实 measurementId" // 可选
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
+  authDomain: "wangzhandaohang.firebaseapp.com",
+  projectId: "wangzhandaohang",
+  storageBucket: "wangzhandaohang.firebasestorage.app",
+  messagingSenderId: "169263636408",
+  appId: "1:169263636408:web:ee3608652b2872a539b94d",
+  measurementId: "G-6JGHTS41NH"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // 重写变量，使用真实的配置
 const appId = REAL_FIREBASE_CONFIG.appId;
