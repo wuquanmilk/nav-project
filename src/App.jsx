@@ -5,10 +5,15 @@ import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, query, or
 
 // --- 全局变量和配置 (Canvas Environment) ---
 // MUST use these global variables provided by the Canvas environment
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-nav-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+const firebaseConfig = {
+  apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
+  authDomain: "wangzhandaohang.firebaseapp.com",
+  projectId: "wangzhandaohang",
+  storageBucket: "wangzhandaohang.firebasestorage.app",
+  messagingSenderId: "169263636408",
+  appId: "1:169263636408:web:ee3608652b2872a539b94d",
+  measurementId: "G-6JGHTS41NH"
+};
 // Replace this placeholder with your actual Firebase User ID (UID) after registering.
 // Only this UID will have permission to edit the navigation data.
 const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2"; 
