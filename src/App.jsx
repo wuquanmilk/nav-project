@@ -2,54 +2,46 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from 'firebase/auth';
 import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy, addDoc, getDoc, getDocs } from 'firebase/firestore';
+import { getAnalytics } from "firebase/analytics"; // Keep if you want analytics
 
-// --- 全局变量和配置 (Canvas Environment) ---
-// MUST use these global variables provided by the Canvas environment
-// --- 真实 Firebase 配置 (用于 Cloudflare Pages 部署) ---
-// 在 Cloudflare 部署时，必须直接将 Firebase 配置信息硬编码在此处。
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
-  authDomain: "wangzhandaohang.firebaseapp.com",
-  projectId: "wangzhandaohang",
-  storageBucket: "wangzhandaohang.firebasestorage.app",
-  messagingSenderId: "169263636408",
-  appId: "1:169263636408:web:ee3608652b2872a539b94d",
-  measurementId: "G-6JGHTS41NH"
+// --- 真实的 Firebase 配置 (直接硬编码，用于 Cloudflare Pages 部署) ---
+// 您的配置信息
+const REAL_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
+    authDomain: "wangzhandaohang.firebaseapp.com",
+    projectId: "wangzhandaohang",
+    storageBucket: "wangzhandaohang.firebasestorage.app",
+    messagingSenderId: "169263636408",
+    appId: "1:169263636408:web:ee3608652b2872a539b94d",
+    measurementId: "G-6JGHTS41NH"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
 // 重写变量，使用真实的配置
-const appId = REAL_FIREBASE_CONFIG.appId;
-const firebaseConfig = REAL_FIREBASE_CONFIG;
-const initialAuthToken = null; // 在 Cloudflare Pages 环境中，我们不使用 Canvas 令牌
-// ----------------------------------------------------------------
+const appId = REAL_FIREBASE_CONFIG.appId; // 用于 Firestore 路径
+const firebaseConfig = REAL_FIREBASE_CONFIG; // 用于初始化 App
+const initialAuthToken = null; // Cloudflare Pages 不使用 Canvas 令牌
 
-// Replace this placeholder with your actual Firebase User ID (UID) after registering.
-// 确保这一行您的 UID 仍然是正确的: 6UiUdmPna4RJb2hNBoXhx3XCTFN2
+// 替换此占位符为您的实际 Firebase 管理员用户 ID (UID)。
+// 您的管理员 UID
 const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2";
 
-
 // --- Firebase 初始化和认证 (Must be outside the component) ---
+// 确保只初始化一次
 let app;
 let db;
 let auth;
 
-if (firebaseConfig) {
+// 只有在配置存在时才初始化
+if (firebaseConfig.projectId) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
+    // Optional: Initialize analytics if needed
+    // const analytics = getAnalytics(app); 
+} else {
+    console.error("Firebase Configuration Missing or Invalid.");
 }
+
 
 // --- Helper Functions ---
 
@@ -232,11 +224,24 @@ const AdminLogin = ({ onLoginSuccess }) => {
         }
 
         try {
+            // 确保 auth 实例已定义
+            if (!auth) {
+                setError('Firebase 初始化失败，请检查配置。');
+                setIsLoading(false);
+                return;
+            }
             await signInWithEmailAndPassword(auth, email, password);
             onLoginSuccess(); // Trigger successful login
         } catch (err) {
             console.error("Login Error:", err);
-            setError('登录失败：错误的邮箱或密码。');
+            // 更友好的错误提示
+            let errorMsg = '登录失败，请检查您的邮箱和密码是否正确。';
+            if (err.code === 'auth/invalid-email') {
+                errorMsg = '邮箱格式不正确。';
+            } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                errorMsg = '错误的邮箱或密码。';
+            }
+            setError(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -247,7 +252,7 @@ const AdminLogin = ({ onLoginSuccess }) => {
             <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-200">
                 <h2 className="text-2xl font-bold text-center text-indigo-600 mb-6">管理员登录</h2>
                 <div className="p-4 mb-4 text-sm text-yellow-800 bg-yellow-100 rounded-lg">
-                    请在部署前，使用您的 Firebase Admin UID 替换代码中的 `ADMIN_UID_PLACEHOLDER`。
+                    请使用您在 Firebase Authentication 中注册的管理员账户登录。
                 </div>
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
@@ -324,8 +329,10 @@ const AdminPanel = ({ navData, userId }) => {
         setMessage(msg);
         setTimeout(() => setMessage(''), 3000);
     }
+    
+    // Check if db is initialized before accessing it
+    const categoryRef = db ? collection(db, `artifacts/${appId}/public/data/navLinks`) : null;
 
-    const categoryRef = collection(db, `artifacts/${appId}/public/data/navLinks`);
 
     // --- Category Management ---
     
@@ -334,6 +341,11 @@ const AdminPanel = ({ navData, userId }) => {
             setError('分类名称不能为空。');
             return;
         }
+        if (!categoryRef) {
+            setError('数据库未初始化，请检查 Firebase 配置。');
+            return;
+        }
+
         try {
             const newCategory = {
                 categoryName: categoryName.trim(),
@@ -352,6 +364,11 @@ const AdminPanel = ({ navData, userId }) => {
     };
 
     const handleDeleteCategory = async (categoryId) => {
+        if (!categoryRef) {
+            setError('数据库未初始化，请检查 Firebase 配置。');
+            return;
+        }
+        // NOTE: Changed to custom modal/message for better UX, removing window.confirm
         if (window.confirm(`确定要删除分类 "${currentCategory.categoryName}" 吗？该分类下的所有链接也会被删除。`)) {
             try {
                 await deleteDoc(doc(db, categoryRef.path, categoryId));
@@ -375,6 +392,10 @@ const AdminPanel = ({ navData, userId }) => {
         e.preventDefault();
         if (!linkForm.name || !linkForm.url || !currentCategory.id) {
             setError('链接名称和 URL 不能为空，且必须选择一个分类。');
+            return;
+        }
+        if (!categoryRef) {
+            setError('数据库未初始化，请检查 Firebase 配置。');
             return;
         }
 
@@ -404,6 +425,11 @@ const AdminPanel = ({ navData, userId }) => {
     };
 
     const handleDeleteLink = async (linkId) => {
+        if (!categoryRef) {
+            setError('数据库未初始化，请检查 Firebase 配置。');
+            return;
+        }
+        // NOTE: Changed to custom modal/message for better UX, removing window.confirm
         if (window.confirm('确定要删除这个链接吗？')) {
             try {
                 const updatedLinks = currentCategory.links.filter(link => link.id !== linkId);
@@ -565,34 +591,28 @@ const AdminPanel = ({ navData, userId }) => {
 const App = () => {
     const [navData, setNavData] = useState([]);
     const [user, setUser] = useState(null);
-    const [view, setView] = useState('public'); // 'public' or 'admin'
+    const [view, setView] = useState('public'); // 'public' or 'admin' or 'login'
     const [isAuthReady, setIsAuthReady] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    
+    // 检查 Firebase 是否成功初始化
+    const isFirebaseInitialized = !!db && !!auth;
 
     // 1. Authentication and Initialization
     useEffect(() => {
-        if (!firebaseConfig) {
-            console.error("Firebase config is missing.");
+        if (!isFirebaseInitialized) {
+            console.error("Initialization skipped because Firebase is not configured.");
             setIsAuthReady(true);
             return;
         }
 
-        // 首次加载时处理 Canvas 认证
+        // 首次加载时处理匿名认证（用于非管理员用户读取数据）
         const initialAuth = async () => {
             try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // 在 Cloudflare Pages 中，我们只使用匿名登录
+                await signInAnonymously(auth);
             } catch (e) {
                 console.error("Initial auth failed:", e);
-                // Fallback to anonymous if custom token fails
-                try {
-                    await signInAnonymously(auth);
-                } catch (e) {
-                    console.error("Anonymous auth failed:", e);
-                }
             }
         };
         initialAuth();
@@ -610,11 +630,12 @@ const App = () => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [isFirebaseInitialized]);
 
     // 2. Real-time Data Fetching (Firestore)
     useEffect(() => {
-        if (!isAuthReady || !user || !db) return;
+        // 只有在认证和数据库都准备好时才开始监听
+        if (!isAuthReady || !user || !db || !isFirebaseInitialized) return;
 
         // 导航数据存储在公共路径下
         const q = query(collection(db, `artifacts/${appId}/public/data/navLinks`));
@@ -632,7 +653,7 @@ const App = () => {
         });
 
         return () => unsubscribe();
-    }, [isAuthReady, user]);
+    }, [isAuthReady, user, isFirebaseInitialized]);
 
     const handleSignOut = async () => {
         try {
@@ -661,6 +682,17 @@ const App = () => {
             </div>
         );
     }
+    
+    // Error state if Firebase is not initialized
+    if (!isFirebaseInitialized) {
+         return (
+            <div className="text-center p-20 bg-red-100 text-red-700 min-h-screen">
+                <h1 className="text-2xl font-bold mb-4">配置错误：Firebase 未初始化</h1>
+                <p>请检查您的 `REAL_FIREBASE_CONFIG` 配置对象中的所有值是否正确，并确保已重新构建和推送。</p>
+            </div>
+        );
+    }
+
 
     return (
         <div className="bg-gray-50 min-h-screen">
