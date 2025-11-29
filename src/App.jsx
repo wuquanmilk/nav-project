@@ -5,18 +5,28 @@ import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, query, or
 
 // --- 全局变量和配置 (Canvas Environment) ---
 // MUST use these global variables provided by the Canvas environment
-const firebaseConfig = {
-  apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
-  authDomain: "wangzhandaohang.firebaseapp.com",
-  projectId: "wangzhandaohang",
-  storageBucket: "wangzhandaohang.firebasestorage.app",
-  messagingSenderId: "169263636408",
-  appId: "1:169263636408:web:ee3608652b2872a539b94d",
-  measurementId: "G-6JGHTS41NH"
+// --- 真实 Firebase 配置 (用于 Cloudflare Pages 部署) ---
+// 在 Cloudflare 部署时，必须直接将 Firebase 配置信息硬编码在此处。
+const REAL_FIREBASE_CONFIG = {
+    apiKey: "您的真实 apiKey",
+    authDomain: "您的真实 authDomain",
+    projectId: "您的真实 projectId",
+    storageBucket: "您的真实 storageBucket",
+    messagingSenderId: "您的真实 messagingSenderId",
+    appId: "您的真实 appId",
+    measurementId: "您的真实 measurementId" // 可选
 };
+
+// 重写变量，使用真实的配置
+const appId = REAL_FIREBASE_CONFIG.appId;
+const firebaseConfig = REAL_FIREBASE_CONFIG;
+const initialAuthToken = null; // 在 Cloudflare Pages 环境中，我们不使用 Canvas 令牌
+// ----------------------------------------------------------------
+
 // Replace this placeholder with your actual Firebase User ID (UID) after registering.
-// Only this UID will have permission to edit the navigation data.
-const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2"; 
+// 确保这一行您的 UID 仍然是正确的: 6UiUdmPna4RJb2hNBoXhx3XCTFN2
+const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2";
+
 
 // --- Firebase 初始化和认证 (Must be outside the component) ---
 let app;
