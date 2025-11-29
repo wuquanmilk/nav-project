@@ -649,3 +649,65 @@ const App = () => {
 
             {/* 导航内容 */}
             <PublicNav navData={navData} searchTerm={searchTerm}
+// ...前面的代码保持不变...
+
+return (
+  <div className={`min-h-screen transition-colors duration-300 ${
+    darkMode 
+      ? 'dark bg-gray-900 text-white' 
+      : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50'
+  }`}>
+    {/* 导航栏 */}
+    <nav className={`sticky top-0 z-40 backdrop-blur-lg border-b ${
+      darkMode 
+        ? 'bg-gray-900/80 border-gray-700' 
+        : 'bg-white/80 border-gray-200'
+    }`}>
+      {/* ...导航栏内容... */}
+    </nav>
+
+    {/* 主要内容 */}
+    <main>
+      {isAdmin ? (
+        <AdminPanel
+          navData={navData}
+          onAddLink={handleAddLink}
+          onEditLink={handleEditLink}
+          onDeleteLink={handleDeleteLink}
+          onLoadDefaultData={handleLoadDefaultData}
+        />
+      ) : (
+        <>
+          {/* 搜索区域 */}
+          <div className="pt-16 pb-8">
+            <div className="text-center mb-8">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                发现优质资源
+              </h1>
+              <p className="text-xl text-gray-600 dark:text-gray-400">
+                快速访问您常用的工具和网站
+              </p>
+            </div>
+            
+            <SearchBar
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onClear={() => setSearchTerm('')}
+            />
+          </div>
+
+          {/* 导航内容 - 这里修复了未闭合的标签 */}
+          <PublicNav navData={navData} searchTerm={searchTerm} />
+        </>
+      )}
+    </main>
+
+    {/* 登录模态框 */}
+    {showLogin && (
+      <LoginForm
+        onLogin={handleLogin}
+        onClose={() => setShowLogin(false)}
+      />
+    )}
+  </div>
+);
