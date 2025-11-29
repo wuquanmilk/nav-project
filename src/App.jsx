@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';  // 引入 Router 和 Route
 import { Search } from 'lucide-react';
 
@@ -58,7 +58,15 @@ const App = () => {
     return (
         <Router>
             <Routes>
-                {/* 路由部分 */}
+                {/* 首页路由 */}
+                <Route path="/" element={
+                    <div className="px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+                        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">欢迎来到导航主页</h1>
+                        <p className="mb-4 text-gray-600 dark:text-gray-400">请点击上面的链接，开始你的导航之旅！</p>
+                    </div>
+                } />
+
+                {/* 导航页面路由 */}
                 <Route path="/nav" element={
                     <div className="px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
                         {/* 搜索框 */}
@@ -121,7 +129,6 @@ const App = () => {
                         ))}
                     </div>
                 } />
-                {/* 其他已有路由 */}
             </Routes>
         </Router>
     );
