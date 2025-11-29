@@ -4,7 +4,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signI
 import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, query, orderBy, addDoc, getDoc, updateDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { AlertTriangle, Home, LogIn, Settings, Plus, X, Edit3, Save, Trash2, Loader, ExternalLink, Search, Download } from 'lucide-react';
 
-// --- 真实的 Firebase 配置 (直接硬编码，用于 Cloudflare Pages 部署) ---
+// --- 真实的 Firebase 配置 ---
 const REAL_FIREBASE_CONFIG = {
     apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
     authDomain: "wangzhandaohang.firebaseapp.com",
@@ -23,7 +23,7 @@ const initialAuthToken = null;
 // 您的管理员 UID
 const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2";
 
-// --- 默认链接数据 (仿照 eooce.com 风格，面向开发者/设计师/AI用户) ---
+// --- 默认链接数据 ---
 const DEFAULT_LINKS_DATA = {
     "AI/效率工具": [
         { title: "ChatGPT", url: "https://chat.openai.com/", description: "强大的多模态语言模型" },
@@ -51,15 +51,12 @@ const DEFAULT_LINKS_DATA = {
         { title: "稀土掘金", url: "https://juejin.cn/", description: "面向开发者的技术社区" },
     ],
 };
-// ----------------------------------------------------
-
 
 // ----------------------------------------------------
-// 1. 公共导航区组件 (PublicNav) - 界面优化并支持搜索过滤
+// 1. 公共导航区组件 (PublicNav) - 优化居中布局
 // ----------------------------------------------------
 
 const PublicNav = React.memo(({ navData, searchTerm }) => {
-    // 过滤逻辑：根据搜索词过滤链接
     const filteredNavData = useMemo(() => {
         if (!searchTerm) return navData;
         const lowerCaseSearch = searchTerm.toLowerCase();
@@ -67,11 +64,10 @@ const PublicNav = React.memo(({ navData, searchTerm }) => {
 
         Object.entries(navData).forEach(([category, links]) => {
             const matchingLinks = links.filter(link =>
-                // 搜索匹配标题、描述或 URL
                 link.title.toLowerCase().includes(lowerCaseSearch) ||
                 (link.description && link.description.toLowerCase().includes(lowerCaseSearch)) ||
                 link.url.toLowerCase().includes(lowerCaseSearch) ||
-                category.toLowerCase().includes(lowerCaseSearch) // 也匹配类别
+                category.toLowerCase().includes(lowerCaseSearch)
             );
 
             if (matchingLinks.length > 0) {
@@ -92,48 +88,45 @@ const PublicNav = React.memo(({ navData, searchTerm }) => {
     }
 
     return (
-        // 🚀 优化点 1: 容器保持最大宽度和居中，内边距更舒适
-        <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {Object.keys(displayData).sort().map(category => (
-                <div key={category} className="mb-10">
-                    {/* 🚀 优化点 2: 类别标题更突出，增加一个视觉分隔 */}
-                    <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-200 border-l-4 border-indigo-500 pl-3">
-                        {category}
-                    </h2>
-                    {/* 🚀 优化点 3: 优化网格布局，在小屏上提供更好的体验 */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                        {displayData[category].map(link => (
-                            <a
-                                key={link.id}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                // 🚀 优化点 4: 链接卡片样式提升。使用更深的阴影，圆角更大，增加悬停时的立体感
-                                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md hover:shadow-xl transition duration-300 transform hover:scale-[1.03] border border-gray-100 dark:border-gray-700 block group flex items-start space-x-3 h-full"
-                            >
-                                {/* 简化图标 */}
-                                <div className="w-9 h-9 flex-shrink-0 bg-indigo-500 text-white rounded-lg flex items-center justify-center text-md font-bold shadow-md">
-                                    {link.title ? link.title[0].toUpperCase() : '?'}
-                                </div>
-                                <div className="overflow-hidden flex-1 pt-0.5">
-                                    {/* 🚀 优化点 5: 标题字体稍大，悬停时颜色变化更明显 */}
-                                    <p className="text-base font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
+                <div key={category} className="mb-12">
+                    {/* 居中类别标题 */}
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white inline-block border-b-4 border-indigo-500 pb-2 px-6">
+                            {category}
+                        </h2>
+                    </div>
+                    
+                    {/* 居中网格容器 */}
+                    <div className="flex justify-center">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full max-w-6xl">
+                            {displayData[category].map(link => (
+                                <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-center bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md hover:shadow-xl transition duration-300 transform hover:scale-105 border border-gray-100 dark:border-gray-700 group"
+                                >
+                                    <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-lg">
+                                        {link.title ? link.title[0].toUpperCase() : '?'}
+                                    </div>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-1">
                                         {link.title}
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                                        {/* 使用 line-clamp-2 确保描述不会太长 */}
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                                         {link.description || link.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                                     </p>
-                                </div>
-                            </a>
-                        ))}
+                                </a>
+                            ))}
+                        </div>
                     </div>
                 </div>
             ))}
         </div>
     );
 });
-
 
 // ----------------------------------------------------
 // 2. 管理员登录组件 (AdminLogin)
@@ -207,9 +200,8 @@ const AdminLogin = ({ auth, onLoginSuccess }) => {
     );
 };
 
-
 // ----------------------------------------------------
-// 3. 管理员面板组件 (AdminPanel)
+// 3. 管理员面板组件 (AdminPanel) - 重点优化居中布局
 // ----------------------------------------------------
 
 const AdminPanel = ({ db, navData, userId }) => {
@@ -217,7 +209,7 @@ const AdminPanel = ({ db, navData, userId }) => {
     const [editLink, setEditLink] = useState(null);
     const [newLink, setNewLink] = useState({ category: '', title: '', url: '', description: '' });
     const [currentStatus, setCurrentStatus] = useState('');
-    const [isDataLoading, setIsDataLoading] = useState(false); // 用于默认数据加载状态
+    const [isDataLoading, setIsDataLoading] = useState(false);
 
     const allCategories = useMemo(() => {
         return Object.keys(navData).sort();
@@ -228,7 +220,6 @@ const AdminPanel = ({ db, navData, userId }) => {
         return collection(db, 'artifacts', appId, 'public', 'data', 'navigation_links');
     }, [db]);
 
-    // 批量加载默认数据
     const loadDefaultData = useCallback(async () => {
         if (Object.values(navData).flat().length > 0) {
             if (!window.confirm('数据库中已存在数据，确定要加载默认数据吗？这将重复添加！')) return;
@@ -264,7 +255,6 @@ const AdminPanel = ({ db, navData, userId }) => {
         }
     }, [db, navData, publicCollectionRef, userId]);
 
-
     const handleFormChange = useCallback((e) => {
         const { name, value } = e.target;
         if (editLink) {
@@ -292,7 +282,6 @@ const AdminPanel = ({ db, navData, userId }) => {
 
         try {
             if (editLink) {
-                // Update existing link
                 const docRef = doc(publicCollectionRef, data.id);
                 await updateDoc(docRef, {
                     category: data.category.trim(),
@@ -304,7 +293,6 @@ const AdminPanel = ({ db, navData, userId }) => {
                 });
                 setCurrentStatus('链接更新成功！');
             } else {
-                // Add new link
                 await addDoc(publicCollectionRef, {
                     category: data.category.trim(),
                     title: data.title.trim(),
@@ -339,145 +327,153 @@ const AdminPanel = ({ db, navData, userId }) => {
     }, [publicCollectionRef]);
 
     const LinkForm = (item) => (
-        // 🚀 优化点 6: 表单背景和阴影调整，使其更突出
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-2xl border border-indigo-200 dark:border-indigo-600 space-y-4">
-            <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-300">{item.id ? '编辑链接' : '新增链接'}</h3>
-            {/* 类别 (Category) */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">类别 (Category)</label>
-                <select
-                    name="category"
-                    value={item.category}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white"
-                >
-                    <option value="">-- 选择或输入新类别 --</option>
-                    {allCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                </select>
-                <input
-                    type="text"
-                    name="category"
-                    value={item.category}
-                    onChange={handleFormChange}
-                    placeholder="或直接输入新类别名称"
-                    required
-                    className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition duration-150"
-                />
-            </div>
-            {/* 标题 (Title) */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">标题 (Title)</label>
-                <input
-                    type="text"
-                    name="title"
-                    value={item.title}
-                    onChange={handleFormChange}
-                    placeholder="网站名称"
-                    required
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition duration-150"
-                />
-            </div>
-            {/* URL */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">URL</label>
-                <input
-                    type="url"
-                    name="url"
-                    value={item.url}
-                    onChange={handleFormChange}
-                    placeholder="https://example.com"
-                    required
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition duration-150"
-                />
-            </div>
-            {/* 描述 (Description) */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">描述 (Description) (可选)</label>
-                <textarea
-                    name="description"
-                    value={item.description}
-                    onChange={handleFormChange}
-                    placeholder="网站的简短描述"
-                    rows="2"
-                    className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white transition duration-150"
-                />
-            </div>
-
-            <div className="flex justify-end space-x-3">
-                <button
-                    type="button"
-                    onClick={clearForm}
-                    className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-150"
-                >
-                    <X className="w-4 h-4 mr-2" />取消
-                </button>
-                <button
-                    type="submit"
-                    className="flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition duration-150 shadow-md"
-                >
-                    <Save className="w-4 h-4 mr-2" />{item.id ? '保存修改' : '添加链接'}
-                </button>
-            </div>
-        </form>
+        <div className="flex justify-center mb-8">
+            <form onSubmit={handleSubmit} className="w-full max-w-2xl bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl border border-indigo-200 dark:border-indigo-600 space-y-4">
+                <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-300 text-center">{item.id ? '编辑链接' : '新增链接'}</h3>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">类别 (Category)</label>
+                    <select
+                        name="category"
+                        value={item.category}
+                        onChange={handleFormChange}
+                        required
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                    >
+                        <option value="">-- 选择或输入新类别 --</option>
+                        {allCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                    <input
+                        type="text"
+                        name="category"
+                        value={item.category}
+                        onChange={handleFormChange}
+                        placeholder="或直接输入新类别名称"
+                        required
+                        className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">标题 (Title)</label>
+                    <input
+                        type="text"
+                        name="title"
+                        value={item.title}
+                        onChange={handleFormChange}
+                        placeholder="网站名称"
+                        required
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">URL</label>
+                    <input
+                        type="url"
+                        name="url"
+                        value={item.url}
+                        onChange={handleFormChange}
+                        placeholder="https://example.com"
+                        required
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">描述 (Description) (可选)</label>
+                    <textarea
+                        name="description"
+                        value={item.description}
+                        onChange={handleFormChange}
+                        placeholder="网站的简短描述"
+                        rows="2"
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                    />
+                </div>
+                <div className="flex justify-center space-x-3">
+                    <button
+                        type="button"
+                        onClick={clearForm}
+                        className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                        <X className="w-4 h-4 mr-2" />取消
+                    </button>
+                    <button
+                        type="submit"
+                        className="flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                        <Save className="w-4 h-4 mr-2" />{item.id ? '保存修改' : '添加链接'}
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 
     const LinkItem = ({ link }) => (
-        // 🚀 优化点 7: 链接列表卡片样式提升，增加可读性
-        <div className="flex items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition duration-150">
-            <div className="flex-1 min-w-0">
-                <p className="text-lg font-bold text-gray-900 dark:text-white truncate">{link.title}</p>
-                <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate mt-0.5">{link.category}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{link.url}</p>
-            </div>
-            <div className="flex space-x-2 ml-4 flex-shrink-0">
-                <a 
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 rounded-full text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-gray-700 transition duration-150"
-                    title="访问"
-                >
-                    <ExternalLink className="w-5 h-5" />
-                </a>
-                <button
-                    onClick={() => { setEditLink(link); setIsAdding(false); }}
-                    className="p-2 rounded-full text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-gray-700 transition duration-150"
-                    title="编辑"
-                >
-                    <Edit3 className="w-5 h-5" />
-                </button>
-                <button
-                    onClick={() => handleDelete(link.id)}
-                    className="p-2 rounded-full text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-gray-700 transition duration-150"
-                    title="删除"
-                >
-                    <Trash2 className="w-5 h-5" />
-                </button>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-shadow">
+            <div className="flex justify-between items-start">
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">{link.title}</h3>
+                    <span className="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs px-2 py-1 rounded-full mt-1">
+                        {link.category}
+                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-2">{link.url}</p>
+                </div>
+                <div className="flex space-x-2 ml-4">
+                    <a 
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-gray-700 rounded-full transition"
+                        title="访问"
+                    >
+                        <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <button
+                        onClick={() => { setEditLink(link); setIsAdding(false); }}
+                        className="p-2 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-400 dark:hover:bg-gray-700 rounded-full transition"
+                        title="编辑"
+                    >
+                        <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(link.id)}
+                        className="p-2 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-gray-700 rounded-full transition"
+                        title="删除"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         </div>
     );
 
-    // Flatten navData into a list for easy rendering in AdminPanel
     const allLinks = useMemo(() => {
         return Object.values(navData).flat().sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
     }, [navData]);
 
     return (
-        // 🚀 优化点 8: AdminPanel 容器保持最大宽度和居中
-        <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto dark:bg-gray-900 min-h-screen">
-            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center">
-                <Settings className="w-8 h-8 mr-3 text-indigo-600" />
-                导航管理面板
-            </h1>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                当前用户 ID: <code className="bg-gray-100 dark:bg-gray-700 p-1 rounded text-xs">{userId}</code>
-                （只有匹配 <code className="bg-gray-100 dark:bg-gray-700 p-1 rounded text-xs">{ADMIN_UID_PLACEHOLDER}</code> 的用户拥有写权限）
-            </p>
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* 居中标题区域 */}
+            <div className="text-center mb-8">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                    <Settings className="w-8 h-8 mr-3 text-indigo-600 inline" />
+                    导航管理面板
+                </h1>
+                
+                {/* 用户信息卡片居中 */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 max-w-2xl mx-auto mb-6">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
+                        <span className="font-semibold">当前用户 ID:</span> 
+                        <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded ml-2">{userId}</code>
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        只有匹配管理员 UID 的用户拥有写权限
+                    </p>
+                </div>
+            </div>
 
-            <div className="mb-6 flex flex-wrap gap-4">
+            {/* 居中按钮组 */}
+            <div className="flex justify-center gap-4 mb-8 flex-wrap">
                 <button
                     onClick={() => { setIsAdding(true); setEditLink(null); }}
                     className="flex items-center px-6 py-3 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition duration-150 font-semibold"
@@ -496,49 +492,55 @@ const AdminPanel = ({ db, navData, userId }) => {
             </div>
 
             {currentStatus && (
-                <div className="p-3 mb-4 text-sm font-medium text-green-700 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
-                    {currentStatus}
+                <div className="text-center">
+                    <div className="inline-block p-3 mb-4 text-sm font-medium text-green-700 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
+                        {currentStatus}
+                    </div>
                 </div>
             )}
 
-            {/* 编辑/新增表单区 */}
+            {/* 表单区域 */}
             {(isAdding || editLink) && (
-                <div className="mb-8">
-                    <LinkForm {...(editLink || newLink)} />
-                </div>
+                <LinkForm {...(editLink || newLink)} />
             )}
 
-            {/* 链接列表区 */}
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white my-6 border-b pb-2 border-gray-300 dark:border-gray-700">全部链接 ({allLinks.length})</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {allLinks.length > 0 ? (
-                    allLinks.map(link => <LinkItem key={link.id} link={link} />)
-                ) : (
-                    <p className="text-gray-500 col-span-full">暂无链接，请点击“添加新链接”或“一键加载默认数据”开始。</p>
-                )}
+            {/* 链接列表区域 */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        全部链接 ({allLinks.length})
+                    </h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {allLinks.length > 0 ? (
+                        allLinks.map(link => <LinkItem key={link.id} link={link} />)
+                    ) : (
+                        <div className="col-span-full text-center py-8 text-gray-500">
+                            暂无链接，请点击"添加新链接"或"一键加载默认数据"开始。
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
-
 // ----------------------------------------------------
-// 4. 主应用组件 (App)
+// 4. 主应用组件 (App) - 优化整体布局
 // ----------------------------------------------------
 
 const App = () => {
     const [navData, setNavData] = useState({});
-    const [view, setView] = useState('public'); // 'public', 'login', 'admin'
+    const [view, setView] = useState('public');
     const [auth, setAuth] = useState(null);
     const [db, setDb] = useState(null);
     const [userId, setUserId] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAuthReady, setIsAuthReady] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    // 新增搜索状态
     const [searchTerm, setSearchTerm] = useState('');
 
-    // 1. Firebase 初始化和认证
     useEffect(() => {
         try {
             const app = initializeApp(firebaseConfig);
@@ -547,12 +549,10 @@ const App = () => {
             setAuth(authInstance);
             setDb(dbInstance);
 
-            // 监听认证状态变化
             const unsubscribe = onAuthStateChanged(authInstance, async (user) => {
                 const currentUserId = user ? user.uid : null;
                 setUserId(currentUserId);
 
-                // 检查是否为管理员
                 const userIsAdmin = user && user.uid === ADMIN_UID_PLACEHOLDER;
                 setIsAdmin(userIsAdmin);
 
@@ -566,13 +566,12 @@ const App = () => {
                 setIsLoading(false);
             });
 
-            // 尝试匿名登录以获取读取权限
             const authenticate = async () => {
                 if (!authInstance.currentUser) {
                     try {
                         await signInAnonymously(authInstance);
                     } catch (error) {
-                        console.warn("自动匿名登录失败 (可能未在控制台启用):", error);
+                        console.warn("自动匿名登录失败:", error);
                     }
                 }
             };
@@ -586,7 +585,6 @@ const App = () => {
         }
     }, []);
 
-    // 2. 实时获取导航数据
     useEffect(() => {
         if (!db || !isAuthReady) return;
         
@@ -604,14 +602,11 @@ const App = () => {
                 links[category].push(data);
             });
 
-            // 对链接进行排序 (按标题)
             Object.keys(links).forEach(category => {
                 links[category].sort((a, b) => a.title.localeCompare(b.title));
             });
 
             setNavData(links);
-            console.log("Navigation data updated from Firestore.");
-
         }, (error) => {
             if (error.code !== 'permission-denied') {
                  console.error("Error fetching navigation data:", error);
@@ -621,7 +616,6 @@ const App = () => {
         return () => unsubscribe();
     }, [db, isAuthReady, auth?.currentUser]);
 
-    // 登出处理
     const handleLogout = useCallback(async () => {
         if (auth) {
             await signOut(auth);
@@ -643,31 +637,24 @@ const App = () => {
         );
     }
 
-    // 主渲染逻辑
     return (
-        // 🚀 核心优化点 A: 确保根容器 min-h-screen
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 font-sans">
-            {/* 导航栏 - 优化设计 */}
-            {/* 🚀 优化点 B: 增加头部阴影和高度，使其更像一个现代化的 Header */}
+            {/* 导航栏 */}
             <nav className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* 🚀 优化点 C: 增加导航栏高度 (h-16) */}
                     <div className="flex justify-between items-center h-16">
-                        {/* 网站标题/Logo */}
                         <div className="flex-shrink-0">
                             <h1 className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 cursor-pointer flex items-center" onClick={() => { setView('public'); setSearchTerm(''); }}>
                                 🚀 极速导航
                             </h1>
                         </div>
 
-                        {/* 操作按钮 */}
                         <div className="flex items-center space-x-2">
                             {isAdmin ? (
                                 <>
                                     <button
                                         onClick={() => { setView('admin'); setSearchTerm(''); }}
                                         className={`p-2 rounded-xl text-sm font-medium transition duration-150 flex items-center ${view === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                        title="管理面板"
                                     >
                                         <Settings className="w-5 h-5" />
                                         <span className="hidden sm:inline ml-1">管理</span>
@@ -675,7 +662,6 @@ const App = () => {
                                     <button
                                         onClick={handleLogout}
                                         className="p-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition duration-150 flex items-center"
-                                        title="登出"
                                     >
                                         <LogIn className="w-5 h-5" />
                                         <span className="hidden sm:inline ml-1">登出</span>
@@ -685,7 +671,6 @@ const App = () => {
                                 <button
                                     onClick={() => { setView('login'); setSearchTerm(''); }}
                                     className={`p-2 rounded-xl text-sm font-medium transition duration-150 flex items-center ${view === 'login' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                                    title="管理员登录"
                                 >
                                     <LogIn className="w-5 h-5" />
                                     <span className="hidden sm:inline ml-1">登录</span>
@@ -696,53 +681,53 @@ const App = () => {
                 </div>
             </nav>
 
-            {/* 视图内容 */}
-            <main className="text-gray-900 dark:text-gray-100">
-                {view === 'public' && (
-                    <>
-                        {/* 居中搜索栏 (仿 eooce 风格) */}
-                        {/* 🚀 优化点 D: 增加顶部间距，搜索框视觉上更居中 */}
-                        <div className="pt-16 pb-10 flex justify-center w-full">
-                            <div className="relative w-full max-w-3xl px-4">
-                                <Search className="absolute left-7 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                                {/* 🚀 优化点 E: 搜索框更大，圆角更突出 */}
-                                <input
-                                    type="text"
-                                    placeholder="搜索网站标题、描述或类别..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 text-lg border-2 border-indigo-300 dark:border-indigo-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white shadow-xl transition duration-200"
-                                />
-                                {searchTerm && (
-                                    <button
-                                        onClick={() => setSearchTerm('')}
-                                        className="absolute right-7 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700"
-                                        title="清空搜索"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+            {/* 主内容区域 */}
+            <div className="flex justify-center w-full">
+                <div className="w-full max-w-7xl">
+                    <main className="text-gray-900 dark:text-gray-100 px-4 sm:px-6 lg:px-8">
+                        {view === 'public' && (
+                            <>
+                                <div className="pt-12 pb-8 flex justify-center">
+                                    <div className="relative w-full max-w-2xl">
+                                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="搜索网站标题、描述或类别..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full pl-12 pr-10 py-3 text-lg border-2 border-indigo-300 dark:border-indigo-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white shadow-xl"
+                                        />
+                                        {searchTerm && (
+                                            <button
+                                                onClick={() => setSearchTerm('')}
+                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
 
-                        <PublicNav navData={navData} searchTerm={searchTerm} />
-                    </>
-                )}
-                {view === 'login' && auth && <AdminLogin auth={auth} onLoginSuccess={() => setView('admin')} />}
-                
-                {view === 'admin' && isAuthReady && db && (
-                    isAdmin ? (
-                        <AdminPanel db={db} navData={navData} userId={userId} />
-                    ) : (
-                        <div className="text-center p-20 text-red-500 text-xl bg-white dark:bg-gray-800 m-8 rounded-xl shadow-lg max-w-3xl mx-auto">
-                            <AlertTriangle className="w-10 h-10 mx-auto mb-4" />
-                            <h2 className="font-bold mb-2">权限不足</h2>
-                            <p>您没有管理员权限。请先登录，并确保您的 UID ({userId}) 匹配代码中的管理员 UID。</p>
-                            <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">要设置管理员，请修改 `App.jsx` 中的 `ADMIN_UID_PLACEHOLDER`。</p>
-                        </div>
-                    )
-                )}
-            </main>
+                                <PublicNav navData={navData} searchTerm={searchTerm} />
+                            </>
+                        )}
+                        
+                        {view === 'login' && auth && <AdminLogin auth={auth} onLoginSuccess={() => setView('admin')} />}
+                        
+                        {view === 'admin' && isAuthReady && db && (
+                            isAdmin ? (
+                                <AdminPanel db={db} navData={navData} userId={userId} />
+                            ) : (
+                                <div className="text-center p-20 text-red-500 text-xl bg-white dark:bg-gray-800 m-8 rounded-xl shadow-lg max-w-3xl mx-auto">
+                                    <AlertTriangle className="w-10 h-10 mx-auto mb-4" />
+                                    <h2 className="font-bold mb-2">权限不足</h2>
+                                    <p>您没有管理员权限。请先登录，并确保您的 UID ({userId}) 匹配代码中的管理员 UID。</p>
+                                </div>
+                            )
+                        )}
+                    </main>
+                </div>
+            </div>
         </div>
     );
 };
