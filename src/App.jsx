@@ -18,7 +18,7 @@ const REAL_FIREBASE_CONFIG = {
 // 使用真实配置覆盖
 const firebaseConfig = REAL_FIREBASE_CONFIG;
 const appId = REAL_FIREBASE_CONFIG.appId;
-const initialAuthToken = null; 
+const initialAuthToken = null;
 
 // 您的管理员 UID
 const ADMIN_UID_PLACEHOLDER = "6UiUdmPna4RJb2hNBoXhx3XCTFN2";
@@ -92,30 +92,36 @@ const PublicNav = React.memo(({ navData, searchTerm }) => {
     }
 
     return (
+        // 🚀 优化点 1: 容器保持最大宽度和居中，内边距更舒适
         <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto">
             {Object.keys(displayData).sort().map(category => (
                 <div key={category} className="mb-10">
-                    <h2 className="text-2xl font-semibold mb-5 text-gray-700 dark:text-gray-300 border-b border-indigo-200 dark:border-indigo-800 pb-2">
+                    {/* 🚀 优化点 2: 类别标题更突出，增加一个视觉分隔 */}
+                    <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-200 border-l-4 border-indigo-500 pl-3">
                         {category}
                     </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+                    {/* 🚀 优化点 3: 优化网格布局，在小屏上提供更好的体验 */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
                         {displayData[category].map(link => (
                             <a
                                 key={link.id}
                                 href={link.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm hover:shadow-lg transition duration-300 transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700 block group flex items-center space-x-3"
+                                // 🚀 优化点 4: 链接卡片样式提升。使用更深的阴影，圆角更大，增加悬停时的立体感
+                                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md hover:shadow-xl transition duration-300 transform hover:scale-[1.03] border border-gray-100 dark:border-gray-700 block group flex items-start space-x-3 h-full"
                             >
                                 {/* 简化图标 */}
-                                <div className="w-8 h-8 flex-shrink-0 bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 rounded-lg flex items-center justify-center text-md font-bold">
+                                <div className="w-9 h-9 flex-shrink-0 bg-indigo-500 text-white rounded-lg flex items-center justify-center text-md font-bold shadow-md">
                                     {link.title ? link.title[0].toUpperCase() : '?'}
                                 </div>
-                                <div className="overflow-hidden flex-1">
-                                    <p className="text-base font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-500 transition-colors">
+                                <div className="overflow-hidden flex-1 pt-0.5">
+                                    {/* 🚀 优化点 5: 标题字体稍大，悬停时颜色变化更明显 */}
+                                    <p className="text-base font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
                                         {link.title}
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                                        {/* 使用 line-clamp-2 确保描述不会太长 */}
                                         {link.description || link.url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                                     </p>
                                 </div>
@@ -155,7 +161,7 @@ const AdminLogin = ({ auth, onLoginSuccess }) => {
     }, [auth, email, password, onLoginSuccess]);
 
     return (
-        <div className="flex justify-center items-center p-8 min-h-[50vh] bg-gray-50 dark:bg-gray-900">
+        <div className="flex justify-center items-center p-8 min-h-[calc(100vh-56px)] bg-gray-50 dark:bg-gray-900">
             <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700">
                 <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">管理员登录</h2>
                 <form onSubmit={handleLogin} className="space-y-6">
@@ -333,7 +339,8 @@ const AdminPanel = ({ db, navData, userId }) => {
     }, [publicCollectionRef]);
 
     const LinkForm = (item) => (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-lg border border-indigo-200 dark:border-indigo-600 space-y-4">
+        // 🚀 优化点 6: 表单背景和阴影调整，使其更突出
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-700 p-6 rounded-xl shadow-2xl border border-indigo-200 dark:border-indigo-600 space-y-4">
             <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-300">{item.id ? '编辑链接' : '新增链接'}</h3>
             {/* 类别 (Category) */}
             <div>
@@ -418,11 +425,12 @@ const AdminPanel = ({ db, navData, userId }) => {
     );
 
     const LinkItem = ({ link }) => (
-        <div className="flex items-center bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition duration-150">
+        // 🚀 优化点 7: 链接列表卡片样式提升，增加可读性
+        <div className="flex items-center bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition duration-150">
             <div className="flex-1 min-w-0">
-                <p className="text-lg font-semibold text-gray-900 dark:text-white truncate">{link.title}</p>
-                <p className="text-sm text-indigo-600 dark:text-indigo-400 truncate">{link.category}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{link.url}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white truncate">{link.title}</p>
+                <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate mt-0.5">{link.category}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{link.url}</p>
             </div>
             <div className="flex space-x-2 ml-4 flex-shrink-0">
                 <a 
@@ -458,6 +466,7 @@ const AdminPanel = ({ db, navData, userId }) => {
     }, [navData]);
 
     return (
+        // 🚀 优化点 8: AdminPanel 容器保持最大宽度和居中
         <div className="p-4 md:p-8 lg:p-12 max-w-7xl mx-auto dark:bg-gray-900 min-h-screen">
             <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center">
                 <Settings className="w-8 h-8 mr-3 text-indigo-600" />
@@ -468,7 +477,7 @@ const AdminPanel = ({ db, navData, userId }) => {
                 （只有匹配 <code className="bg-gray-100 dark:bg-gray-700 p-1 rounded text-xs">{ADMIN_UID_PLACEHOLDER}</code> 的用户拥有写权限）
             </p>
 
-            <div className="mb-6 flex space-x-4">
+            <div className="mb-6 flex flex-wrap gap-4">
                 <button
                     onClick={() => { setIsAdding(true); setEditLink(null); }}
                     className="flex items-center px-6 py-3 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition duration-150 font-semibold"
@@ -500,6 +509,7 @@ const AdminPanel = ({ db, navData, userId }) => {
             )}
 
             {/* 链接列表区 */}
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white my-6 border-b pb-2 border-gray-300 dark:border-gray-700">全部链接 ({allLinks.length})</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {allLinks.length > 0 ? (
                     allLinks.map(link => <LinkItem key={link.id} link={link} />)
@@ -635,14 +645,17 @@ const App = () => {
 
     // 主渲染逻辑
     return (
+        // 🚀 核心优化点 A: 确保根容器 min-h-screen
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 font-sans">
-            {/* 导航栏 - 简化设计，只有 Logo 和管理入口 */}
-            <nav className="bg-white dark:bg-gray-800 shadow-sm">
+            {/* 导航栏 - 优化设计 */}
+            {/* 🚀 优化点 B: 增加头部阴影和高度，使其更像一个现代化的 Header */}
+            <nav className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-14">
+                    {/* 🚀 优化点 C: 增加导航栏高度 (h-16) */}
+                    <div className="flex justify-between items-center h-16">
                         {/* 网站标题/Logo */}
                         <div className="flex-shrink-0">
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-white cursor-pointer" onClick={() => { setView('public'); setSearchTerm(''); }}>
+                            <h1 className="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 cursor-pointer flex items-center" onClick={() => { setView('public'); setSearchTerm(''); }}>
                                 🚀 极速导航
                             </h1>
                         </div>
@@ -653,26 +666,29 @@ const App = () => {
                                 <>
                                     <button
                                         onClick={() => { setView('admin'); setSearchTerm(''); }}
-                                        className={`p-2 rounded-lg text-sm font-medium transition duration-150 flex items-center ${view === 'admin' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                        className={`p-2 rounded-xl text-sm font-medium transition duration-150 flex items-center ${view === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                                         title="管理面板"
                                     >
                                         <Settings className="w-5 h-5" />
+                                        <span className="hidden sm:inline ml-1">管理</span>
                                     </button>
                                     <button
                                         onClick={handleLogout}
-                                        className="p-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition duration-150"
+                                        className="p-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition duration-150 flex items-center"
                                         title="登出"
                                     >
                                         <LogIn className="w-5 h-5" />
+                                        <span className="hidden sm:inline ml-1">登出</span>
                                     </button>
                                 </>
                             ) : (
                                 <button
                                     onClick={() => { setView('login'); setSearchTerm(''); }}
-                                    className={`p-2 rounded-lg text-sm font-medium transition duration-150 flex items-center ${view === 'login' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                                    className={`p-2 rounded-xl text-sm font-medium transition duration-150 flex items-center ${view === 'login' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                                     title="管理员登录"
                                 >
                                     <LogIn className="w-5 h-5" />
+                                    <span className="hidden sm:inline ml-1">登录</span>
                                 </button>
                             )}
                         </div>
@@ -685,20 +701,22 @@ const App = () => {
                 {view === 'public' && (
                     <>
                         {/* 居中搜索栏 (仿 eooce 风格) */}
-                        <div className="pt-12 pb-6 flex justify-center w-full">
-                            <div className="relative w-full max-w-2xl px-4">
+                        {/* 🚀 优化点 D: 增加顶部间距，搜索框视觉上更居中 */}
+                        <div className="pt-16 pb-10 flex justify-center w-full">
+                            <div className="relative w-full max-w-3xl px-4">
                                 <Search className="absolute left-7 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                                {/* 🚀 优化点 E: 搜索框更大，圆角更突出 */}
                                 <input
                                     type="text"
                                     placeholder="搜索网站标题、描述或类别..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 text-lg border border-gray-300 dark:border-gray-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white shadow-lg transition duration-200"
+                                    className="w-full pl-12 pr-4 py-4 text-lg border-2 border-indigo-300 dark:border-indigo-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-white shadow-xl transition duration-200"
                                 />
                                 {searchTerm && (
                                     <button
                                         onClick={() => setSearchTerm('')}
-                                        className="absolute right-7 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                        className="absolute right-7 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 bg-gray-100 dark:bg-gray-700"
                                         title="清空搜索"
                                     >
                                         <X className="w-5 h-5" />
@@ -716,7 +734,7 @@ const App = () => {
                     isAdmin ? (
                         <AdminPanel db={db} navData={navData} userId={userId} />
                     ) : (
-                        <div className="text-center p-20 text-red-500 text-xl bg-white dark:bg-gray-800 m-8 rounded-xl shadow-lg">
+                        <div className="text-center p-20 text-red-500 text-xl bg-white dark:bg-gray-800 m-8 rounded-xl shadow-lg max-w-3xl mx-auto">
                             <AlertTriangle className="w-10 h-10 mx-auto mb-4" />
                             <h2 className="font-bold mb-2">权限不足</h2>
                             <p>您没有管理员权限。请先登录，并确保您的 UID ({userId}) 匹配代码中的管理员 UID。</p>
