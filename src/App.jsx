@@ -1,3 +1,5 @@
+// 文件：App.jsx (最终优化版本)
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
@@ -76,7 +78,7 @@ const DEFAULT_LINKS = {
   ],
 };
 
-// 搜索栏组件（优化版）
+// 搜索栏组件（保持不变）
 const SearchBar = ({ searchTerm, onSearchChange, onClear }) => (
   <div className="w-full max-w-2xl mx-auto mb-12 px-4">
     <div className="relative">
@@ -104,7 +106,7 @@ const SearchBar = ({ searchTerm, onSearchChange, onClear }) => (
   </div>
 );
 
-// 链接卡片组件（优化版）
+// 链接卡片组件（保持不变）
 const LinkCard = ({ link }) => (
   <a
     href={link.url}
@@ -138,7 +140,7 @@ const LinkCard = ({ link }) => (
   </a>
 );
 
-// 分类区域组件（优化版）
+// 分类区域组件（保持不变）
 const CategorySection = ({ category, links }) => (
   <section className="mb-10">
     <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-5 border-l-4 border-blue-500 pl-3">
@@ -152,7 +154,7 @@ const CategorySection = ({ category, links }) => (
   </section>
 );
 
-// 公共导航组件
+// 公共导航组件 (已移除内部的居中容器)
 const PublicNav = ({ navData, searchTerm }) => {
   const filteredData = useMemo(() => {
     if (!searchTerm) return navData;
@@ -189,7 +191,8 @@ const PublicNav = ({ navData, searchTerm }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4">
+    // 【修改点 1】移除冗余容器：只返回内容
+    <div> 
       {Object.entries(displayData).map(([category, links]) => (
         <CategorySection key={category} category={category} links={links} />
       ))}
@@ -197,8 +200,9 @@ const PublicNav = ({ navData, searchTerm }) => {
   );
 };
 
-// 登录组件
+// 登录组件 (保持不变)
 const LoginForm = ({ onLogin, onClose }) => {
+// ... (LoginForm 保持不变)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -271,7 +275,7 @@ const LoginForm = ({ onLogin, onClose }) => {
   );
 };
 
-// 管理面板组件（保持不变，仅样式微调）
+// 管理面板组件（保持不变）
 const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaultData }) => {
   const [editingLink, setEditingLink] = useState(null);
   const [newLink, setNewLink] = useState({ category: '', title: '', url: '', description: '' });
@@ -469,7 +473,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
   );
 };
 
-// 主应用组件
+// 主应用组件 (已包含居中和美化逻辑)
 const App = () => {
   const [navData, setNavData] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -673,19 +677,23 @@ const App = () => {
           onClear={() => setSearchTerm('')}
         />
 
-        {/* 导航内容 */}
+        {/* 导航内容 - 外部居中容器 */}
         <div className="max-w-7xl mx-auto px-4">
-          {isAdmin ? (
-            <AdminPanel
-              navData={navData}
-              onAddLink={handleAddLink}
-              onEditLink={handleEditLink}
-              onDeleteLink={handleDeleteLink}
-              onLoadDefaultData={handleLoadDefaultData}
-            />
-          ) : (
-            <PublicNav navData={navData} searchTerm={searchTerm} />
-          )}
+          {/* 【修改点 2】新增美观的背景卡片效果容器 */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-10">
+            {isAdmin ? (
+              <AdminPanel
+                navData={navData}
+                onAddLink={handleAddLink}
+                onEditLink={handleEditLink}
+                onDeleteLink={handleDeleteLink}
+                onLoadDefaultData={handleLoadDefaultData}
+              />
+            ) : (
+              // PublicNav 现在只渲染内容，并使用外部容器居中
+              <PublicNav navData={navData} searchTerm={searchTerm} />
+            )}
+          </div>
         </div>
 
         {/* 底部版权 */}

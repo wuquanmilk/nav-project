@@ -1,29 +1,24 @@
 /* index.css */
 
 /* ==================================== */
-/* 1. 关键修改：添加 Tailwind CSS 指令 */
+/* 🚀 核心修复：添加 Tailwind CSS 指令 */
 /* ==================================== */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ==================================== */
-/* 2. 保留并调整您的自定义样式 */
+/* 修正后的基础样式 */
 /* ==================================== */
 
 :root {
-  /* 建议：由于 Tailwind 已经设置了字体、颜色等，
-     为了避免冲突，您可能想移除或简化这部分内容，
-     或者将它们迁移到 Tailwind 的配置中。
-     对于快速修复，可以保留，但可能会与 Tailwind 的默认样式冲突。
-  */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424; /* 这里的背景色可能会被 Tailwind 的 body 样式覆盖 */
+  background-color: #242424; 
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -31,16 +26,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 建议：使用 Tailwind 类来控制 body 样式，而不是直接在这里修改 */
+/* 【重要修改】移除 body 上的 display: flex; place-items: center; min-height: 100vh;
+   让 App.jsx 中的 min-h-screen 来控制布局，避免冲突。 */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
-  min-height: 100vh;
 }
-
-/* ... 文件的其他部分保持不变 ... */
 
 a {
   font-weight: 500;
