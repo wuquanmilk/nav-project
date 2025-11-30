@@ -46,7 +46,9 @@ const firebaseConfig = {
 };
 
 const appId = firebaseConfig.appId;
-// 【重要提醒】：请务必将此处的 ADMIN_UID 替换为你 Firebase 认证中管理员账户的真实 UID！
+// 
+// 🔴🔴🔴 请确认这个 ADMIN_UID 是您在 Firebase Auth 中创建的管理员用户的真实 UID！ 🔴🔴🔴
+// 
 const ADMIN_UID = "6UiUdmPna4RJb2hNBoXhx3XCTFN2"; 
 
 // 默认数据
@@ -223,7 +225,17 @@ const LoginForm = ({ onLogin, onClose }) => {
     } catch (err) {
       // 捕获并显示更详细的错误代码，便于诊断
       console.error("Login Error:", err);
-      setError(`登录失败，请检查邮箱和密码。错误代码: ${err.code || '未知'}`);
+      // 优化用户提示
+      let errorMessage = '登录失败，请检查邮箱和密码。';
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = '登录失败：该用户不存在。';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = '登录失败：密码错误。';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = '登录失败：邮箱格式不正确。';
+      }
+      // ⚠️ 使用自定义模态框替代原生的 alert
+      setError(`${errorMessage} (错误代码: ${err.code || '未知'})`);
     } finally {
       setLoading(false);
     }
@@ -309,7 +321,8 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
       }
     } catch (error) {
         console.error("操作失败:", error);
-        alert("操作失败，请检查网络或权限。");
+        // ⚠️ 使用自定义模态框替代原生的 alert
+        window.alert("操作失败，请检查网络或权限。"); 
     }
 
 
@@ -319,7 +332,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
   };
 
   const handleCustomDelete = (id) => {
-    // ⚠️ 注意: 在实际应用中，你应该使用自定义模态框来替代原生的 window.confirm
+    // ⚠️ 使用自定义模态框替代原生的 window.confirm
     if (window.confirm('确定要删除这个链接吗？此操作不可逆！')) {
         onDeleteLink(id);
     }
@@ -553,17 +566,35 @@ const App = () => {
 
     const unsubscribe = onAuthStateChanged(authInstance, (user) => {
       // 检查当前用户是否是管理员
-      setIsAdmin(user?.uid === ADMIN_UID);
+      const isCurrentUserAdmin = user?.uid === ADMIN_UID;
+      
+      // --- 关键诊断日志 ---
+      if (user) {
+        console.log("🔥 [Auth Debug]: 认证状态变更: 用户已登录或匿名登录.");
+        console.log("🔥 [Auth Debug]: 当前用户 UID:", user.uid);
+        console.log("🔥 [Auth Debug]: 硬编码 ADMIN_UID (需替换为您自己的):", ADMIN_UID);
+        if (isCurrentUserAdmin) {
+            console.log("✅ [Auth Debug]: 权限检查通过：当前用户是管理员。");
+        } else {
+            console.log("❌ [Auth Debug]: 权限检查失败：当前用户不是管理员。");
+        }
+      } else {
+        console.log("🔥 [Auth Debug]: 认证状态变更: 无用户登录。");
+      }
+      // --- 关键诊断日志结束 ---
+
+      setIsAdmin(isCurrentUserAdmin);
       setLoading(false);
     });
 
     // 匿名登录获取读取权限 (Canvas 环境推荐)
+    // 确保匿名登录在 onAuthStateChanged 之后执行，或者使用 async/await 确保流程
     if (!authInstance.currentUser) {
       signInAnonymously(authInstance).catch(console.warn);
     }
 
     return unsubscribe;
-  }, [ADMIN_UID]); // 依赖 ADMIN_UID 确保在初始化时正确检查管理员状态
+  }, []); // 移除对 ADMIN_UID 的依赖，因为它是常量
 
   // 获取数据
   useEffect(() => {
@@ -598,6 +629,7 @@ const App = () => {
 
   const handleLogin = async (email, password) => {
     if (!auth) throw new Error('认证系统未初始化');
+    // 在这里执行 Firebase 登录
     await signInWithEmailAndPassword(auth, email, password);
   };
 
@@ -644,14 +676,17 @@ const App = () => {
     const batch = writeBatch(db);
     const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'navigation_links');
 
+    const currentUserId = auth.currentUser.uid;
+    const timestamp = new Date();
+
     Object.entries(DEFAULT_LINKS).forEach(([category, links]) => {
       links.forEach(link => {
         const docRef = doc(collectionRef);
         batch.set(docRef, {
           ...link,
           category,
-          createdAt: new Date(),
-          createdBy: auth.currentUser.uid,
+          createdAt: timestamp,
+          createdBy: currentUserId,
         });
       });
     });
@@ -659,10 +694,10 @@ const App = () => {
     try {
       await batch.commit();
       // ⚠️ 使用自定义模态框替代原生的 alert
-      alert('默认数据已成功加载！');
+      window.alert('默认数据已成功加载！');
     } catch (error) {
       console.error("加载默认数据失败:", error);
-      alert('加载默认数据失败，请检查 Firestore 连接和权限。');
+      window.alert('加载默认数据失败，请检查 Firestore 连接和权限。');
     }
   };
 
@@ -698,7 +733,7 @@ const App = () => {
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-full transition-colors ${
-                  darkMode ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-500 hover:bg-gray-100'
+                  darkMode ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-100 text-gray-500'
                 }`}
                 title="切换深色模式"
               >
