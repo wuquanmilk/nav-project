@@ -19,7 +19,8 @@ import {
   writeBatch,
   getDocs,
   setDoc,
-} from 'firebase/firestore';
+}
+ from 'firebase/firestore';
 import {
   Search,
   Settings,
@@ -44,11 +45,9 @@ import {
 // 全局配置与工具函数
 // =========================================================================
 
-// Firebase 配置：通过全局变量获取配置
-const firebaseConfig =
-  typeof __firebase_config !== 'undefined'
-    ? JSON.parse(__firebase_config)
-    : {};
+// Firebase 配置：通过全局变量获取原始配置字符串
+const rawFirebaseConfig =
+  typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
 // 应用 ID：用于 Firestore 路径
 const appId =
@@ -142,10 +141,6 @@ const DebugBar = ({ userId, isAdmin, adminUid }) => {
       </p>
       <p>
         **是否管理员:** {isAdmin ? '是' : '否'}
-      </p>
-      <p>
-        **注意:** 权限错误通常意味着 Firestore 规则限制了 `userId` 对路径{' '}
-        `artifacts/{appId}/public/data/navData` 的访问。
       </p>
     </div>
   );
@@ -487,13 +482,15 @@ const AdminPanel = ({ navData, onLoadDefaultData, onDeleteLink, onEditLink, onAd
   };
 
   const handleLoadDefault = async () => {
+    // ⚠️ 替代 window.confirm()，使用自定义模态框或简单逻辑
     if (window.confirm('警告: 这将覆盖所有现有数据并加载默认数据。确定继续吗？')) {
         setIsDefaultLoading(true);
         try {
             await onLoadDefaultData();
         } catch(e) {
             console.error('加载默认数据失败:', e);
-            alert('加载默认数据失败，请检查控制台错误信息。'); // 使用一个简单的 alert 来通知错误
+            // ⚠️ 替代 alert()，使用自定义消息显示错误
+            console.error('加载默认数据失败，请检查控制台错误信息。'); 
         } finally {
             setIsDefaultLoading(false);
         }
@@ -631,6 +628,28 @@ const App = () => {
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [dataError, setDataError] = useState(null);
   const [isDark, setIsDark] = useState(false);
+  // 新增配置错误状态
+  const [configError, setConfigError] = useState(null);
+
+  // 1. 解析并验证 Firebase 配置 (使用 useMemo 确保只运行一次)
+  const firebaseConfig = useMemo(() => {
+    if (!rawFirebaseConfig) {
+        setConfigError('系统错误：配置缺失。无法加载 Firebase 数据库配置。请联系应用管理员解决配置问题。');
+        return null;
+    }
+    try {
+      const config = JSON.parse(rawFirebaseConfig);
+      // 验证配置对象是否有效
+      if (!config || typeof config !== 'object' || !config.apiKey) {
+        throw new Error('配置对象缺失或不包含 apiKey');
+      }
+      return config;
+    } catch (e) {
+      console.error('Firebase Config 解析失败:', e);
+      setConfigError('系统错误：配置缺失。无法加载 Firebase 数据库配置。请联系应用管理员解决配置问题。');
+      return null;
+    }
+  }, []);
 
   // 管理员 UID（当前环境用户的 ID）
   const adminUid = useMemo(
@@ -642,9 +661,12 @@ const App = () => {
   );
 
   // -----------------------------------------------------------------------
-  // 1. Firebase 初始化与认证 (FIXED)
+  // 2. Firebase 初始化与认证
   // -----------------------------------------------------------------------
   useEffect(() => {
+    // 检查是否有配置错误，如果有，则停止初始化
+    if (configError || !firebaseConfig) return;
+    
     // 1. 初始化 Firebase 服务
     const app = initializeApp(firebaseConfig);
     const authInstance = getAuth(app);
@@ -658,7 +680,6 @@ const App = () => {
     const initAuth = async () => {
       try {
         // 2. 执行初始登录尝试 (Custom Token 或 Anonymous)
-        // 关键：等待异步登录完成后再设置 isAuthReady
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(authInstance, __initial_auth_token);
         } else {
@@ -693,14 +714,14 @@ const App = () => {
         unsubscribeAuth();
       }
     };
-  }, [adminUid]); // 依赖 adminUid 确保它在 onAuthStateChanged 中被正确使用
+  }, [adminUid, configError, firebaseConfig]); // 依赖 configError 和 firebaseConfig
 
   // -----------------------------------------------------------------------
-  // 2. 监听导航数据变化
+  // 3. 监听导航数据变化
   // -----------------------------------------------------------------------
   useEffect(() => {
     // 确保 DB 实例和认证都已就绪
-    if (!db || !isAuthReady) return; 
+    if (!db || !isAuthReady || configError) return; 
 
     const navDataPath = `artifacts/${appId}/public/data/navData`;
     const q = collection(db, navDataPath);
@@ -723,10 +744,10 @@ const App = () => {
     });
 
     return () => unsubscribe(); // 清理监听器
-  }, [db, isAuthReady]); // 依赖 db 和 isAuthReady
+  }, [db, isAuthReady, configError]); // 依赖 db, isAuthReady, configError
 
   // -----------------------------------------------------------------------
-  // 3. 深色模式管理
+  // 4. 深色模式管理
   // -----------------------------------------------------------------------
   useEffect(() => {
     if (isDark) {
@@ -737,7 +758,7 @@ const App = () => {
   }, [isDark]);
 
   // -----------------------------------------------------------------------
-  // 4. 认证函数 (登录/登出)
+  // 5. 认证函数 (登录/登出)
   // -----------------------------------------------------------------------
   const handleLogin = async (email, password) => {
     if (!auth) return;
@@ -745,7 +766,7 @@ const App = () => {
     setIsLoginLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
+      await signInWithEmailAndPassword(
         auth,
         email,
         password,
@@ -772,7 +793,7 @@ const App = () => {
   };
 
   // -----------------------------------------------------------------------
-  // 5. 导航数据管理函数 (Admin Only)
+  // 6. 导航数据管理函数 (Admin Only)
   // -----------------------------------------------------------------------
   const handleLoadDefaultData = async () => {
     if (!db || !isAdmin) return;
@@ -799,10 +820,8 @@ const App = () => {
     console.log('Default data loaded successfully.');
   };
 
-  const findLinkAndSection = (linkId, category = null) => {
+  const findLinkAndSection = (linkId) => {
     for (const section of navData) {
-      if (category && section.category !== category) continue;
-
       const linkIndex = section.links.findIndex(link => link.id === linkId);
       if (linkIndex !== -1) {
         return { section, linkIndex };
@@ -908,6 +927,27 @@ const App = () => {
   };
 
 
+  // =========================================================================
+  // 7. 渲染逻辑
+  // =========================================================================
+
+  // 优先渲染配置错误
+  if (configError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-300 p-8">
+        <AlertTriangle className="w-16 h-16 mb-6" />
+        <h1 className="text-3xl font-bold mb-4">系统错误：配置缺失</h1>
+        <p className="text-center text-xl max-w-lg">
+          {configError.split('：')[1] || configError}
+        </p>
+        <p className="mt-8 text-sm text-red-500 dark:text-red-400">
+          **请注意**：要修复此问题，应用管理员需要在环境配置中提供有效的 Firebase JSON 配置。
+        </p>
+      </div>
+    );
+  }
+
+  // 渲染认证加载状态
   if (!isAuthReady) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
