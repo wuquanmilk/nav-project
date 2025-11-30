@@ -39,6 +39,7 @@ import {
   Info,
   Layers,
   CheckCircle,
+  AlertOctagon
 } from 'lucide-react';
 
 // =========================================================================
@@ -88,6 +89,7 @@ const Toast = ({ message, type, onClose }) => {
     };
 
     useEffect(() => {
+        // 自动关闭
         const timer = setTimeout(onClose, 4000);
         return () => clearTimeout(timer);
     }, [onClose]);
@@ -96,12 +98,50 @@ const Toast = ({ message, type, onClose }) => {
         <div className={`fixed bottom-5 right-5 p-4 rounded-xl shadow-xl z-[10000] border ${colorMap[type]} flex items-center transition-opacity duration-300`}>
             {iconMap[type]}
             <span className="font-medium text-sm">{message}</span>
-            <button onClick={onClose} className="ml-4 p-1 rounded-full hover:bg-opacity-50 transition-colors">
-                <X className="w-4 h-4 opacity-70" />
+            <button onClick={onClose} className="ml-4 p-1 rounded-full opacity-70 hover:opacity-100 transition-colors">
+                <X className="w-4 h-4" />
             </button>
         </div>
     );
 };
+
+
+// =========================================================================
+// Confirmation Modal (自定义确认模态框)
+// 解决了 window.confirm() 在 iframe 中被阻止的问题
+// =========================================================================
+const ConfirmationModal = ({ message, onConfirm, onCancel, isLoading }) => {
+    return (
+        <ModalWrapper onClose={onCancel}>
+            <div className="text-center">
+                <AlertOctagon className="w-12 h-12 mx-auto text-red-500 mb-4" />
+                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">请确认操作</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
+                <div className="flex justify-center space-x-4">
+                    <button
+                        onClick={onCancel}
+                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        disabled={isLoading}
+                    >
+                        取消
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Loader className="w-5 h-5 animate-spin" />
+                        ) : (
+                            '确认执行'
+                        )}
+                    </button>
+                </div>
+            </div>
+        </ModalWrapper>
+    );
+};
+
 
 // =========================================================================
 // DebugBar (调试组件)
@@ -113,8 +153,8 @@ const DebugBar = ({ userId, isAdmin, adminUidConfigured, isAuthReady }) => {
   if (!showDebug) return null;
 
   return (
-    <div className="bg-yellow-100 text-yellow-800 p-2 text-xs font-mono break-all z-50 relative border-b-4 border-yellow-300">
-      <strong>🔧 调试信息:</strong>
+    <div className="bg-red-100 text-red-800 p-2 text-xs font-mono break-all z-50 relative border-b-4 border-red-400">
+      <strong>⚠️ 调试信息 (管理员权限诊断):</strong>
       <br/>
       认证状态: <strong>{isAuthReady ? '✅ 已就绪' : '⏳ 初始化中'}</strong>
       <br/>
@@ -122,16 +162,16 @@ const DebugBar = ({ userId, isAdmin, adminUidConfigured, isAuthReady }) => {
       <br/>
       代码中配置的 ADMIN_UID: <strong>{adminUidConfigured}</strong>
       <br/>
-      当前权限状态: <strong>{isAdmin ? '✅ 管理员' : '❌ 访客'}</strong>
+      当前权限状态: <strong>{isAdmin ? '✅ 管理员 (UID匹配)' : '❌ 访客 (UID不匹配)'}</strong>
       <br/>
-      <span className="text-red-600 font-bold">请确保上方 UID 与 ADMIN_UID 匹配才能获得管理权限!</span>
+      <span className="text-red-600 font-bold">如果上面两个 UID 不匹配，您将无法保存数据!</span>
     </div>
   );
 };
 
-// =========================================================================
-// LinkCard, Modals, SearchBar, PublicNav, AdminPanel (组件定义 - 与上一次版本相似)
-// =========================================================================
+
+// LinkCard, Modals, SearchBar, PublicNav, AdminPanel (组件定义 - 略有修改)
+// ... (保留了大部分LinkCard, ModalWrapper, LoginModal, LinkEditModal, CategoryEditModal, SearchBar, PublicNav的代码) ...
 
 const LinkCard = ({ link, onEdit, onDelete, isAdmin }) => {
     const faviconUrl = useMemo(() => {
@@ -218,7 +258,6 @@ const LoginModal = ({ onClose, onLogin, error, isLoading }) => {
             管理员登录
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-            {/* ... 邮箱和密码输入框 ... (与上一次版本相同) */}
             <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">邮箱</label>
                 <input
@@ -285,7 +324,7 @@ const LinkEditModal = ({ onClose, onSave, initialLink = {}, categories = [] }) =
         setIsLoading(true);
         await onSave(link);
         setIsLoading(false);
-        onClose(); // 操作完成后关闭模态框
+        onClose(); 
     };
 
     const isEditing = !!initialLink.id;
@@ -375,7 +414,7 @@ const CategoryEditModal = ({ onClose, onSave, initialCategory = {} }) => {
         setIsLoading(true);
         await onSave(category);
         setIsLoading(false);
-        onClose(); // 操作完成后关闭模态框
+        onClose(); 
     };
 
     const isEditing = !!initialCategory.id;
@@ -585,8 +624,8 @@ const AdminPanel = ({
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {cat.links?.map((link, index) => (
                                     <LinkCard 
-                                        key={link.id || index} // 使用link.id作为唯一key
-                                        link={{...link, categoryId: cat.id}} // 传递分类ID用于编辑保存
+                                        key={link.id || index} 
+                                        link={{...link, categoryId: cat.id}} 
                                         isAdmin={true} 
                                         onEdit={onEditLink}
                                         onDelete={onDeleteLink}
@@ -626,7 +665,8 @@ const App = () => {
   const [navData, setNavData] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDark, setIsDark] = useState(false);
-  const [toast, setToast] = useState(null); // Toast 状态管理
+  const [toast, setToast] = useState(null); 
+  const [confirmation, setConfirmation] = useState(null); // 确认模态框状态
 
   // Modals State
   const [showLogin, setShowLogin] = useState(false);
@@ -634,12 +674,14 @@ const App = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const [editingLink, setEditingLink] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+
 
   const showToast = useCallback((message, type = 'info') => {
       setToast({ message, type });
   }, []);
 
-  // 初始化 Firebase 和认证 (与上一次版本相同，确保认证健壮性)
+  // 认证和初始化逻辑 (不变)
   useEffect(() => {
     try {
       const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
@@ -699,7 +741,7 @@ const App = () => {
   const categories = navData.map(c => ({ id: c.id, category: c.category }));
 
 
-  // 数据监听
+  // 数据监听 (不变)
   useEffect(() => {
     if (!db || !isAuthReady) return; 
     
@@ -719,7 +761,7 @@ const App = () => {
 
 
   // =========================================================================
-  // AUTH 认证逻辑
+  // AUTH 认证逻辑 (不变)
   // =========================================================================
   const handleLogin = async (email, password) => {
     if (!auth) {
@@ -731,7 +773,7 @@ const App = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       setShowLogin(false);
-      showToast('登录成功！您现在拥有管理员权限。', 'success'); // 🚀 使用 Toast
+      showToast('登录成功！您现在拥有管理员权限。', 'success'); 
     } catch (e) {
       setLoginError(e.message.replace('Firebase: ', ''));
       console.error("Login failed:", e);
@@ -744,19 +786,18 @@ const App = () => {
       try {
           await signOut(auth);
           await signInAnonymously(auth);
-          showToast('已成功退出管理模式。', 'info'); // 🚀 使用 Toast
+          showToast('已成功退出管理模式。', 'info'); 
       } catch (e) {
           console.error("Logout failed:", e);
-          showToast("退出失败，请查看控制台。", 'error'); // 🚀 使用 Toast
+          showToast("退出失败，请查看控制台。", 'error'); 
       }
   };
 
 
   // =========================================================================
-  // CRUD 链接 (Link) 逻辑
+  // CRUD 链接 (Link) 逻辑 (修复后的核心逻辑)
   // =========================================================================
 
-  // 生成唯一 ID
   const generateUniqueId = () => Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
   
   // 1. 新增或编辑链接的保存逻辑
@@ -777,7 +818,6 @@ const App = () => {
           const currentCat = navData.find(c => c.id === categoryId);
 
           if (!currentCat) {
-              console.error("Category not found for ID:", categoryId);
               showToast("操作失败：分类不存在。", 'error');
               return;
           }
@@ -788,53 +828,55 @@ const App = () => {
           if (id) {
               // 编辑逻辑：找到并替换链接
               updatedLinks = currentLinks.map(l => l.id === id ? { id, ...data } : l);
-              showToast('链接修改成功！', 'success'); // 🚀 使用 Toast
+              showToast('链接修改成功！', 'success'); 
           } else {
               // 新增逻辑：添加新链接
               const newLink = { ...data, id: generateUniqueId() };
               updatedLinks = [...currentLinks, newLink];
-              showToast('链接新增成功！', 'success'); // 🚀 使用 Toast
+              showToast('链接新增成功！', 'success'); 
           }
 
+          // 核心更新：只更新 links 字段
           await updateDoc(catRef, { links: updatedLinks });
 
-          return true; // 成功
+          return true; 
       } catch (e) {
           console.error("Error saving link:", e);
-          showToast("保存链接失败，请查看控制台。", 'error'); // 🚀 使用 Toast
-          return false; // 失败
+          showToast("保存链接失败，权限不足或网络错误。", 'error'); 
+          return false; 
       }
   };
 
-
-  // 2. 删除链接
-  const handleDeleteLink = async (link) => {
-      if (!db || !isAdmin) { 
-          showToast("权限不足或数据库未就绪。", 'error');
+  // 2. 删除链接 (替换 window.confirm)
+  const handleDeleteLink = useCallback((link) => {
+      if (!isAdmin) {
+          showToast("权限不足。", 'error');
           return;
       }
-      if (!window.confirm(`确定要删除链接: ${link.name} 吗?`)) return;
-
-      const { id, categoryId } = link;
-      
-      try {
-          const catRef = doc(db, dataCollectionPath, categoryId);
-          const currentCat = navData.find(c => c.id === categoryId);
-
-          if (!currentCat) {
-             showToast("操作失败：分类不存在。", 'error');
-             return;
+      setConfirmation({
+          message: `确定要删除链接 "${link.name}" 吗？此操作不可撤销。`,
+          onConfirm: async () => {
+              const { id, categoryId } = link;
+              try {
+                  const catRef = doc(db, dataCollectionPath, categoryId);
+                  const currentCat = navData.find(c => c.id === categoryId);
+        
+                  if (!currentCat) {
+                     showToast("操作失败：分类不存在。", 'error');
+                     return;
+                  }
+        
+                  const updatedLinks = (currentCat.links || []).filter(l => l.id !== id);
+                  await updateDoc(catRef, { links: updatedLinks });
+        
+                  showToast('链接删除成功!', 'success');
+              } catch (e) {
+                  console.error("Error deleting link:", e);
+                  showToast("删除链接失败，请查看控制台。", 'error');
+              }
           }
-
-          const updatedLinks = (currentCat.links || []).filter(l => l.id !== id);
-          await updateDoc(catRef, { links: updatedLinks });
-
-          showToast('链接删除成功!', 'success'); // 🚀 使用 Toast
-      } catch (e) {
-          console.error("Error deleting link:", e);
-          showToast("删除链接失败，请查看控制台。", 'error'); // 🚀 使用 Toast
-      }
-  };
+      });
+  }, [db, isAdmin, navData, dataCollectionPath, showToast]);
 
   // 3. 打开新增链接模态框
   const handleAddLink = useCallback((initialData = {}) => {
@@ -851,7 +893,7 @@ const App = () => {
   // CRUD 分类 (Category) 逻辑
   // =========================================================================
 
-  // 1. 新增或编辑分类的保存逻辑
+  // 1. 新增或编辑分类的保存逻辑 (不变)
   const handleSaveCategory = async (catData) => {
       if (!db || !isAdmin) {
            showToast("权限不足或数据库未就绪。", 'error');
@@ -859,7 +901,6 @@ const App = () => {
       }
       const { id, ...data } = catData;
       
-      // 🚀 确保 order 字段被正确解析为数字
       const orderValue = parseInt(data.order, 10);
       if (isNaN(orderValue)) {
           showToast("排序值必须是有效的数字。", 'error');
@@ -869,44 +910,44 @@ const App = () => {
       const payload = { 
           category: data.category, 
           order: orderValue,
-          // 确保编辑时保留原有 links 数组，新增时默认为空数组
           links: id ? (navData.find(c => c.id === id)?.links || []) : [], 
       };
 
       try {
           if (id) {
-              // 编辑
               await updateDoc(doc(db, dataCollectionPath, id), payload);
-              showToast('分类修改成功！', 'success'); // 🚀 使用 Toast
+              showToast('分类修改成功！', 'success'); 
           } else {
-              // 新增
               await addDoc(collection(db, dataCollectionPath), payload);
-              showToast('分类新增成功！', 'success'); // 🚀 使用 Toast
+              showToast('分类新增成功！', 'success'); 
           }
           return true;
       } catch (e) {
           console.error("Error saving category:", e);
-          showToast("保存分类失败，请查看控制台。", 'error'); // 🚀 使用 Toast
+          showToast("保存分类失败，权限不足或网络错误。", 'error'); 
           return false;
       }
   };
 
-  // 2. 删除分类
-  const handleDeleteCategory = async (category) => {
-      if (!db || !isAdmin) { 
-          showToast("权限不足或数据库未就绪。", 'error');
+  // 2. 删除分类 (替换 window.confirm)
+  const handleDeleteCategory = useCallback((category) => {
+      if (!isAdmin) {
+          showToast("权限不足。", 'error');
           return;
       }
-      if (!window.confirm(`确定要删除分类: ${category.category} 吗? 这将同时删除该分类下的所有链接!`)) return;
-
-      try {
-          await deleteDoc(doc(db, dataCollectionPath, category.id));
-          showToast(`分类 "${category.category}" 删除成功!`, 'success'); // 🚀 使用 Toast
-      } catch (e) {
-          console.error("Error deleting category:", e);
-          showToast("删除分类失败，请查看控制台。", 'error'); // 🚀 使用 Toast
-      }
-  };
+      setConfirmation({
+          message: `确定要删除分类 "${category.category}" 吗? 这将同时删除该分类下的所有链接!`,
+          onConfirm: async () => {
+              try {
+                  await deleteDoc(doc(db, dataCollectionPath, category.id));
+                  showToast(`分类 "${category.category}" 删除成功!`, 'success'); 
+              } catch (e) {
+                  console.error("Error deleting category:", e);
+                  showToast("删除分类失败，权限不足或网络错误。", 'error'); 
+              }
+          }
+      });
+  }, [db, isAdmin, dataCollectionPath, showToast]);
 
   // 3. 打开新增分类模态框
   const handleAddCategory = useCallback(() => {
@@ -920,46 +961,66 @@ const App = () => {
 
 
   // =========================================================================
-  // 批量加载默认数据逻辑
+  // 批量加载默认数据逻辑 (替换 window.confirm)
   // =========================================================================
-  const handleLoadDefaultData = async () => {
-      if(!db || !isAdmin) {
-          showToast("权限不足或数据库未就绪。", 'error');
+  const handleLoadDefaultData = useCallback(() => {
+      if(!isAdmin) {
+          showToast("权限不足。", 'error');
           return;
       }
 
-      if (!window.confirm("警告: 这将清空当前所有导航数据，并加载内置模板。确认继续吗?")) return;
+      setConfirmation({
+          message: "警告: 这将清空当前所有导航数据，并加载内置模板。确认继续吗?",
+          onConfirm: async () => {
+              try {
+                const batch = writeBatch(db);
+                const colRef = collection(db, dataCollectionPath);
 
-      try {
-        const batch = writeBatch(db);
-        const colRef = collection(db, dataCollectionPath);
+                // 1. 清空现有数据
+                const snapshot = await getDocs(colRef);
+                snapshot.docs.forEach((d) => {
+                    batch.delete(d.ref);
+                });
 
-        // 1. 清空现有数据
-        const snapshot = await getDocs(colRef);
-        snapshot.docs.forEach((d) => {
-            batch.delete(d.ref);
-        });
+                // 2. 写入默认数据
+                MOCK_DEFAULT_DATA.forEach(item => {
+                    const linksWithIds = (item.links || []).map(link => ({
+                        ...link,
+                        id: generateUniqueId(),
+                    }));
+                    
+                    const newDocRef = doc(colRef);
+                    batch.set(newDocRef, { ...item, links: linksWithIds });
+                });
 
-        // 2. 写入默认数据
-        MOCK_DEFAULT_DATA.forEach(item => {
-            // 给每个链接生成一个唯一ID
-            const linksWithIds = (item.links || []).map(link => ({
-                ...link,
-                id: generateUniqueId(),
-            }));
-            
-            const newDocRef = doc(colRef);
-            batch.set(newDocRef, { ...item, links: linksWithIds });
-        });
+                await batch.commit();
+                showToast('默认数据已成功加载！', 'success'); 
 
-        await batch.commit();
-        showToast('默认数据已成功加载！', 'success'); // 🚀 使用 Toast
+              } catch(e) {
+                  console.error("加载默认数据失败:", e);
+                  showToast("加载默认数据失败，权限不足或网络错误。", 'error'); 
+              }
+          }
+      });
+  }, [db, isAdmin, dataCollectionPath, showToast]);
 
-      } catch(e) {
-          console.error("加载默认数据失败:", e);
-          showToast("加载默认数据失败，请查看控制台。", 'error'); // 🚀 使用 Toast
-      }
+
+  // 确认模态框的执行逻辑
+  const executeConfirmation = async () => {
+    if (!confirmation || isConfirming) return;
+
+    setIsConfirming(true);
+    try {
+        await confirmation.onConfirm();
+    } catch (e) {
+        console.error("Confirmation action failed:", e);
+        showToast("操作执行失败。", 'error');
+    } finally {
+        setIsConfirming(false);
+        setConfirmation(null);
+    }
   };
+
 
   // =========================================================================
   // 渲染
@@ -968,6 +1029,7 @@ const App = () => {
   return (
     <div className={`min-h-screen ${isDark ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       
+      {/* 🔴 关键调试信息，请检查 ADMIN_USER_ID 是否与您登录的 UID 匹配 */}
       <DebugBar 
           userId={userId} 
           isAdmin={isAdmin} 
@@ -988,6 +1050,16 @@ const App = () => {
           onSave={handleSaveCategory}
           initialCategory={editingCategory}
       />}
+      
+      {/* 替换 window.confirm 的自定义模态框 */}
+      {confirmation && (
+          <ConfirmationModal
+              message={confirmation.message}
+              onConfirm={executeConfirmation}
+              onCancel={() => setConfirmation(null)}
+              isLoading={isConfirming}
+          />
+      )}
       
       {/* Toast 提示 */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
