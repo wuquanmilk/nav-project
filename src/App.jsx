@@ -239,8 +239,6 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
     [navData]
   );
 
-  const allCategories = useMemo(() => Object.keys(navData).sort(), [navData]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const linkData = editingLink || newLink;
@@ -416,7 +414,6 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
     </div>
   );
 };
-
 // 主应用组件
 const App = () => {
   const [navData, setNavData] = useState({});
@@ -654,4 +651,5 @@ const App = () => {
       </main>
 
       {/* 登录模态框 */}
-      {
+      {showLogin && (
+        <LoginForm
