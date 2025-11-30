@@ -649,7 +649,15 @@ const App = () => {
           </>
         )}
       </main>
-
-      {/* 登录模态框 */}
+{/* 登录模态框 */}
       {showLogin && (
         <LoginForm
+          onLogin={handleLogin}
+          onClose={() => setShowLogin(false)}
+        />
+      )}
+    </div>
+  );
+};
+
+export default App;
