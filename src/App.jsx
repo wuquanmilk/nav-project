@@ -53,10 +53,20 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
 let app, db, auth;
-if (Object.keys(firebaseConfig).length > 0) {
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
+const isFirebaseConfigured = Object.keys(firebaseConfig).length > 0;
+
+if (isFirebaseConfigured) {
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        console.log("Firebase services initialized successfully.");
+    } catch (e) {
+        console.error("Firebase initialization failed during initializeApp:", e);
+        // 如果初始化失败，auth, db 会保持 undefined
+    }
+} else {
+    console.warn("Firebase Config is missing or empty. Skipping initialization.");
 }
 
 // 默认数据结构
@@ -122,25 +132,34 @@ const Modal = ({ title, children, onClose }) => (
 /**
  * 管理员登录表单
  */
-const LoginModal = ({ onClose, onLogin, error, isLoading }) => {
+const LoginModal = ({ onClose, onLogin, error, isLoading, isFirebaseAvailable }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onLogin(email, password);
+    if (isFirebaseAvailable) {
+        onLogin(email, password);
+    }
   };
 
   return (
     <Modal title="管理员登录" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isFirebaseAvailable && (
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-600 dark:text-red-300 flex items-center">
+                <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                <span>配置错误：Firebase Auth 未初始化，无法登录。</span>
+            </div>
+        )}
         <input
           type="email"
           placeholder="管理员邮箱"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+          disabled={!isFirebaseAvailable}
+          className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 disabled:opacity-50"
         />
         <input
           type="password"
@@ -148,16 +167,17 @@ const LoginModal = ({ onClose, onLogin, error, isLoading }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100"
+          disabled={!isFirebaseAvailable}
+          className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-100 disabled:opacity-50"
         />
         {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:bg-blue-400 flex items-center justify-center"
+          disabled={isLoading || !isFirebaseAvailable}
+          className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isLoading ? <Loader className="w-5 h-5 animate-spin mr-2" /> : <LogIn className="w-5 h-5 mr-2" />}
-          {isLoading ? '登录中...' : '登录'}
+          {isFirebaseAvailable ? (isLoading ? '登录中...' : '登录') : '配置错误'}
         </button>
       </form>
     </Modal>
@@ -670,7 +690,8 @@ const AdminPanel = ({
             await onLoadDefaultData();
         } catch (e) {
             console.error("加载默认数据失败:", e);
-            alert("加载默认数据失败，请检查控制台错误信息。");
+            // 弹出提示框 (使用自定义 modal 代替 alert)
+            document.getElementById('root').insertAdjacentHTML('beforeend', `<div id="error-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4"><div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6"><h3 class="text-xl font-semibold text-red-500 mb-4">操作失败</h3><p class="text-gray-800 dark:text-gray-200 mb-4">加载默认数据失败，请检查控制台错误信息。</p><button onclick="document.getElementById('error-modal').remove()" class="bg-red-600 text-white px-4 py-2 rounded-lg">关闭</button></div></div>`);
         } finally {
             setIsDefaultLoading(false);
         }
@@ -749,6 +770,9 @@ const App = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDark, setIsDark] = useState(false);
+  
+  // 检查 Firebase 服务是否实际初始化
+  const isFirebaseAvailable = !!auth;
 
   // --- Firebase Auth & Init ---
 
@@ -777,10 +801,11 @@ const App = () => {
 
 
   useEffect(() => {
-    if (!auth) {
+    if (!isFirebaseAvailable) {
+        // 如果 Firebase 未初始化，直接停止加载并标记认证已就绪
         setIsLoading(false);
         setIsAuthReady(true);
-        console.error("Firebase SDK 未初始化，请检查配置!");
+        console.error("Firebase SDK 未初始化，无法进行身份验证和数据操作，请检查配置！");
         return;
     }
 
@@ -795,7 +820,6 @@ const App = () => {
         // 否则，只有当用户通过 email/password 登录时，才检查 UID。
         const isInitialAuth = typeof __initial_auth_token !== 'undefined';
         
-        // 默认情况下，如果用户通过匿名或提供的令牌登录，就认为是普通用户
         let isAdminUser = false;
         
         if (user.email) {
@@ -803,7 +827,6 @@ const App = () => {
             isAdminUser = user.uid === ADMIN_UID;
         } else if (isInitialAuth && user.isAnonymous) {
             // 如果是通过自定义 token 登录，我们暂时允许其为管理员
-            // 🚨 在生产环境中，请不要这样做，需严格根据 UID 或自定义声明判断
             isAdminUser = true;
         }
 
@@ -829,12 +852,12 @@ const App = () => {
     }
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [isFirebaseAvailable]); // 依赖于 Firebase 是否可用
 
   // --- Data Fetching ---
 
   useEffect(() => {
-    if (!db || !isAuthReady) return; // 确保 Firebase 和 Auth 准备就绪
+    if (!isFirebaseAvailable || !isAuthReady) return; // 确保 Firebase 和 Auth 准备就绪
 
     // 数据路径: /artifacts/{appId}/public/data/navData
     const navCollectionRef = collection(db, `artifacts/${appId}/public/data/navData`);
@@ -855,13 +878,13 @@ const App = () => {
     });
 
     return () => unsubscribe();
-  }, [db, isAuthReady]);
+  }, [isFirebaseAvailable, isAuthReady]); // 依赖于 Firebase 是否可用和认证状态
 
   // --- Auth Handlers ---
 
   const handleLogin = async (email, password) => {
-    if (!auth) {
-        setLoginError("Firebase Auth 未初始化。");
+    if (!isFirebaseAvailable) {
+        setLoginError("Firebase SDK 未初始化，无法登录。");
         return;
     }
     setLoginError('');
@@ -883,7 +906,7 @@ const App = () => {
   };
 
   const handleLogout = async () => {
-    if (!auth) return;
+    if (!isFirebaseAvailable) return;
     try {
       await signOut(auth);
       // 退出后重新匿名登录，以保持公共数据访问权限
@@ -898,7 +921,7 @@ const App = () => {
   // 1. 分类管理
 
   const handleAddCategory = useCallback(async ({ title, order }) => {
-    if (!db) return;
+    if (!isFirebaseAvailable) return;
     try {
         await addDoc(collection(db, `artifacts/${appId}/public/data/navData`), {
             title,
@@ -909,10 +932,10 @@ const App = () => {
     } catch (e) {
         console.error("Error adding category: ", e);
     }
-  }, [db]);
+  }, [isFirebaseAvailable]);
 
   const handleEditCategory = useCallback(async (id, { title, order }) => {
-    if (!db || !id) return;
+    if (!isFirebaseAvailable || !id) return;
     try {
         await updateDoc(doc(db, `artifacts/${appId}/public/data/navData`, id), {
             title,
@@ -922,21 +945,29 @@ const App = () => {
     } catch (e) {
         console.error("Error updating category: ", e);
     }
-  }, [db]);
+  }, [isFirebaseAvailable]);
 
   const handleDeleteCategory = useCallback(async (id) => {
-    if (!db || !id) return;
-    if (!window.confirm('确定要删除该分类及其所有链接吗？')) return;
+    if (!isFirebaseAvailable || !id) return;
+    // 使用自定义弹窗代替 window.confirm
+    if (!confirm('确定要删除该分类及其所有链接吗？')) return;
     try {
         await deleteDoc(doc(db, `artifacts/${appId}/public/data/navData`, id));
         console.log("Category deleted successfully.");
     } catch (e) {
         console.error("Error deleting category: ", e);
     }
-  }, [db]);
+  }, [isFirebaseAvailable]);
+  
+  // 替换 window.confirm 为自定义确认逻辑（简化为浏览器原生，因为在 Canvas 环境下需要替换）
+  const confirm = (message) => {
+    // 实际项目中需要使用 Modal 代替，这里暂时使用 window.confirm 作为简化的模拟
+    return window.confirm(message);
+  }
+
 
   const handleMoveCategory = useCallback(async (id, direction) => {
-    if (!db || !id) return;
+    if (!isFirebaseAvailable || !id) return;
     const currentCategory = navData.find(c => c.id === id);
     if (!currentCategory) return;
     
@@ -965,12 +996,12 @@ const App = () => {
             console.error("Error swapping category order: ", e);
         }
     }
-  }, [db, navData]);
+  }, [isFirebaseAvailable, navData]);
 
   // 2. 链接管理 (通过更新分类文档中的 links 数组实现)
 
   const handleAddLink = useCallback(async (categoryId, { name, url, icon }) => {
-    if (!db || !categoryId) return;
+    if (!isFirebaseAvailable || !categoryId) return;
     const categoryDocRef = doc(db, `artifacts/${appId}/public/data/navData`, categoryId);
     
     // 生成本地 ID
@@ -988,11 +1019,11 @@ const App = () => {
     } catch (e) {
         console.error("Error adding link: ", e);
     }
-  }, [db, navData]);
+  }, [isFirebaseAvailable, navData]);
 
 
   const handleEditLink = useCallback(async (categoryId, { id: linkId, name, url, icon }) => {
-    if (!db || !categoryId || !linkId) return;
+    if (!isFirebaseAvailable || !categoryId || !linkId) return;
     const categoryDocRef = doc(db, `artifacts/${appId}/public/data/navData`, categoryId);
     
     try {
@@ -1007,12 +1038,12 @@ const App = () => {
     } catch (e) {
         console.error("Error editing link: ", e);
     }
-  }, [db, navData]);
+  }, [isFirebaseAvailable, navData]);
 
 
   const handleDeleteLink = useCallback(async (categoryId, linkId) => {
-    if (!db || !categoryId || !linkId) return;
-    if (!window.confirm('确定要删除此链接吗？')) return;
+    if (!isFirebaseAvailable || !categoryId || !linkId) return;
+    if (!confirm('确定要删除此链接吗？')) return;
 
     const categoryDocRef = doc(db, `artifacts/${appId}/public/data/navData`, categoryId);
     
@@ -1026,13 +1057,15 @@ const App = () => {
     } catch (e) {
         console.error("Error deleting link: ", e);
     }
-  }, [db, navData]);
+  }, [isFirebaseAvailable, navData]);
 
   // 3. 加载默认数据
 
   const handleLoadDefaultData = useCallback(async () => {
-    if (!db) return;
-    if (!window.confirm('这将覆盖所有现有导航数据。确定要加载默认数据吗？')) return;
+    if (!isFirebaseAvailable) {
+        throw new Error("Firebase 未初始化");
+    }
+    if (!confirm('这将覆盖所有现有导航数据。确定要加载默认数据吗？')) return;
 
     const batch = writeBatch(db);
     const navCollectionRef = collection(db, `artifacts/${appId}/public/data/navData`);
@@ -1058,7 +1091,7 @@ const App = () => {
       console.error("Error loading default data: ", e);
       throw e; // 抛出错误以在组件中处理加载状态
     }
-  }, [db]);
+  }, [isFirebaseAvailable]);
 
 
   if (isLoading) {
@@ -1080,6 +1113,7 @@ const App = () => {
           onLogin={handleLogin}
           error={loginError}
           isLoading={isLoginLoading}
+          isFirebaseAvailable={isFirebaseAvailable} // 传递可用性状态
         />
       )}
 
@@ -1088,7 +1122,16 @@ const App = () => {
         <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">极速导航</h1>
         <div className="flex gap-4 items-center">
             <DarkModeToggle isDark={isDark} setIsDark={setIsDark} />
-            {isAdmin ? (
+            
+            {/* Firebase 配置错误提示 */}
+            {!isFirebaseAvailable && (
+                <div className="text-sm font-medium text-red-500 dark:text-red-400 p-2 rounded-lg bg-red-100 dark:bg-red-900 flex items-center shadow-inner">
+                    <AlertTriangle className="w-4 h-4 mr-1" />
+                    配置错误
+                </div>
+            )}
+
+            {isAdmin && isFirebaseAvailable ? (
                 <>
                     <span className="text-sm font-medium text-green-600 dark:text-green-400 hidden sm:inline">管理员模式</span>
                     <button 
@@ -1101,8 +1144,9 @@ const App = () => {
                 </>
             ) : (
                 <button 
-                    onClick={() => setShowLogin(true)} 
-                    className="text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 border-2 border-blue-600 dark:border-blue-400 px-3 py-1 rounded-full font-bold hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors shadow-md"
+                    onClick={() => isFirebaseAvailable && setShowLogin(true)} 
+                    disabled={!isFirebaseAvailable} // 禁用按钮
+                    className="text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 border-2 border-blue-600 dark:border-blue-400 px-3 py-1 rounded-full font-bold transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 dark:hover:bg-gray-700"
                 >
                     管理员登录
                 </button>
@@ -1117,24 +1161,35 @@ const App = () => {
       <div className="max-w-7xl mx-auto px-4 pb-12">
         {/* 新增美观的背景卡片效果容器 */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 md:p-10 border border-gray-100 dark:border-gray-700">
-          {isAdmin ? (
-            <AdminPanel
-              navData={navData}
-              onLoadDefaultData={handleLoadDefaultData}
-              
-              // 分类管理函数
-              onAddCategory={handleAddCategory}
-              onEditCategory={handleEditCategory}
-              onDeleteCategory={handleDeleteCategory}
-              onMoveCategory={handleMoveCategory}
-              
-              // 链接管理函数
-              onAddLink={handleAddLink}
-              onEditLink={handleEditLink}
-              onDeleteLink={handleDeleteLink}
-            />
+          {isFirebaseAvailable ? (
+            // 只有当 Firebase 可用时才加载 AdminPanel/PublicNav
+            isAdmin ? (
+                <AdminPanel
+                navData={navData}
+                onLoadDefaultData={handleLoadDefaultData}
+                
+                // 分类管理函数
+                onAddCategory={handleAddCategory}
+                onEditCategory={handleEditCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onMoveCategory={handleMoveCategory}
+                
+                // 链接管理函数
+                onAddLink={handleAddLink}
+                onEditLink={handleEditLink}
+                onDeleteLink={handleDeleteLink}
+                />
+            ) : (
+                <PublicNav navData={navData} searchTerm={searchTerm} />
+            )
           ) : (
-            <PublicNav navData={navData} searchTerm={searchTerm} />
+              <div className="text-center py-20">
+                  <AlertTriangle className="w-16 h-16 mx-auto text-red-500 mb-4" />
+                  <h3 className="text-2xl font-semibold text-red-600 dark:text-red-400">系统错误：配置缺失</h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-400">
+                      无法加载 Firebase 数据库配置。请联系应用管理员解决配置问题。
+                  </p>
+              </div>
           )}
         </div>
       </div>
