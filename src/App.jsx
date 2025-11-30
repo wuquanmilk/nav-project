@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -47,7 +47,7 @@ const firebaseConfig = {
 
 const appId = firebaseConfig.appId;
 // 
-// 🔴🔴🔴 请确认这个 ADMIN_UID 是您在 Firebase Auth 中创建的管理员用户的真实 UID！ 🔴🔴🔴
+// 🔴 请替换为您在 Firebase Auth 中创建的管理员用户的真实 UID！ 
 // 
 const ADMIN_UID = "6UiUdmPna4RJb2hNBoXhx3XCTFN2"; 
 
@@ -233,8 +233,10 @@ const LoginForm = ({ onLogin, onClose }) => {
         errorMessage = '登录失败：密码错误。';
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = '登录失败：邮箱格式不正确。';
+      } else if (err.code === 'auth/admin-restricted-operation') {
+        errorMessage = '登录失败：该操作受限，请确认用户已在 Firebase 控制台中创建。';
       }
-      // ⚠️ 使用自定义模态框替代原生的 alert
+      // 使用自定义模态框替代原生的 alert
       setError(`${errorMessage} (错误代码: ${err.code || '未知'})`);
     } finally {
       setLoading(false);
@@ -263,6 +265,7 @@ const LoginForm = ({ onLogin, onClose }) => {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl 
                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+              placeholder="admin@example.com"
               required
             />
           </div>
@@ -275,6 +278,7 @@ const LoginForm = ({ onLogin, onClose }) => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl 
                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+              placeholder="您的管理员密码"
               required
             />
           </div>
@@ -321,7 +325,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
       }
     } catch (error) {
         console.error("操作失败:", error);
-        // ⚠️ 使用自定义模态框替代原生的 alert
+        // 使用自定义模态框替代原生的 alert
         window.alert("操作失败，请检查网络或权限。"); 
     }
 
@@ -332,7 +336,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
   };
 
   const handleCustomDelete = (id) => {
-    // ⚠️ 使用自定义模态框替代原生的 window.confirm
+    // 使用自定义模态框替代原生的 window.confirm
     if (window.confirm('确定要删除这个链接吗？此操作不可逆！')) {
         onDeleteLink(id);
     }
@@ -572,7 +576,7 @@ const App = () => {
       if (user) {
         console.log("🔥 [Auth Debug]: 认证状态变更: 用户已登录或匿名登录.");
         console.log("🔥 [Auth Debug]: 当前用户 UID:", user.uid);
-        console.log("🔥 [Auth Debug]: 硬编码 ADMIN_UID (需替换为您自己的):", ADMIN_UID);
+        console.log("🔥 [Auth Debug]: 硬编码 ADMIN_UID (请确保替换为您自己的):", ADMIN_UID);
         if (isCurrentUserAdmin) {
             console.log("✅ [Auth Debug]: 权限检查通过：当前用户是管理员。");
         } else {
@@ -629,8 +633,9 @@ const App = () => {
 
   const handleLogin = async (email, password) => {
     if (!auth) throw new Error('认证系统未初始化');
-    // 在这里执行 Firebase 登录
+    // 执行 Firebase 登录
     await signInWithEmailAndPassword(auth, email, password);
+    // 登录成功后，onAuthStateChanged 会更新 isAdmin 状态
   };
 
   const handleLogout = async () => {
@@ -639,6 +644,8 @@ const App = () => {
       // 登出后再次匿名登录以保持公共数据的读取权限
       await signInAnonymously(auth); 
       setSearchTerm(''); // 清空搜索状态
+      // 退出登录后，手动关闭可能打开的登录框
+      setShowLogin(false);
     }
   };
 
@@ -670,7 +677,7 @@ const App = () => {
 
   const handleLoadDefaultData = async () => {
     if (!db || !isAdmin) return;
-    // ⚠️ 使用自定义模态框替代原生的 window.confirm
+    // 使用自定义模态框替代原生的 window.confirm
     if (!window.confirm('警告：这将批量添加默认数据到您的导航库中，确定继续吗？')) return;
 
     const batch = writeBatch(db);
@@ -693,7 +700,7 @@ const App = () => {
 
     try {
       await batch.commit();
-      // ⚠️ 使用自定义模态框替代原生的 alert
+      // 使用自定义模态框替代原生的 alert
       window.alert('默认数据已成功加载！');
     } catch (error) {
       console.error("加载默认数据失败:", error);
@@ -758,8 +765,9 @@ const App = () => {
                   </button>
                 </>
               ) : (
+                // 🚀 修复点 1：确保导航栏按钮有 onClick 事件
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => setShowLogin(true)} 
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md text-sm font-medium"
                 >
                   <LogIn className="w-4 h-4" />
@@ -810,9 +818,10 @@ const App = () => {
           </div>
         </div>
 
-        {/* 底部版权 - 【修复点】确保按钮有 onClick 事件 */}
+        {/* 底部版权 */}
         <footer className="text-center text-gray-500 dark:text-gray-500 text-sm mt-16 px-4">
           © {new Date().getFullYear()} 极速导航 - 精选高效工具 ·{' '}
+          {/* 🚀 修复点 2：确保页脚按钮有 onClick 事件 */}
           <button
             onClick={() => setShowLogin(true)}
             className="text-blue-600 hover:underline focus:outline-none dark:text-blue-400"
