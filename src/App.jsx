@@ -46,7 +46,7 @@ const firebaseConfig = {
 };
 
 const appId = firebaseConfig.appId;
-// TODO: 请确保这个 ADMIN_UID 是你 Firebase 认证中管理员账户的真实 UID
+// 【重要提醒】：请务必将此处的 ADMIN_UID 替换为你 Firebase 认证中管理员账户的真实 UID！
 const ADMIN_UID = "6UiUdmPna4RJb2hNBoXhx3XCTFN2"; 
 
 // 默认数据
@@ -196,7 +196,6 @@ const PublicNav = ({ navData, searchTerm }) => {
   }
 
   return (
-    // 容器已被移除，内容直接流向外部的居中容器
     <div> 
       {Object.entries(displayData).map(([category, links]) => (
         <CategorySection key={category} category={category} links={links} />
@@ -219,10 +218,11 @@ const LoginForm = ({ onLogin, onClose }) => {
 
     try {
       await onLogin(email, password);
+      // 登录成功后，关闭模态框
       onClose();
     } catch (err) {
       // 捕获并显示更详细的错误代码，便于诊断
-      console.error(err);
+      console.error("Login Error:", err);
       setError(`登录失败，请检查邮箱和密码。错误代码: ${err.code || '未知'}`);
     } finally {
       setLoading(false);
@@ -288,7 +288,6 @@ const LoginForm = ({ onLogin, onClose }) => {
 
 // 管理面板组件
 const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaultData }) => {
-// ... (AdminPanel 组件逻辑保持不变，但样式已在 App 组件中包裹)
   const [editingLink, setEditingLink] = useState(null);
   const [newLink, setNewLink] = useState({ category: '', title: '', url: '', description: '' });
   const [showForm, setShowForm] = useState(false);
@@ -320,6 +319,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
   };
 
   const handleCustomDelete = (id) => {
+    // ⚠️ 注意: 在实际应用中，你应该使用自定义模态框来替代原生的 window.confirm
     if (window.confirm('确定要删除这个链接吗？此操作不可逆！')) {
         onDeleteLink(id);
     }
@@ -327,7 +327,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
 
 
   return (
-    <div className="py-2"> {/* 移除多余的 max-w-6xl mx-auto px-4 容器，因为它已被外部 App 组件管理 */}
+    <div className="py-2"> 
       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-8 border border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white flex items-center space-x-3">
@@ -337,7 +337,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
           <div className="flex gap-3">
             <button
               onClick={onLoadDefaultData}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-md"
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-md text-sm font-medium"
             >
               <Download className="w-4 h-4 mr-2" />
               加载默认数据
@@ -348,7 +348,7 @@ const AdminPanel = ({ navData, onAddLink, onEditLink, onDeleteLink, onLoadDefaul
                 setEditingLink(null);
                 setNewLink({ category: '', title: '', url: '', description: '' });
               }}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md"
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-md text-sm font-medium"
             >
               <Plus className="w-4 h-4 mr-2" />
               添加新链接
@@ -563,7 +563,7 @@ const App = () => {
     }
 
     return unsubscribe;
-  }, []);
+  }, [ADMIN_UID]); // 依赖 ADMIN_UID 确保在初始化时正确检查管理员状态
 
   // 获取数据
   useEffect(() => {
@@ -638,6 +638,7 @@ const App = () => {
 
   const handleLoadDefaultData = async () => {
     if (!db || !isAdmin) return;
+    // ⚠️ 使用自定义模态框替代原生的 window.confirm
     if (!window.confirm('警告：这将批量添加默认数据到您的导航库中，确定继续吗？')) return;
 
     const batch = writeBatch(db);
@@ -657,6 +658,7 @@ const App = () => {
 
     try {
       await batch.commit();
+      // ⚠️ 使用自定义模态框替代原生的 alert
       alert('默认数据已成功加载！');
     } catch (error) {
       console.error("加载默认数据失败:", error);
@@ -696,7 +698,7 @@ const App = () => {
               <button
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-full transition-colors ${
-                  darkMode ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-100 text-gray-500'
+                  darkMode ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-500 hover:bg-gray-100'
                 }`}
                 title="切换深色模式"
               >
@@ -707,7 +709,7 @@ const App = () => {
                 <>
                   <button
                     onClick={() => setSearchTerm('')} // 返回主页，清空搜索
-                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md text-sm"
+                    className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md text-sm font-medium"
                   >
                     <Home className="w-4 h-4" />
                     <span>查看导航</span>
@@ -723,7 +725,7 @@ const App = () => {
               ) : (
                 <button
                   onClick={() => setShowLogin(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md text-sm"
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md text-sm font-medium"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>管理员登录</span>
@@ -773,10 +775,9 @@ const App = () => {
           </div>
         </div>
 
-        {/* 底部版权 - 修复：确保按钮有 onClick 事件 */}
+        {/* 底部版权 - 【修复点】确保按钮有 onClick 事件 */}
         <footer className="text-center text-gray-500 dark:text-gray-500 text-sm mt-16 px-4">
           © {new Date().getFullYear()} 极速导航 - 精选高效工具 ·{' '}
-          {/* 【修复点】确保 onClick 事件存在 */}
           <button
             onClick={() => setShowLogin(true)}
             className="text-blue-600 hover:underline focus:outline-none dark:text-blue-400"
