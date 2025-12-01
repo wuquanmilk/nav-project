@@ -23,21 +23,8 @@ import { ExternalLink, Moon, Sun, LogIn, X } from 'lucide-react';
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔹 调试栏
-const DebugBar = ({ userId, isAdmin }) => (
-  <div style={{
-    backgroundColor: '#fff3cd',
-    color: '#856404',
-    padding: '10px',
-    fontSize: '12px',
-    fontFamily: 'monospace',
-    wordBreak: 'break-all',
-  }}>
-    <strong>🔧 调试信息:</strong><br/>
-    当前用户 UID: <strong>{userId || '未登录'}</strong><br/>
-    当前权限: <strong>{isAdmin ? '✅ 管理员' : '❌ 访客'}</strong>
-  </div>
-);
+// 🔹 调试栏隐藏
+const DebugBar = () => null;
 
 // 🔹 链接卡片
 const LinkCard = ({ link }) => {
@@ -147,15 +134,12 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   return (
     <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
       <h3 className="text-xl font-bold mb-2">管理员面板 (完整 CRUD)</h3>
-      {/* 新增分类 */}
       <div className="flex flex-col md:flex-row gap-2 mb-4">
         <input placeholder="分类名" className="border p-2 rounded flex-1" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
         <input type="number" placeholder="排序" className="border p-2 rounded w-24" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
         <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
         <button onClick={handleAddCategory} className="bg-blue-500 text-white px-4 rounded">新增分类</button>
       </div>
-
-      {/* 分类列表 */}
       {navData.map(item=>(
         <div key={item.id} className="border p-2 mb-2 rounded bg-white dark:bg-gray-700">
           {editId === item.id ? (
@@ -249,11 +233,13 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
-      <DebugBar userId={userId} isAdmin={isAdmin} />
+      <DebugBar />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">极速导航</h1>
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+            第一象限 极速导航网
+          </h1>
           <div className="flex gap-4">
             <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
             {!isAdmin && <button onClick={()=>setShowLogin(true)} className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50">管理员登录</button>}
