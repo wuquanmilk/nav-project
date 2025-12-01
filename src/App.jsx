@@ -1,37 +1,19 @@
+// 🔹 App.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
 import { ExternalLink, Moon, Sun, LogIn, X } from 'lucide-react';
 
-// 🔹 配置管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔹 规范 URL
 const normalizeUrl = (url) => {
   if (!url) return '#';
   if (!/^https?:\/\//i.test(url)) return 'https://' + url;
   return url;
 };
 
-// 🔹 调试栏
-const DebugBar = ({ userId, isAdmin }) => (
-  <div style={{
-    backgroundColor: '#fff3cd',
-    color: '#856404',
-    padding: '10px',
-    fontSize: '12px',
-    fontFamily: 'monospace',
-    wordBreak: 'break-all',
-  }}>
-    <strong>🔧 调试信息:</strong><br/>
-    当前用户 UID: <strong>{userId || '未登录'}</strong><br/>
-    当前权限: <strong>{isAdmin ? '✅ 管理员' : '❌ 访客'}</strong>
-  </div>
-);
-
-// 🔹 链接卡片
 const LinkCard = ({ link }) => {
   const faviconUrl = useMemo(() => {
     try {
@@ -63,9 +45,7 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共主页（支持搜索 + Grid）
 const PublicNav = ({ navData, searchTerm }) => {
-  // 搜索过滤
   const filteredData = navData.map(cat => ({
     ...cat,
     links: cat.links.filter(link =>
@@ -89,7 +69,6 @@ const PublicNav = ({ navData, searchTerm }) => {
   )
 }
 
-// 🔹 登录弹窗
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -111,7 +90,6 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
-// 🔹 主应用
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -166,12 +144,12 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
-      <DebugBar userId={userId} isAdmin={isAdmin} />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
 
       <div className="container mx-auto px-4 py-8">
+        {/* header */}
         <header className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 sm:mb-0 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">极速导航</h1>
+          <h1 className="text-4xl font-bold mb-4 sm:mb-0 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">第一象限 极速导航网</h1>
           <div className="flex gap-2 w-full sm:w-auto">
             <input type="text" placeholder="搜索…" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
               className="flex-1 px-4 py-2 border rounded-full dark:bg-gray-800 dark:border-gray-700 dark:text-white"/>
@@ -181,6 +159,7 @@ export default function App() {
           </div>
         </header>
 
+        {/* 内容 */}
         <PublicNav navData={navData} searchTerm={searchTerm} />
       </div>
     </div>
