@@ -2,26 +2,33 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
-  signInAnonymously,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  signInWithEmailAndPassword
+  signInAnonymously
 } from 'firebase/auth';
 import {
   getFirestore,
   collection,
   onSnapshot,
-  doc,
   addDoc,
-  deleteDoc,
   updateDoc,
+  deleteDoc,
+  doc,
   getDocs
 } from 'firebase/firestore';
 import { ExternalLink, Moon, Sun, LogIn, X } from 'lucide-react';
 
-// 🔹 配置你的管理员 UID
+// 🔹 配置管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
+
+// 🔹 规范 URL
+const normalizeUrl = (url) => {
+  if (!url) return '#';
+  if (!/^https?:\/\//i.test(url)) return 'https://' + url;
+  return url;
+};
 
 // 🔹 调试栏
 const DebugBar = ({ userId, isAdmin }) => (
@@ -52,7 +59,12 @@ const LinkCard = ({ link }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700">
-      <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
+      <a
+        href={normalizeUrl(link.url)} // ✅ 使用 normalizeUrl
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center space-x-4 flex-grow"
+      >
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
           <img src={faviconUrl} alt={link.name} className="w-full h-full object-cover" />
         </div>
@@ -136,18 +148,25 @@ const AdminPanel = ({ db, navData, fetchData }) => {
 
   const handleAddCategory = async () => {
     if (!newCategory.category) return alert('请输入分类名称');
-    await addDoc(navCollection, newCategory);
+    // 统一规范 URL
+    const normalizedLinks = newCategory.links.map(l => ({...l, url: normalizeUrl(l.url)}));
+    await addDoc(navCollection, {...newCategory, links: normalizedLinks});
     setNewCategory({ category: '', order: 0, links: [] });
     fetchData();
   };
+
   const startEdit = (item) => { setEditId(item.id); setEditData({...item}); };
-  const saveEdit = async () => { await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), editData); setEditId(null); fetchData(); };
+  const saveEdit = async () => {
+    const normalizedLinks = editData.links.map(l => ({...l, url: normalizeUrl(l.url)}));
+    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), {...editData, links: normalizedLinks});
+    setEditId(null);
+    fetchData();
+  };
   const handleDelete = async (id) => { await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); fetchData(); };
 
   return (
     <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
       <h3 className="text-xl font-bold mb-2">管理员面板 (完整 CRUD)</h3>
-      {/* 新增分类 */}
       <div className="flex flex-col md:flex-row gap-2 mb-4">
         <input placeholder="分类名" className="border p-2 rounded flex-1" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
         <input type="number" placeholder="排序" className="border p-2 rounded w-24" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
@@ -155,7 +174,6 @@ const AdminPanel = ({ db, navData, fetchData }) => {
         <button onClick={handleAddCategory} className="bg-blue-500 text-white px-4 rounded">新增分类</button>
       </div>
 
-      {/* 分类列表 */}
       {navData.map(item=>(
         <div key={item.id} className="border p-2 mb-2 rounded bg-white dark:bg-gray-700">
           {editId === item.id ? (
