@@ -12,7 +12,7 @@ export default function AdminPanel() {
   const [editData, setEditData] = useState({});
 
   const navCollection = collection(db, `artifacts/${appId}/public/data/navData`);
-  const isAdmin = auth.currentUser?.uid === ADMIN_USER_ID;
+  const isAdmin = auth.currentUser?.uid === 6UiUdmPna4RJb2hNBoXhx3XCTFN2;
 
   const fetchData = async () => {
     const snapshot = await getDocs(navCollection);
