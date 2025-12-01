@@ -1,19 +1,38 @@
-// 🔹 App.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  signInAnonymously
+} from 'firebase/auth';
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs
+} from 'firebase/firestore';
 import { ExternalLink, Moon, Sun, LogIn, X } from 'lucide-react';
 
+// 🔹 配置管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
+// 🔹 规范 URL
 const normalizeUrl = (url) => {
   if (!url) return '#';
   if (!/^https?:\/\//i.test(url)) return 'https://' + url;
   return url;
 };
 
+
+
+// 🔹 链接卡片
 const LinkCard = ({ link }) => {
   const faviconUrl = useMemo(() => {
     try {
@@ -25,9 +44,9 @@ const LinkCard = ({ link }) => {
   }, [link.icon, link.url]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col h-full border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700">
       <a
-        href={normalizeUrl(link.url)}
+        href={normalizeUrl(link.url)} // ✅ 使用 normalizeUrl
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center space-x-4 flex-grow"
@@ -45,30 +64,46 @@ const LinkCard = ({ link }) => {
   );
 };
 
-const PublicNav = ({ navData, searchTerm }) => {
-  const filteredData = navData.map(cat => ({
-    ...cat,
-    links: cat.links.filter(link =>
-      link.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      link.url.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })).filter(cat => cat.links.length > 0);
+// 🔹 公共主页
+const PublicNav = ({ navData }) => (
+  <div className="space-y-8">
+    {navData.map(cat => (
+      <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {cat.links?.map(link => <LinkCard key={link.id} link={link} />)}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+// 🔹 链接表单
+const LinkForm = ({ links, setLinks }) => {
+  const handleChange = (index, field, value) => {
+    const newLinks = [...links];
+    newLinks[index][field] = value;
+    setLinks(newLinks);
+  };
+  const addLink = () => setLinks([...links, { name: '', url: '', description: '' }]);
+  const removeLink = (index) => setLinks(links.filter((_, i) => i !== index));
 
   return (
-    <div className="space-y-8">
-      {filteredData.map(cat => (
-        <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {cat.links.map(link => <LinkCard key={link.id} link={link} />)}
-          </div>
+    <div className="space-y-2">
+      {links.map((l, idx) => (
+        <div key={idx} className="flex space-x-2">
+          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24"/>
+          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48"/>
+          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1"/>
+          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded">删除</button>
         </div>
       ))}
+      <button onClick={addLink} className="bg-blue-500 text-white px-3 py-1 rounded mt-1">新增链接</button>
     </div>
   )
 }
 
+// 🔹 登录弹窗
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -90,6 +125,72 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
+// 🔹 管理面板
+const AdminPanel = ({ db, navData, fetchData }) => {
+  const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
+  const [editId, setEditId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const navCollection = collection(db, `artifacts/${APP_ID}/public/data/navData`);
+
+  const handleAddCategory = async () => {
+    if (!newCategory.category) return alert('请输入分类名称');
+    // 统一规范 URL
+    const normalizedLinks = newCategory.links.map(l => ({...l, url: normalizeUrl(l.url)}));
+    await addDoc(navCollection, {...newCategory, links: normalizedLinks});
+    setNewCategory({ category: '', order: 0, links: [] });
+    fetchData();
+  };
+
+  const startEdit = (item) => { setEditId(item.id); setEditData({...item}); };
+  const saveEdit = async () => {
+    const normalizedLinks = editData.links.map(l => ({...l, url: normalizeUrl(l.url)}));
+    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), {...editData, links: normalizedLinks});
+    setEditId(null);
+    fetchData();
+  };
+  const handleDelete = async (id) => { await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); fetchData(); };
+
+  return (
+    <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
+      <h3 className="text-xl font-bold mb-2">管理员面板 (完整 CRUD)</h3>
+      <div className="flex flex-col md:flex-row gap-2 mb-4">
+        <input placeholder="分类名" className="border p-2 rounded flex-1" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
+        <input type="number" placeholder="排序" className="border p-2 rounded w-24" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
+        <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
+        <button onClick={handleAddCategory} className="bg-blue-500 text-white px-4 rounded">新增分类</button>
+      </div>
+
+      {navData.map(item=>(
+        <div key={item.id} className="border p-2 mb-2 rounded bg-white dark:bg-gray-700">
+          {editId === item.id ? (
+            <>
+              <input className="border p-1 mb-1 rounded w-full" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+              <input type="number" className="border p-1 mb-1 rounded w-24" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
+              <div className="flex space-x-2 mt-1">
+                <button onClick={saveEdit} className="bg-green-500 text-white px-2 rounded">保存</button>
+                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-2 rounded">取消</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <h4>{item.category} (排序: {item.order})</h4>
+                <div className="flex space-x-1">
+                  <button onClick={()=>startEdit(item)} className="bg-yellow-400 text-white px-2 rounded">编辑</button>
+                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white px-2 rounded">删除</button>
+                </div>
+              </div>
+              <ul className="ml-4">{item.links?.map((l,idx)=><li key={idx}>{l.name} - {l.url}</li>)}</ul>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// 🔹 主应用
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -99,7 +200,6 @@ export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(()=>{
     const firebaseConfig = {
@@ -135,6 +235,15 @@ export default function App() {
     return unsub;
   },[db]);
 
+  const fetchData = async ()=>{
+    if(!db) return;
+    const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
+    const snapshot = await getDocs(navCol);
+    const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    data.sort((a,b)=>(a.order||0)-(b.order||0));
+    setNavData(data);
+  };
+
   const handleLogin = async (email,password)=>{
     try {
       await signInWithEmailAndPassword(auth,email,password);
@@ -144,23 +253,18 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
+      <DebugBar userId={userId} isAdmin={isAdmin} />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
-
       <div className="container mx-auto px-4 py-8">
-        {/* header */}
-        <header className="flex flex-col sm:flex-row justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 sm:mb-0 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">第一象限 极速导航网</h1>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <input type="text" placeholder="搜索…" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 border rounded-full dark:bg-gray-800 dark:border-gray-700 dark:text-white"/>
+        <header className="flex justify-between items-center mb-12">
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">第一象限 极速导航网（无广告）</h1>
+          <div className="flex gap-4">
             <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
             {!isAdmin && <button onClick={()=>setShowLogin(true)} className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50">管理员登录</button>}
             {isAdmin && <button onClick={()=>signOut(auth)} className="text-red-500">退出管理</button>}
           </div>
         </header>
-
-        {/* 内容 */}
-        <PublicNav navData={navData} searchTerm={searchTerm} />
+        {isAdmin ? <AdminPanel db={db} navData={navData} fetchData={fetchData} /> : <PublicNav navData={navData} />}
       </div>
     </div>
   )
