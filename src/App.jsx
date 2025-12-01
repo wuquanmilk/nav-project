@@ -1,29 +1,65 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "./firebase"; // 请确保已初始化
-import { collection, getDocs, addDoc, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { db, auth } from "./firebase"; // 确保 firebase.js 已初始化
+import {
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  deleteDoc,
+  updateDoc
+} from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const appId = 'default-app-id';
 
 export default function AdminPanel() {
+  const [user, setUser] = useState(null);
   const [dataList, setDataList] = useState([]);
   const [newData, setNewData] = useState({ category: "", order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const navCollection = collection(db, `artifacts/${appId}/public/data/navData`);
-  const isAdmin = auth.currentUser?.uid === ADMIN_USER_ID;
 
+  // 监听登录状态
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+      if (currentUser) fetchData();
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 获取数据列表
   const fetchData = async () => {
     const snapshot = await getDocs(navCollection);
     const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setDataList(list);
   };
 
-  useEffect(() => {
-    if (isAdmin) fetchData();
-  }, [isAdmin]);
+  // 登录函数
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      alert("登录失败：" + err.message);
+    }
+  };
 
+  // 登出函数
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUser(null);
+  };
+
+  // 新增数据
   const handleAdd = async () => {
     if (!newData.category) return alert("请输入 category");
     await addDoc(navCollection, newData);
@@ -31,17 +67,20 @@ export default function AdminPanel() {
     fetchData();
   };
 
+  // 删除数据
   const handleDelete = async (id) => {
     const docRef = doc(db, `artifacts/${appId}/public/data/navData`, id);
     await deleteDoc(docRef);
     fetchData();
   };
 
+  // 开始编辑
   const startEdit = (item) => {
     setEditId(item.id);
     setEditData({ category: item.category, order: item.order, links: item.links });
   };
 
+  // 保存修改
   const saveEdit = async () => {
     const docRef = doc(db, `artifacts/${appId}/public/data/navData`, editId);
     await updateDoc(docRef, editData);
@@ -49,11 +88,63 @@ export default function AdminPanel() {
     fetchData();
   };
 
-  if (!isAdmin) return <div className="p-4 text-red-500">你不是管理员</div>;
+  if (loading) return <div className="p-6">加载中...</div>;
 
+  // 未登录显示登录表单
+  if (!user) {
+    return (
+      <div className="p-6 max-w-md mx-auto">
+        <h2 className="text-2xl font-bold mb-4">管理员登录</h2>
+        <input
+          className="border p-2 rounded w-full mb-2"
+          placeholder="邮箱"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          className="border p-2 rounded w-full mb-2"
+          placeholder="密码"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full"
+          onClick={handleLogin}
+        >
+          登录
+        </button>
+      </div>
+    );
+  }
+
+  // 非管理员用户
+  if (user.uid !== ADMIN_USER_ID) {
+    return (
+      <div className="p-6 text-red-500">
+        你不是管理员
+        <button
+          className="ml-4 bg-gray-400 text-white px-2 py-1 rounded hover:bg-gray-500"
+          onClick={handleLogout}
+        >
+          登出
+        </button>
+      </div>
+    );
+  }
+
+  // 管理员面板
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold mb-4">管理面板</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">管理面板</h2>
+        <button
+          onClick={handleLogout}
+          className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
+        >
+          登出
+        </button>
+      </div>
 
       {/* 新增数据表单 */}
       <div className="flex space-x-2 mb-4">
