@@ -2,10 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
-  signInWithEmailAndPassword,
+  signInAnonymously,
   signOut,
   onAuthStateChanged,
-  signInAnonymously,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -15,15 +14,15 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
-  writeBatch,
+  getDocs,
 } from 'firebase/firestore';
-import { ExternalLink, X, Edit3, Trash2, Moon, Sun } from 'lucide-react';
+import { ExternalLink, Moon, Sun } from 'lucide-react';
 
 // 🔹 请替换为你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
-const APP_ID = 'default-app-id'; // 默认 appId，可根据你实际修改
+const APP_ID = 'default-app-id';
 
-// 🔹 调试栏组件
+// 🔹 调试栏
 const DebugBar = ({ userId, isAdmin }) => (
   <div style={{
     backgroundColor: '#fff3cd',
@@ -39,13 +38,13 @@ const DebugBar = ({ userId, isAdmin }) => (
   </div>
 );
 
-// 🔹 链接卡片组件
-const LinkCard = ({ link, isAdmin, onEdit, onDelete }) => {
+// 🔹 链接卡片
+const LinkCard = ({ link }) => {
   const faviconUrl = useMemo(() => {
     try {
       const urlObj = new URL(link.icon || link.url);
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
-    } catch (e) {
+    } catch {
       return 'https://placehold.co/40x40/ccc/000?text=L';
     }
   }, [link.icon, link.url]);
@@ -62,58 +61,67 @@ const LinkCard = ({ link, isAdmin, onEdit, onDelete }) => {
         </div>
         <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
       </a>
-
-      {isAdmin && (
-        <div className="flex justify-end space-x-2 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-          <button onClick={() => onEdit(link)} className="p-1.5 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900">
-            <Edit3 className="w-5 h-5" />
-          </button>
-          <button onClick={() => onDelete(link.id)} className="p-1.5 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900">
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };
 
-// 🔹 公共导航组件
+// 🔹 公共导航主页
 const PublicNav = ({ navData }) => (
   <div className="space-y-8">
     {navData.map(cat => (
       <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {cat.links?.map(link => <LinkCard key={link.id} link={link} isAdmin={false} />)}
+          {cat.links?.map(link => <LinkCard key={link.id} link={link} />)}
         </div>
       </div>
     ))}
   </div>
 );
 
-// 🔹 管理面板组件
+// 🔹 链接表单（用于新增/编辑）
+const LinkForm = ({ links, setLinks }) => {
+  const handleChange = (index, field, value) => {
+    const newLinks = [...links];
+    newLinks[index][field] = value;
+    setLinks(newLinks);
+  };
+  const addLink = () => setLinks([...links, { name: '', url: '', description: '' }]);
+  const removeLink = (index) => setLinks(links.filter((_, i) => i !== index));
+
+  return (
+    <div className="space-y-2">
+      {links.map((l, idx) => (
+        <div key={idx} className="flex space-x-2">
+          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24"/>
+          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48"/>
+          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1"/>
+          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded">删除</button>
+        </div>
+      ))}
+      <button onClick={addLink} className="bg-blue-500 text-white px-3 py-1 rounded mt-1">新增链接</button>
+    </div>
+  )
+}
+
+// 🔹 管理面板
 const AdminPanel = ({ db, navData, fetchData }) => {
-  const [newData, setNewData] = useState({ category: '', order: 0, links: [] });
+  const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
 
   const navCollection = collection(db, `artifacts/${APP_ID}/public/data/navData`);
 
-  const handleAdd = async () => {
-    if (!newData.category) return alert('请输入分类名称');
-    await addDoc(navCollection, newData);
-    setNewData({ category: '', order: 0, links: [] });
-    fetchData();
-  };
-
-  const handleDelete = async (id) => {
-    await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id));
+  const handleAddCategory = async () => {
+    if (!newCategory.category) return alert('请输入分类名称');
+    await addDoc(navCollection, newCategory);
+    setNewCategory({ category: '', order: 0, links: [] });
     fetchData();
   };
 
   const startEdit = (item) => {
     setEditId(item.id);
-    setEditData({ category: item.category, order: item.order, links: item.links });
+    setEditData({ ...item });
   };
 
   const saveEdit = async () => {
@@ -122,106 +130,59 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     fetchData();
   };
 
+  const handleDelete = async (id) => {
+    await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id));
+    fetchData();
+  };
+
   return (
     <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
-      <h3 className="text-xl font-bold mb-2">管理员面板 (CRUD)</h3>
+      <h3 className="text-xl font-bold mb-2">管理员面板 (完整 CRUD)</h3>
 
-      {/* 新增 */}
-      <div className="flex space-x-2 mb-4">
-        <input
-          className="border p-2 rounded flex-1"
-          placeholder="分类名"
-          value={newData.category}
-          onChange={(e) => setNewData({ ...newData, category: e.target.value })}
-        />
-        <input
-          type="number"
-          className="border p-2 rounded w-24"
-          placeholder="排序"
-          value={newData.order}
-          onChange={(e) => setNewData({ ...newData, order: Number(e.target.value) })}
-        />
-        <input
-          className="border p-2 rounded flex-1"
-          placeholder="链接名,url,描述 (用逗号分隔多条)"
-          value={newData.links.map(l => `${l.name},${l.url},${l.description}`).join(';')}
-          onChange={(e) => {
-            const arr = e.target.value.split(';').map(str => {
-              const [name, url, description] = str.split(',');
-              return { name, url, description };
-            });
-            setNewData({ ...newData, links: arr });
-          }}
-        />
-        <button onClick={handleAdd} className="bg-blue-500 text-white px-4 rounded hover:bg-blue-600">新增</button>
+      {/* 新增分类 */}
+      <div className="flex flex-col md:flex-row gap-2 mb-4">
+        <input placeholder="分类名" className="border p-2 rounded flex-1"
+          value={newCategory.category} onChange={e => setNewCategory({...newCategory, category: e.target.value})}/>
+        <input type="number" placeholder="排序" className="border p-2 rounded w-24"
+          value={newCategory.order} onChange={e => setNewCategory({...newCategory, order: Number(e.target.value)})}/>
+        <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
+        <button onClick={handleAddCategory} className="bg-blue-500 text-white px-4 rounded">新增分类</button>
       </div>
 
-      {/* 数据列表 */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border-collapse border border-gray-300">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border p-2">ID</th>
-              <th className="border p-2">分类</th>
-              <th className="border p-2">排序</th>
-              <th className="border p-2">链接</th>
-              <th className="border p-2">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {navData.map(item => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="border p-2">{item.id}</td>
-                {editId === item.id ? (
-                  <>
-                    <td className="border p-2">
-                      <input className="border p-1 rounded w-full"
-                        value={editData.category}
-                        onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <input type="number" className="border p-1 rounded w-full"
-                        value={editData.order}
-                        onChange={(e) => setEditData({ ...editData, order: Number(e.target.value) })}
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <input className="border p-1 rounded w-full"
-                        value={editData.links.map(l => `${l.name},${l.url},${l.description}`).join(';')}
-                        onChange={(e) => {
-                          const arr = e.target.value.split(';').map(str => {
-                            const [name, url, description] = str.split(',');
-                            return { name, url, description };
-                          });
-                          setEditData({ ...editData, links: arr });
-                        }}
-                      />
-                    </td>
-                    <td className="border p-2 flex space-x-2">
-                      <button onClick={saveEdit} className="bg-green-500 text-white px-2 rounded hover:bg-green-600">保存</button>
-                      <button onClick={() => setEditId(null)} className="bg-gray-400 text-white px-2 rounded hover:bg-gray-500">取消</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="border p-2">{item.category}</td>
-                    <td className="border p-2">{item.order}</td>
-                    <td className="border p-2">{item.links.map(l => l.name).join(',')}</td>
-                    <td className="border p-2 flex space-x-2">
-                      <button onClick={() => startEdit(item)} className="bg-yellow-400 text-white px-2 rounded hover:bg-yellow-500">编辑</button>
-                      <button onClick={() => handleDelete(item.id)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* 分类列表 */}
+      {navData.map(item => (
+        <div key={item.id} className="border p-2 mb-2 rounded bg-white dark:bg-gray-700">
+          {editId === item.id ? (
+            <>
+              <input className="border p-1 mb-1 rounded w-full" value={editData.category}
+                onChange={e=>setEditData({...editData, category:e.target.value})}/>
+              <input type="number" className="border p-1 mb-1 rounded w-24" value={editData.order}
+                onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
+              <div className="flex space-x-2 mt-1">
+                <button onClick={saveEdit} className="bg-green-500 text-white px-2 rounded">保存</button>
+                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-2 rounded">取消</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <h4>{item.category} (排序: {item.order})</h4>
+                <div className="flex space-x-1">
+                  <button onClick={()=>startEdit(item)} className="bg-yellow-400 text-white px-2 rounded">编辑</button>
+                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white px-2 rounded">删除</button>
+                </div>
+              </div>
+              <ul className="ml-4">
+                {item.links?.map((l, idx)=><li key={idx}>{l.name} - {l.url}</li>)}
+              </ul>
+            </>
+          )}
+        </div>
+      ))}
     </div>
-  );
-};
+  )
+}
 
 // 🔹 主应用
 export default function App() {
@@ -249,9 +210,8 @@ export default function App() {
     setDb(_db);
 
     const unsubscribe = onAuthStateChanged(_auth, (user) => {
-      if (user) {
-        setUserId(user.uid);
-      } else {
+      if (user) setUserId(user.uid);
+      else {
         signInAnonymously(_auth).catch(console.error);
         setUserId('anonymous');
       }
@@ -293,13 +253,11 @@ export default function App() {
             <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
               {isDark ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
             </button>
-            {isAdmin ? (
-              <button onClick={() => signOut(auth)} className="text-red-500">退出管理</button>
-            ) : null}
+            {isAdmin && <button onClick={() => signOut(auth)} className="text-red-500">退出管理</button>}
           </div>
         </header>
 
-        {/* 公共导航主页或管理员面板 */}
+        {/* 公共主页 / 管理面板 */}
         {isAdmin ? (
           <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : (
@@ -307,5 +265,5 @@ export default function App() {
         )}
       </div>
     </div>
-  );
+  )
 }
