@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-import { ExternalLink, Moon, Sun, LogIn, X } from 'lucide-react';
+import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe } from 'lucide-react';
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
@@ -38,7 +38,7 @@ const LinkCard = ({ link }) => {
   }, [link.icon, link.url]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
           <img src={faviconUrl} alt={link.name} className="w-full h-full object-cover" />
@@ -55,7 +55,7 @@ const LinkCard = ({ link }) => {
 
 // 🔹 公共主页
 const PublicNav = ({ navData }) => (
-  <div className="space-y-8">
+  <div className="space-y-8 min-h-[60vh]">
     {navData.map(cat => (
       <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
@@ -170,6 +170,61 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
+// 🔹 新增：页脚组件
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  
+  // 自定义常用链接
+  const footerLinks = [
+    { name: '关于本站', url: '#' },
+    { name: '提交收录', url: '#' },
+    { name: '免责声明', url: '#' },
+    { name: '反馈建议', url: 'mailto:contact@example.com' },
+  ];
+
+  return (
+    <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          {/* 左侧：版权信息 */}
+          <div className="text-center md:text-left">
+            <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              第一象限
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              © {currentYear} 极速导航网. 保留所有权利.
+            </p>
+          </div>
+
+          {/* 右侧：常用按钮链接 */}
+          <div className="flex flex-wrap justify-center gap-6">
+            {footerLinks.map((link, idx) => (
+              <a 
+                key={idx}
+                href={link.url}
+                target={link.url.startsWith('http') ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+              >
+                {link.name}
+              </a>
+            ))}
+            {/* 图标链接示例 */}
+            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
+              <a href="#" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
 // 🔹 主应用
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
@@ -232,13 +287,13 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
+    <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
       <DebugBar />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-            第一象限 极速导航网
+                              第一象限 极速导航网
           </h1>
           <div className="flex gap-4">
             <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
@@ -248,6 +303,9 @@ export default function App() {
         </header>
         {isAdmin ? <AdminPanel db={db} navData={navData} fetchData={fetchData} /> : <PublicNav navData={navData} />}
       </div>
+      
+      {/* 🔹 这里引入了页脚 */}
+      <Footer />
     </div>
   )
 }
