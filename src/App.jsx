@@ -5,6 +5,7 @@ import {
   signInAnonymously,
   signOut,
   onAuthStateChanged,
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -14,11 +15,11 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
-  getDocs,
+  getDocs
 } from 'firebase/firestore';
-import { ExternalLink, Moon, Sun } from 'lucide-react';
+import { ExternalLink, Moon, Sun, LogIn, X } from 'lucide-react';
 
-// 🔹 请替换为你的管理员 UID
+// 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
@@ -65,7 +66,7 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共导航主页
+// 🔹 公共主页
 const PublicNav = ({ navData }) => (
   <div className="space-y-8">
     {navData.map(cat => (
@@ -79,7 +80,7 @@ const PublicNav = ({ navData }) => (
   </div>
 );
 
-// 🔹 链接表单（用于新增/编辑）
+// 🔹 链接表单
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -104,12 +105,33 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
+// 🔹 登录弹窗
+const LoginModal = ({ onClose, onLogin, error }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
+          <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
+          {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+          <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // 🔹 管理面板
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
-
   const navCollection = collection(db, `artifacts/${APP_ID}/public/data/navData`);
 
   const handleAddCategory = async () => {
@@ -118,46 +140,28 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     setNewCategory({ category: '', order: 0, links: [] });
     fetchData();
   };
-
-  const startEdit = (item) => {
-    setEditId(item.id);
-    setEditData({ ...item });
-  };
-
-  const saveEdit = async () => {
-    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), editData);
-    setEditId(null);
-    fetchData();
-  };
-
-  const handleDelete = async (id) => {
-    await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id));
-    fetchData();
-  };
+  const startEdit = (item) => { setEditId(item.id); setEditData({...item}); };
+  const saveEdit = async () => { await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), editData); setEditId(null); fetchData(); };
+  const handleDelete = async (id) => { await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); fetchData(); };
 
   return (
     <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
       <h3 className="text-xl font-bold mb-2">管理员面板 (完整 CRUD)</h3>
-
       {/* 新增分类 */}
       <div className="flex flex-col md:flex-row gap-2 mb-4">
-        <input placeholder="分类名" className="border p-2 rounded flex-1"
-          value={newCategory.category} onChange={e => setNewCategory({...newCategory, category: e.target.value})}/>
-        <input type="number" placeholder="排序" className="border p-2 rounded w-24"
-          value={newCategory.order} onChange={e => setNewCategory({...newCategory, order: Number(e.target.value)})}/>
+        <input placeholder="分类名" className="border p-2 rounded flex-1" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
+        <input type="number" placeholder="排序" className="border p-2 rounded w-24" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
         <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
         <button onClick={handleAddCategory} className="bg-blue-500 text-white px-4 rounded">新增分类</button>
       </div>
 
       {/* 分类列表 */}
-      {navData.map(item => (
+      {navData.map(item=>(
         <div key={item.id} className="border p-2 mb-2 rounded bg-white dark:bg-gray-700">
           {editId === item.id ? (
             <>
-              <input className="border p-1 mb-1 rounded w-full" value={editData.category}
-                onChange={e=>setEditData({...editData, category:e.target.value})}/>
-              <input type="number" className="border p-1 mb-1 rounded w-24" value={editData.order}
-                onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              <input className="border p-1 mb-1 rounded w-full" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+              <input type="number" className="border p-1 mb-1 rounded w-24" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
               <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
               <div className="flex space-x-2 mt-1">
                 <button onClick={saveEdit} className="bg-green-500 text-white px-2 rounded">保存</button>
@@ -173,16 +177,14 @@ const AdminPanel = ({ db, navData, fetchData }) => {
                   <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white px-2 rounded">删除</button>
                 </div>
               </div>
-              <ul className="ml-4">
-                {item.links?.map((l, idx)=><li key={idx}>{l.name} - {l.url}</li>)}
-              </ul>
+              <ul className="ml-4">{item.links?.map((l,idx)=><li key={idx}>{l.name} - {l.url}</li>)}</ul>
             </>
           )}
         </div>
       ))}
     </div>
-  )
-}
+  );
+};
 
 // 🔹 主应用
 export default function App() {
@@ -192,8 +194,10 @@ export default function App() {
   const [userId, setUserId] = useState(null);
   const [navData, setNavData] = useState([]);
   const [isDark, setIsDark] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
-  useEffect(() => {
+  useEffect(()=>{
     const firebaseConfig = {
       apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
       authDomain: "wangzhandaohang.firebaseapp.com",
@@ -205,64 +209,58 @@ export default function App() {
     const app = initializeApp(firebaseConfig);
     const _auth = getAuth(app);
     const _db = getFirestore(app);
-    setFirebaseApp(app);
-    setAuth(_auth);
-    setDb(_db);
+    setFirebaseApp(app); setAuth(_auth); setDb(_db);
 
-    const unsubscribe = onAuthStateChanged(_auth, (user) => {
-      if (user) setUserId(user.uid);
-      else {
-        signInAnonymously(_auth).catch(console.error);
-        setUserId('anonymous');
-      }
+    const unsub = onAuthStateChanged(_auth, user=>{
+      if(user) setUserId(user.uid);
+      else { signInAnonymously(_auth).catch(console.error); setUserId('anonymous'); }
     });
-    return unsubscribe;
-  }, []);
+    return unsub;
+  },[]);
 
   const isAdmin = userId === ADMIN_USER_ID;
 
-  // 数据监听
-  useEffect(() => {
-    if (!db) return;
+  useEffect(()=>{
+    if(!db) return;
     const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
-    const unsub = onSnapshot(navCol, snapshot => {
-      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a, b) => (a.order || 0) - (b.order || 0));
+    const unsub = onSnapshot(navCol, snapshot=>{
+      const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      data.sort((a,b)=>(a.order||0)-(b.order||0));
       setNavData(data);
     });
     return unsub;
-  }, [db]);
+  },[db]);
 
-  const fetchData = async () => {
-    if (!db) return;
+  const fetchData = async ()=>{
+    if(!db) return;
     const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
     const snapshot = await getDocs(navCol);
-    const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    data.sort((a, b) => (a.order || 0) - (b.order || 0));
+    const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    data.sort((a,b)=>(a.order||0)-(b.order||0));
     setNavData(data);
   };
 
-  return (
-    <div className={`min-h-screen ${isDark ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <DebugBar userId={userId} isAdmin={isAdmin} />
+  const handleLogin = async (email,password)=>{
+    try {
+      await signInWithEmailAndPassword(auth,email,password);
+      setShowLogin(false); setLoginError('');
+    } catch(e){ setLoginError(e.message); }
+  };
 
+  return (
+    <div className={`min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
+      <DebugBar userId={userId} isAdmin={isAdmin} />
+      {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-12">
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">极速导航</h1>
           <div className="flex gap-4">
-            <button onClick={() => setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
-              {isDark ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
-            </button>
-            {isAdmin && <button onClick={() => signOut(auth)} className="text-red-500">退出管理</button>}
+            <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
+            {!isAdmin && <button onClick={()=>setShowLogin(true)} className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50">管理员登录</button>}
+            {isAdmin && <button onClick={()=>signOut(auth)} className="text-red-500">退出管理</button>}
           </div>
         </header>
-
-        {/* 公共主页 / 管理面板 */}
-        {isAdmin ? (
-          <AdminPanel db={db} navData={navData} fetchData={fetchData} />
-        ) : (
-          <PublicNav navData={navData} />
-        )}
+        {isAdmin ? <AdminPanel db={db} navData={navData} fetchData={fetchData} /> : <PublicNav navData={navData} />}
       </div>
     </div>
   )
