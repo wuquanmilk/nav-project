@@ -159,7 +159,7 @@ const DEFAULT_NAV_DATA = [
 const DebugBar = () => null;
 
 // =========================================================================
-// ⬇️ 图标映射和处理逻辑 (国内优化版) ⬇️
+// ⬇️ 图标映射和处理逻辑 ⬇️
 // =========================================================================
 
 // 🔹 图标名称到 Lucide 组件的映射
@@ -254,7 +254,7 @@ const getLucideIcon = (linkName) => {
 };
 
 
-// 🔹 辅助组件：处理图标的加载和回退 (使用国内友好的源)
+// 🔹 辅助组件：处理图标的加载和回退 (切换到 DuckDuckGo Favicon 服务)
 const LinkIcon = ({ link }) => {
     const [hasError, setHasError] = useState(false);
 
@@ -266,9 +266,8 @@ const LinkIcon = ({ link }) => {
         try {
             const urlToParse = link.icon || link.url;
             const urlObj = new URL(urlToParse);
-            // ⭐️⭐️ 核心修改：使用国内可访问的图标源 (api.iowen.cn) ⭐️⭐️
-            // 这个接口在服务器端获取图标，解决了国内直接访问 Google 失败的问题
-            return `https://api.iowen.cn/favicon/${urlObj.hostname}.png`;
+            // ⭐️ 核心修改：使用 DuckDuckGo 的 Favicon 服务，全球访问性较好 ⭐️
+            return `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
         } catch {
             return ''; 
         }
@@ -294,11 +293,11 @@ const LinkIcon = ({ link }) => {
 };
 
 // =========================================================================
-// ⬆️ 图标映射和处理逻辑 (国内优化版) ⬆️
+// ⬆️ 图标映射和处理逻辑 ⬆️
 // =========================================================================
 
 
-// 🔹 链接卡片
+// 🔹 链接卡片 (保持不变)
 const LinkCard = ({ link }) => {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
@@ -316,7 +315,7 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共主页
+// 🔹 公共主页 (保持不变)
 const PublicNav = ({ navData, searchTerm }) => {
     if (navData.length === 0 && searchTerm) {
         return (
@@ -346,7 +345,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单
+// 🔹 链接表单 (保持不变)
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -371,7 +370,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 
+// 🔹 登录弹窗 (保持不变)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -393,7 +392,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
-// 🔹 管理面板
+// 🔹 管理面板 (保持不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
@@ -469,7 +468,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件
+// 🔹 页脚组件 (保持不变)
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -521,7 +520,7 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件
+// 🔹 关于本站页面组件 (保持不变)
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -576,20 +575,25 @@ const DisclaimerPage = () => (
 );
 
 
-// 🔹 外部搜索引擎配置 (保持不变)
+// =========================================================================
+// ⬇️ 搜索按钮配置与逻辑 (硬编码图标，最可靠) ⬇️
+// =========================================================================
+
+// 🔹 外部搜索引擎配置 (改为高解析度、固定链接，不再依赖 Favicon API)
 const externalEngines = [
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
-  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
+  // 使用百度自己的 logo 地址，确保国内加载
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/img/baidu_85beaf5496f291521eb75ba38eacbd7f.png' }, 
+  // 使用 Wikipedia 上的 Google logo SVG (非 Google 域名，可靠性高)
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' }, 
+  // 使用 Bing 自己的高解析度 Favicon
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
 
 // 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
   if (query) {
-    // 编码查询字符串并新窗口打开
     window.open(engineUrl + encodeURIComponent(query), '_blank');
   } else {
-    // 如果没有关键词，直接打开搜索引擎主页
     const baseDomain = new URL(engineUrl.split('?')[0]).origin;
     window.open(baseDomain, '_blank');
   }
@@ -618,27 +622,13 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     </div>
 ));
 
-// =========================================================================
-// ⬇️ 搜索按钮图标逻辑 (国内优化版) ⬇️
-// =========================================================================
-
 // 🔹 子组件：处理单个外部搜索按钮的图标
 const ExternalSearchButton = ({ engine, searchTerm }) => {
     const [hasError, setHasError] = useState(false);
     
-    useEffect(() => {
-        setHasError(false);
-    }, [engine.icon]);
-
-    const imageUrl = useMemo(() => {
-        try {
-            const urlObj = new URL(engine.icon);
-            // ⭐️⭐️ 核心修改：同样使用国内源获取搜索引擎图标 ⭐️⭐️
-            return `https://api.iowen.cn/favicon/${urlObj.hostname}.png`;
-        } catch {
-            return '';
-        }
-    }, [engine.icon]);
+    // ⭐️ 核心修改：直接使用 engine.icon (硬编码的 URL) 作为图片源 ⭐️
+    // 当 URL 失败时，回退到 Lucide Search 图标。
+    const imageUrl = engine.icon;
 
     const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
 
@@ -649,9 +639,11 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
             className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
         >
             {hasError || !imageUrl ? (
+                // 最终的 Lucide 回退
                 <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
             ) : (
                 <img 
+                    // 🚨 直接使用硬编码的 icon URL
                     src={imageUrl} 
                     alt={engine.name} 
                     className="w-6 h-6 rounded-full object-contain"
@@ -663,7 +655,7 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
     );
 };
 
-// 🔹 外部搜索按钮组件 (现在使用子组件渲染)
+// 🔹 外部搜索按钮组件 
 const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
         {externalEngines.map(engine => (
@@ -676,7 +668,12 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// 🚀 SearchLayout 组件
+// =========================================================================
+// ⬆️ 搜索按钮配置与逻辑 ⬆️
+// =========================================================================
+
+
+// 🚀 SearchLayout 组件 (保持不变)
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || currentPage !== 'home') return null;
 
