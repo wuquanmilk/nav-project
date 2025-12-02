@@ -238,40 +238,41 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件 - 接收 setCurrentPage prop
+// 🔹 页脚组件 - 🔥 修改为完全居中布局
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
   // 自定义常用链接
   const footerLinks = [
-    // 仅保留 About 和 Disclaimer，它们使用 action 切换内部页面
     { name: '关于本站', action: () => setCurrentPage('about') },
     { name: '免责声明', action: () => setCurrentPage('disclaimer') },
   ];
 
   return (
     <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          {/* 左侧：版权信息 - 点击 Logo 返回首页 */}
-          <div className="text-center md:text-left">
+      <div className="container mx-auto px-4 text-center">
+        {/* 🔥 居中内容容器 */}
+        <div className="flex flex-col items-center space-y-4"> 
+          
+          {/* 左侧：版权信息 - 居中 */}
+          <div className="text-center">
             <h3 
-              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer" 
+              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
               onClick={() => setCurrentPage('home')}
             >
               第一象限
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {/* 保持动态年份，如果用户特别指定2025，可以写死为 © 2025 */}
               © {currentYear} 极速导航网. 保留所有权利.
             </p>
           </div>
 
-          {/* 右侧：常用按钮链接 */}
+          {/* 右侧：常用按钮链接和图标 - 居中 */}
           <div className="flex flex-wrap justify-center gap-6">
             {footerLinks.map((link, idx) => (
               <a 
                 key={idx}
-                // 如果有 action，则在点击时调用；如果没有，则使用 # 占位
                 href={link.url || '#'} 
                 onClick={link.action || null}
                 target={link.url ? (link.url.startsWith('http') || link.url.startsWith('mailto') ? "_blank" : "_self") : "_self"}
@@ -291,7 +292,7 @@ const Footer = ({ setCurrentPage }) => {
               <a href="https://www.google.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 transition-colors" title="Google Search">
                 <Globe className="w-5 h-5" /> 
               </a>
-              {/* YouTube 链接 - 使用 SVG 代码，避免导入问题 */}
+              {/* YouTube 链接 */}
               <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-600 transition-colors" title="YouTube">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-youtube">
                     <path d="M2.5 17c-2 0-2-2-2-4v-6c0-2 2-4 4-4h14c2 0 4 2 4 4v6c0 2-2 4-4 4h-14z"/><path d="m10 10 5 2-5 2z"/>
@@ -321,7 +322,7 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   
   // 页面状态管理
-  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'about', 'disclaimer'
+  const [currentPage, setCurrentPage] = useState('home'); 
   // 搜索框状态
   const [searchTerm, setSearchTerm] = useState(''); 
 
@@ -414,13 +415,9 @@ export default function App() {
       <DebugBar />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <header className="flex justify-between items-center mb-12">
-          <h1 
-            className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer"
-            onClick={() => setCurrentPage('home')} // 点击标题返回首页
-          >
-              第一象限 极速导航网
-          </h1>
+        
+        {/* 🔥 1. Header (按钮区域 - 靠右对齐) */}
+        <header className="flex justify-end items-center mb-4">
           <div className="flex gap-4">
             <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
             {!isAdmin && <button onClick={()=>setShowLogin(true)} className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50">管理员登录</button>}
@@ -428,7 +425,17 @@ export default function App() {
           </div>
         </header>
         
-        {/* 站内搜索框 仅在首页显示 */}
+        {/* 🔥 2. Centered Title Block (居中标题) */}
+        <div className="mb-12 text-center">
+            <h1 
+                className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block"
+                onClick={() => setCurrentPage('home')}
+            >
+                第一象限 极速导航网
+            </h1>
+        </div>
+        
+        {/* 站内搜索框 仅在首页显示 (已是居中) */}
         {!isAdmin && currentPage === 'home' && (
             <div className="mb-8 relative max-w-2xl mx-auto">
                 <input 
@@ -451,7 +458,7 @@ export default function App() {
             </div>
         )}
         
-        {/* 核心内容渲染：根据 currentPage 渲染不同内容 */}
+        {/* 核心内容渲染 */}
         {isAdmin ? (
             <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : (
