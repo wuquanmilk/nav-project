@@ -21,11 +21,10 @@ import {
 import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
-// 🔥 修复：将管理员 UID 修正回原始值，确保登录权限
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (用于 Firebase 加载失败时的显示) 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已添加 icon 属性进行图标优化) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
@@ -35,8 +34,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
-            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录' },
-            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台' },
+            // 优化图标：直接使用主域名 favicon
+            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'https://claw.cloud/favicon.ico' },
+            // 优化图标：直接使用主域名 favicon
+            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'https://digitalplat.org/favicon.ico' },
             { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案' },
             { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务' },
         ],
@@ -53,7 +54,8 @@ const DEFAULT_NAV_DATA = [
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
             { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
             { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
-            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务' },
+            // 优化图标：直接使用子域名 favicon
+            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/favicon.ico' },
         ],
     },
     {
@@ -122,8 +124,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换' },
             { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除' },
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务' },
-            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑' },
-            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器' },
+            // 优化图标
+            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/favicon.ico' },
+            // 优化图标
+            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/favicon.ico' },
             { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换' },
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆' },
@@ -157,13 +161,21 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-// 🔹 链接卡片 (原始 V1 图标逻辑)
+// 🔹 链接卡片
 const LinkCard = ({ link }) => {
+  // 🚀 修复点：修改 faviconUrl 逻辑
   const faviconUrl = useMemo(() => {
+    // 1. 如果 link.icon 属性已设置，直接使用它作为 URL (用于手动修正图标)
+    if (link.icon && link.icon.startsWith('http')) {
+        return link.icon;
+    }
+    
+    // 2. 否则，通过 Google S2 服务获取图标
     try {
-      const urlObj = new URL(link.icon || link.url);
+      const urlObj = new URL(link.url);
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     } catch {
+      // 3. URL 无效时，使用占位符
       return 'https://placehold.co/40x40/ccc/000?text=L';
     }
   }, [link.icon, link.url]);
@@ -229,7 +241,7 @@ const LinkForm = ({ links, setLinks }) => {
     newLinks[index][field] = value;
     setLinks(newLinks);
   };
-  const addLink = () => setLinks([...links, { name: '', url: '', description: '' }]);
+  const addLink = () => setLinks([...links, { name: '', url: '', description: '', icon: '' }]); // 🚀 链接表单新增 icon 字段
   const removeLink = (index) => setLinks(links.filter((_, i) => i !== index));
 
   return (
@@ -239,6 +251,7 @@ const LinkForm = ({ links, setLinks }) => {
           <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="图标(可选)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> {/* 🚀 新增 icon 输入框 */}
           <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
         </div>
       ))}
@@ -271,6 +284,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
 
 // 🔹 管理面板 (保持不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
+  // 🚀 新增 icon 字段默认值
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -282,8 +296,25 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     setNewCategory({ category: '', order: 0, links: [] });
     fetchData();
   };
-  const startEdit = (item) => { setEditId(item.id); setEditData({...item}); };
-  const saveEdit = async () => { await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), editData); setEditId(null); fetchData(); };
+  const startEdit = (item) => { 
+    // 确保 links 中的每个对象都有 icon 属性，避免编辑时出错
+    const linksWithIcon = (item.links || []).map(l => ({...l, icon: l.icon || ''}));
+    setEditId(item.id); 
+    setEditData({...item, links: linksWithIcon}); 
+  };
+  const saveEdit = async () => { 
+    // 过滤掉空的 icon 字段，保持数据库整洁
+    const dataToSave = {
+        ...editData,
+        links: editData.links.map(l => ({
+            ...l,
+            icon: l.icon || undefined // 如果为空则不存入数据库
+        }))
+    };
+    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), dataToSave); 
+    setEditId(null); 
+    fetchData(); 
+  };
   const handleDelete = async (id) => { 
     if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
         await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); 
@@ -335,7 +366,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
                 </div>
               </div>
               <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
-                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
+                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span> {l.icon && <span className="text-xs text-green-500">(自定义图标)</span>}</li>)}
               </ul>
             </>
           )}
@@ -480,8 +511,6 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
             value={searchTerm}
             // 确保 onChange 正确更新状态
             onChange={(e) => setSearchTerm(e.target.value)}
-            // 确保输入框在 re-render 时保持焦点，focus 属性可能会有帮助，但通常不是必须的
-            // 核心在于 DOM 元素的稳定
             className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
         />
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
@@ -552,7 +581,6 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   
-  // 仅保留状态定义，但在 SearchLayout 中不再用于条件渲染
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   useEffect(()=>{
@@ -695,7 +723,7 @@ export default function App() {
             </div>
         </header>
         
-        {/* 搜索区域 (使用稳定的外部组件 SearchLayout) */}
+        {/* 搜索区域 */}
         <SearchLayout 
             isAdmin={isAdmin}
             currentPage={currentPage}
