@@ -116,6 +116,7 @@ const AboutPage = () => (
     </div>
 );
 
+
 // 🔹 免责声明页面组件
 const DisclaimerPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
@@ -333,11 +334,11 @@ export default function App() {
   // 🔥 新增状态：搜索引擎选择
   const [selectedEngine, setSelectedEngine] = useState('google'); 
   
-  // 🔥 更新常量：搜索引擎配置 (添加 Emoji 符号辅助区分)
+  // 🔥 更新常量：搜索引擎配置 (使用新的卡通符号)
   const SEARCH_ENGINES = useMemo(() => ({ 
-      google: { name: 'Google 🌈', url: 'https://www.google.com/search?q=' }, // 🌈 代表多色
-      baidu: { name: '百度 🇨🇳', url: 'https://www.baidu.com/s?wd=' },    // 🇨🇳 代表中国
-      bing: { name: 'Bing 🟦', url: 'https://www.bing.com/search?q=' },     // 🟦 代表蓝色/方块
+      google: { name: 'Google 🔍', url: 'https://www.google.com/search?q=' }, // 放大镜
+      baidu: { name: '百度 🐼', url: 'https://www.baidu.com/s?wd=' },    // 熊猫
+      bing: { name: 'Bing 💧', url: 'https://www.bing.com/search?q=' },     // 水滴
   }), []);
 
 
@@ -400,9 +401,9 @@ export default function App() {
   const handleExternalSearch = (e) => {
       e.preventDefault(); // 阻止表单默认提交，防止页面刷新
       if (searchTerm.trim()) {
+          // 由于 selectedEngine 的值是 key (如 'google')，这里直接使用它作为键
+          const engine = SEARCH_ENGINES[selectedEngine];
           const query = encodeURIComponent(searchTerm.trim());
-          const engineKey = selectedEngine.split(' ')[0].toLowerCase(); // 从 "Google 🌈" 中获取 "google"
-          const engine = SEARCH_ENGINES[engineKey];
           
           if (engine) {
               window.open(`${engine.url}${query}`, '_blank');
@@ -496,26 +497,12 @@ export default function App() {
             </h1>
         </div>
         
-        {/* 🔥 站内搜索框 (垂直堆叠布局，选择器在上，搜索框在下) */}
+        {/* 🔥 站内搜索框 (水平布局：搜索框长，选择器短，靠右) */}
         {!isAdmin && currentPage === 'home' && (
-            <div className="mb-8 max-w-2xl mx-auto"> 
+            <div className="mb-8 max-w-2xl mx-auto flex items-center"> 
                 
-                {/* 搜索引擎选择器 - 放在上面并居中 */}
-                <div className="mb-3 flex justify-center"> 
-                    <select
-                        value={selectedEngine}
-                        onChange={(e) => setSelectedEngine(e.target.value)}
-                        className="py-3 px-4 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-base cursor-pointer min-w-[8rem]"
-                    >
-                        {/* 循环渲染选项 */}
-                        {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
-                            <option key={key} value={key}>{engine.name}</option>
-                        ))}
-                    </select>
-                </div>
-                
-                {/* 搜索输入框 (表单) - 占满宽度 */}
-                <form onSubmit={handleExternalSearch} className="relative"> 
+                {/* 搜索输入框 (表单) - 使用 flex-grow 占满大部分空间 */}
+                <form onSubmit={handleExternalSearch} className="relative flex-grow"> 
                     <input 
                         type="text" 
                         placeholder={`搜索链接或按 Enter 搜索 ${SEARCH_ENGINES[selectedEngine].name}...`} 
@@ -535,6 +522,19 @@ export default function App() {
                         </button>
                     )}
                 </form>
+
+                {/* 搜索引擎选择器 - 放在右侧，保持宽度小巧 */}
+                <select
+                    value={selectedEngine}
+                    onChange={(e) => setSelectedEngine(e.target.value)}
+                    // 移除 min-w，使用 px-3 保持小宽度，添加 ml-2 间距
+                    className="py-3 px-3 ml-2 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-base cursor-pointer w-auto"
+                >
+                    {/* 循环渲染选项 */}
+                    {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
+                        <option key={key} value={key}>{engine.name}</option>
+                    ))}
+                </select>
             </div>
         )}
         
