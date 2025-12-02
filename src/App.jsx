@@ -344,7 +344,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件
+// 🔹 页脚组件 (保持不变)
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -396,7 +396,7 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件
+// 🔹 关于本站页面组件 (保持不变)
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -426,7 +426,7 @@ const AboutPage = () => (
 );
 
 
-// 🔹 免责声明页面组件
+// 🔹 免责声明页面组件 (保持不变)
 const DisclaimerPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
@@ -451,18 +451,22 @@ const DisclaimerPage = () => (
 );
 
 
-// 🔹 外部搜索引擎配置
+// 🔹 外部搜索引擎配置 (保持不变)
 const externalEngines = [
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
   { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
 ];
 
-// 🔹 外部搜索处理函数
+// 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
   if (query) {
     // 编码查询字符串并新窗口打开
     window.open(engineUrl + encodeURIComponent(query), '_blank');
+  } else {
+    // 如果没有关键词，直接打开搜索引擎主页
+    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
+    window.open(baseDomain, '_blank');
   }
 };
 
@@ -481,6 +485,9 @@ export default function App() {
   
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
+  
+  // 🔥 新增状态：追踪 Firebase 是否连接成功
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   useEffect(()=>{
     const firebaseConfig = {
@@ -514,10 +521,12 @@ export default function App() {
       
       if (data.length > 0 || isAdmin) { 
           setNavData(data);
+          setIsFirebaseConnected(true); // 🔥 成功连接
       }
       
     }, (error) => {
         console.warn("Firebase connection failed or blocked. Using default links.", error);
+        setIsFirebaseConnected(false); // 🔥 连接失败，使用默认数据
     });
     return unsub;
   },[db, isAdmin]); 
@@ -572,6 +581,84 @@ export default function App() {
   }, [navData, searchTerm]);
 
 
+  // 🔹 搜索输入框的公共部分
+  const SearchInput = () => (
+    <div className="relative">
+        <input 
+            type="text" 
+            placeholder="搜索链接名称、描述或网址..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+        />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+        {searchTerm && (
+            <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                title="清空站内搜索"
+            >
+                <X className="w-5 h-5"/>
+            </button>
+        )}
+    </div>
+  );
+
+  // 🔹 外部搜索按钮的公共部分
+  const ExternalSearchButtons = ({ className }) => (
+    <div className={className}>
+        {externalEngines.map(engine => (
+            <button
+                key={engine.name}
+                onClick={() => handleExternalSearch(engine.url, searchTerm)}
+                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
+            >
+                <img 
+                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full"
+                />
+            </button>
+        ))}
+    </div>
+  );
+
+
+  // 🔹 搜索区域渲染逻辑 (根据连接状态切换布局)
+  const SearchArea = () => {
+    if (isAdmin || currentPage !== 'home') return null;
+
+    if (isFirebaseConnected) {
+        // 🔥 国外/连接成功模式：搜索框和按钮并排（按钮在右侧）
+        return (
+            <div className="mb-8 flex justify-center">
+                <div className="max-w-2xl w-full flex items-stretch gap-3">
+                    {/* 站内搜索框 (占主要宽度) */}
+                    <div className="flex-grow">
+                        <SearchInput />
+                    </div>
+
+                    {/* 外部搜索按钮 (右侧最小化) */}
+                    <ExternalSearchButtons className="flex items-center space-x-2 flex-shrink-0" />
+                </div>
+            </div>
+        );
+    } else {
+        // 🔥 国内/Fallback模式：搜索框在上，按钮在下
+        return (
+            <div className="mb-8 max-w-2xl mx-auto">
+                {/* 站内搜索框 (上方) */}
+                <SearchInput />
+                
+                {/* 外部搜索按钮 (下方，居中) */}
+                <ExternalSearchButtons className="flex justify-center space-x-4 mt-4" />
+            </div>
+        );
+    }
+  };
+
+
   return (
     <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
       <DebugBar />
@@ -619,53 +706,8 @@ export default function App() {
             </div>
         </header>
         
-        {/* 🔥 搜索区域容器：包含站内搜索和外部搜索，居中显示 */}
-        {!isAdmin && currentPage === 'home' && (
-            <div className="mb-8 flex justify-center items-stretch gap-3">
-                {/* 站内搜索框 (占主要宽度) */}
-                <div className="relative max-w-xl flex-grow">
-                    <input 
-                        type="text" 
-                        placeholder="搜索链接名称、描述或网址..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-                        // 允许用户按 Enter 键执行站内搜索，但这里我们保持原样，只做输入框
-                    />
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-                    {searchTerm && (
-                        <button 
-                            onClick={() => setSearchTerm('')} 
-                            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                            title="清空站内搜索"
-                        >
-                            <X className="w-5 h-5"/>
-                        </button>
-                    )}
-                </div>
-
-                {/* 外部搜索按钮 (最小化) */}
-                <div className="flex items-center space-x-2">
-                    {externalEngines.map(engine => (
-                        <button
-                            key={engine.name}
-                            onClick={() => handleExternalSearch(engine.url, searchTerm)}
-                            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-                            // 禁用样式，但允许点击，即便没有关键词，用户也可以打开搜索引擎主页
-                            disabled={false} 
-                            className={`p-2 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg ${searchTerm ? 'hover:scale-105' : 'opacity-70'}`}
-                        >
-                            <img 
-                                // 使用 V1 Favicon 接口获取图标
-                                src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
-                                alt={engine.name} 
-                                className="w-5 h-5 rounded-full"
-                            />
-                        </button>
-                    ))}
-                </div>
-            </div>
-        )}
+        {/* 🔥 搜索区域 (根据 isFirebaseConnected 切换布局) */}
+        <SearchArea />
         
         {/* 核心内容渲染 */}
         {isAdmin ? (
