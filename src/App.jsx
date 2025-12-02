@@ -85,8 +85,58 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
+// 🔥 新增：关于本站页面组件
+const AboutPage = () => (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
+        <div className="space-y-4 text-gray-700 dark:text-gray-300">
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【站点功能】</h3>
+            <p>
+                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【创设初衷：拒绝广告】</h3>
+            <p>
+                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
+            <p>
+                由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
+            </p>
+        </div>
+    </div>
+);
+
+// 🔥 新增：免责声明页面组件
+const DisclaimerPage = () => (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
+        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
+            <p>
+                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
+            <p>
+                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
+            <p>
+                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">4. 服务中断与修改</h3>
+            <p>
+                本站保留随时修改、暂停或永久终止提供本网站全部或部分服务的权利，恕不另行通知。因系统维护、网络故障、技术升级等原因导致的服务中断，本站不承担任何责任。
+            </p>
+            <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
+                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
+            </p>
+        </div>
+    </div>
+);
+
 // 🔹 链接表单 (不变)
 const LinkForm = ({ links, setLinks }) => {
+// ... (代码保持不变)
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
     newLinks[index][field] = value;
@@ -112,6 +162,7 @@ const LinkForm = ({ links, setLinks }) => {
 
 // 🔹 登录弹窗 (不变)
 const LoginModal = ({ onClose, onLogin, error }) => {
+// ... (代码保持不变)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
@@ -134,6 +185,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
 
 // 🔹 管理面板 (不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
+// ... (代码保持不变)
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -188,25 +240,30 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 新增：页脚组件 (不变)
-const Footer = () => {
+// 🔹 页脚组件 - 🔥 接收 setCurrentPage prop
+const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
   // 自定义常用链接
   const footerLinks = [
-    { name: '关于本站', url: '#' },
-    { name: '提交收录', url: '#' },
-    { name: '免责声明', url: '#' },
-    { name: '反馈建议', url: 'mailto:contact@example.com' },
+    // 🔥 修改：使用 action 函数来切换页面
+    { name: '关于本站', action: () => setCurrentPage('about') },
+    { name: '免责声明', action: () => setCurrentPage('disclaimer') },
+    // 保持外部链接
+    { name: '提交收录', url: '#' }, 
+    { name: '反馈建议', url: 'mailto:contact@example.com' }, 
   ];
 
   return (
     <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          {/* 左侧：版权信息 */}
+          {/* 左侧：版权信息 - 🔥 点击 Logo 返回首页 */}
           <div className="text-center md:text-left">
-            <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+            <h3 
+              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer" 
+              onClick={() => setCurrentPage('home')}
+            >
               第一象限
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -219,20 +276,24 @@ const Footer = () => {
             {footerLinks.map((link, idx) => (
               <a 
                 key={idx}
-                href={link.url}
-                target={link.url.startsWith('http') ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                // 如果有 action，则在点击时调用；如果没有，则使用 href
+                href={link.url || '#'} 
+                onClick={link.action || null}
+                target={link.url ? (link.url.startsWith('http') || link.url.startsWith('mailto') ? "_blank" : "_self") : "_self"}
+                rel={link.url ? "noopener noreferrer" : undefined}
+                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
               >
                 {link.name}
               </a>
             ))}
             {/* 图标链接示例 */}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              <a href="#" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+              {/* 🔥 修改 Github 链接 */}
+              <a href="https://github.com/wuquanmilk" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
+              {/* 🔥 修改 Mail 链接 */}
+              <a href="https://mail.qq.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="QQ邮箱">
                 <Mail className="w-5 h-5" />
               </a>
             </div>
@@ -254,7 +315,9 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   
-  // 🔥 新增：搜索框状态
+  // 🔥 新增：页面状态管理
+  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'about', 'disclaimer'
+  // 🔥 搜索框状态
   const [searchTerm, setSearchTerm] = useState(''); 
 
   useEffect(()=>{
@@ -307,7 +370,7 @@ export default function App() {
     } catch(e){ setLoginError(e.message); }
   };
   
-  // 🔥 新增：根据搜索词过滤导航数据
+  // 根据搜索词过滤导航数据 (不变)
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
       return navData; // 搜索词为空，返回全部数据
@@ -347,8 +410,11 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         <header className="flex justify-between items-center mb-12">
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                              第一象限 极速导航网
+          <h1 
+            className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer"
+            onClick={() => setCurrentPage('home')} // 点击标题返回首页
+          >
+              第一象限 极速导航网
           </h1>
           <div className="flex gap-4">
             <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
@@ -357,8 +423,8 @@ export default function App() {
           </div>
         </header>
         
-        {/* 🔥 新增：站内搜索框 */}
-        {!isAdmin && (
+        {/* 站内搜索框 仅在首页显示 */}
+        {!isAdmin && currentPage === 'home' && (
             <div className="mb-8 relative max-w-2xl mx-auto">
                 <input 
                     type="text" 
@@ -380,11 +446,24 @@ export default function App() {
             </div>
         )}
         
-        {/* 🔥 修改：向 PublicNav 传递过滤后的数据和搜索词 */}
-        {isAdmin ? <AdminPanel db={db} navData={navData} fetchData={fetchData} /> : <PublicNav navData={filteredNavData} searchTerm={searchTerm} />}
+        {/* 🔥 核心内容渲染：根据 currentPage 渲染不同内容 */}
+        {isAdmin ? (
+            <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+        ) : (
+            currentPage === 'home' ? (
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
+            ) : currentPage === 'about' ? (
+                <AboutPage />
+            ) : currentPage === 'disclaimer' ? (
+                <DisclaimerPage />
+            ) : (
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} /> // 默认返回 Home
+            )
+        )}
       </div>
       
-      <Footer />
+      {/* 🔥 修改：传递 setCurrentPage 函数到 Footer */}
+      <Footer setCurrentPage={setCurrentPage} />
     </div>
   )
 }
