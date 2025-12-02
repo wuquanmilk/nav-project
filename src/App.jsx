@@ -238,7 +238,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件 - 🔥 修改为完全居中布局
+// 🔹 页脚组件
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -251,7 +251,7 @@ const Footer = ({ setCurrentPage }) => {
   return (
     <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 text-center">
-        {/* 🔥 居中内容容器 */}
+        {/* 居中内容容器 */}
         <div className="flex flex-col items-center space-y-4"> 
           
           {/* 左侧：版权信息 - 居中 */}
@@ -263,7 +263,6 @@ const Footer = ({ setCurrentPage }) => {
               第一象限
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {/* 保持动态年份，如果用户特别指定2025，可以写死为 © 2025 */}
               © {currentYear} 极速导航网. 保留所有权利.
             </p>
           </div>
@@ -416,7 +415,7 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
-        {/* 🔥 1. Header (按钮区域 - 靠右对齐) */}
+        {/* 1. Header (按钮区域 - 靠右对齐) */}
         <header className="flex justify-end items-center mb-4">
           <div className="flex gap-4">
             <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
@@ -425,13 +424,13 @@ export default function App() {
           </div>
         </header>
         
-        {/* 🔥 2. Centered Title Block (居中标题) */}
+        {/* 2. Centered Title Block (居中标题) */}
         <div className="mb-12 text-center">
             <h1 
                 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block"
                 onClick={() => setCurrentPage('home')}
             >
-                第一象限 极速导航网
+                极速导航网 {/* ⬅️ 已修改 */}
             </h1>
         </div>
         
