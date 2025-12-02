@@ -221,7 +221,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单
+// 🔹 链接表单 (管理面板内部使用，保持不变)
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -246,7 +246,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 (使用 LogIn 图标)
+// 🔹 登录弹窗 (保持不变)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -268,7 +268,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
-// 🔹 管理面板
+// 🔹 管理面板 (保持不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
@@ -470,6 +470,50 @@ const handleExternalSearch = (engineUrl, query) => {
   }
 };
 
+// 🔹 搜索输入框组件 (提取到 App 外部，接收 props)
+const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
+    <div className="relative">
+        <input 
+            type="text" 
+            placeholder="搜索链接名称、描述或网址..." 
+            value={searchTerm}
+            // 确保 onChange 正确更新状态
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+        />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+        {searchTerm && (
+            <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                title="清空站内搜索"
+            >
+                <X className="w-5 h-5"/>
+            </button>
+        )}
+    </div>
+));
+
+// 🔹 外部搜索按钮组件 (提取到 App 外部，接收 props)
+const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
+    <div className={className}>
+        {externalEngines.map(engine => (
+            <button
+                key={engine.name}
+                onClick={() => handleExternalSearch(engine.url, searchTerm)}
+                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
+            >
+                <img 
+                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full"
+                />
+            </button>
+        ))}
+    </div>
+));
+
 
 // 🔹 主应用 (App 组件)
 export default function App() {
@@ -581,51 +625,10 @@ export default function App() {
   }, [navData, searchTerm]);
 
 
-  // 🔹 搜索输入框的公共部分
-  const SearchInput = () => (
-    <div className="relative">
-        <input 
-            type="text" 
-            placeholder="搜索链接名称、描述或网址..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-        />
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-        {searchTerm && (
-            <button 
-                onClick={() => setSearchTerm('')} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                title="清空站内搜索"
-            >
-                <X className="w-5 h-5"/>
-            </button>
-        )}
-    </div>
-  );
-
-  // 🔹 外部搜索按钮的公共部分
-  const ExternalSearchButtons = ({ className }) => (
-    <div className={className}>
-        {externalEngines.map(engine => (
-            <button
-                key={engine.name}
-                onClick={() => handleExternalSearch(engine.url, searchTerm)}
-                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
-            >
-                <img 
-                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
-                    alt={engine.name} 
-                    className="w-6 h-6 rounded-full"
-                />
-            </button>
-        ))}
-    </div>
-  );
-
-
-  // 🔹 搜索区域渲染逻辑 (根据连接状态切换布局)
+  // 🔹 搜索区域渲染逻辑 (根据 isFirebaseConnected 切换布局)
+  // 💥 修复：将此逻辑作为函数定义在 App 内部或使用 useCallback，
+  // 确保它不会在每次 App 渲染时都被当作一个全新的组件，
+  // 或者直接使用一个普通函数/逻辑块并在 JSX 中调用。
   const SearchArea = () => {
     if (isAdmin || currentPage !== 'home') return null;
 
@@ -636,11 +639,14 @@ export default function App() {
                 <div className="max-w-2xl w-full flex items-stretch gap-3">
                     {/* 站内搜索框 (占主要宽度) */}
                     <div className="flex-grow">
-                        <SearchInput />
+                        <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
                     </div>
 
                     {/* 外部搜索按钮 (右侧最小化) */}
-                    <ExternalSearchButtons className="flex items-center space-x-2 flex-shrink-0" />
+                    <ExternalSearchButtons 
+                        className="flex items-center space-x-2 flex-shrink-0" 
+                        searchTerm={searchTerm} 
+                    />
                 </div>
             </div>
         );
@@ -649,10 +655,13 @@ export default function App() {
         return (
             <div className="mb-8 max-w-2xl mx-auto">
                 {/* 站内搜索框 (上方) */}
-                <SearchInput />
+                <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
                 
                 {/* 外部搜索按钮 (下方，居中) */}
-                <ExternalSearchButtons className="flex justify-center space-x-4 mt-4" />
+                <ExternalSearchButtons 
+                    className="flex justify-center space-x-4 mt-4" 
+                    searchTerm={searchTerm} 
+                />
             </div>
         );
     }
@@ -706,7 +715,7 @@ export default function App() {
             </div>
         </header>
         
-        {/* 🔥 搜索区域 (根据 isFirebaseConnected 切换布局) */}
+        {/* 🔥 搜索区域 (调用 SearchArea 函数，该函数现在内部调用的是稳定的外部组件) */}
         <SearchArea />
         
         {/* 核心内容渲染 */}
