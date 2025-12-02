@@ -17,8 +17,8 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标，新增 LogOut
-import { ExternalLink, Moon, Sun, LogIn, LogOut, X, Github, Mail, Globe, Search } from 'lucide-react'; 
+// 导入需要的图标，移除 LogIn, LogOut，新增 User
+import { ExternalLink, Moon, Sun, User, X, Github, Mail, Globe, Search } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
@@ -160,7 +160,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 (不变)
+// 🔹 登录弹窗 (修改图标)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -170,7 +170,8 @@ const LoginModal = ({ onClose, onLogin, error }) => {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
+        {/* 🔥 图标替换为 User */}
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><User className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
@@ -418,7 +419,7 @@ export default function App() {
         {/* 1. Header (按钮区域 - 靠右对齐) */}
         <header className="flex justify-end items-center mb-4">
           <div className="flex gap-4">
-            {/* 白天/黑夜切换按钮 (不变) */}
+            {/* 白天/黑夜切换按钮 */}
             <button 
               onClick={()=>setIsDark(!isDark)} 
               className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -427,25 +428,25 @@ export default function App() {
               {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
             </button>
             
-            {/* 🔥 管理员登录入口 (圆形按钮，使用 LogIn 图标) */}
+            {/* 🔥 管理员登录入口 (人头像图标，中性颜色) */}
             {!isAdmin && (
                 <button 
                     onClick={() => setShowLogin(true)} 
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-blue-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     title="管理员登录"
                 >
-                    <LogIn className="w-5 h-5"/>
+                    <User className="w-5 h-5"/>
                 </button>
             )}
             
-            {/* 🔥 管理员退出入口 (圆形按钮，使用 LogOut 图标) */}
+            {/* 🔥 管理员退出入口 (人头像图标，红色表示退出) */}
             {isAdmin && (
                 <button 
                     onClick={() => signOut(auth)} 
                     className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     title="退出管理"
                 >
-                    <LogOut className="w-5 h-5"/>
+                    <User className="w-5 h-5"/>
                 </button>
             )}
           </div>
