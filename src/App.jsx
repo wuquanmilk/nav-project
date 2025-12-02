@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInAnonymously,
   signOut,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword // 导入注册函数
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -16,300 +15,394 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
-  query,
-  orderBy,
-  getDocs,
-  setDoc,
+  getDocs
 } from 'firebase/firestore';
 // 导入需要的图标
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
-  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, ChevronDown, ChevronUp,
-  Settings // 新增设置图标
+  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
 } from 'lucide-react'; 
 
-// 🔹 配置你的管理员 UID (请确保这是您在 Firebase Authentication 中的真实 UID)
-// 管理员 UID 用于演示公共数据管理，但现在所有注册用户都有自己的私有数据管理
-const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2'; 
+// 🔹 配置你的管理员 UID
+const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// ⭐️ 谷歌图标 Base64 SVG 编码 (用于国际版稳定性修复) ⭐️
-const GOOGLE_BASE64_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGggZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1Yy0wLjU1Ny0uMTUtMy4wOS0uMzg0LjU1LTMuNDctMS43Mi0yLjk2LTQuOTItNS40OC04LjQ3LTcuMThsLTcuNzM2LTcuMDI2NDIuNTg4IDYuMjk2Yy0xLjUzLS43MS0zLjIzLS45OS00Ljk3LS45OS01LjM2IDAtMTAuMzMgMi40Ni0xMy42NiA2LjE1TDkuNjggMi45YzMuODMtMy42NyA5LjAxLTUuOTYgMTUuMzIgNS45NiAyLjk5IDAgNS43OC41NSA4LjQ0IDEuNTRsNS43OCAzLjI0Yy00LjU1LTIuOTYtOS45Mi00LjUzLTE1LjgzLTQuNTMtMTIuODggMC0yMy41IDEwLjQyLTIzLjUgMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0.NzQ-MTQuMzVMODkuNjggMi45eiIvPjwvc3ZnPg==';
-
-// =========================================================================
-// 核心数据定义：外部搜索引擎列表 和 默认导航数据
-// =========================================================================
-
-// 国际版搜索引擎
-const FULL_EXTERNAL_ENGINES = [
-    { name: 'Google', url: 'https://www.google.com/search?q=', icon: GOOGLE_BASE64_ICON },
-    { name: 'Bing', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/favicon.ico' },
-    { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', icon: 'https://duckduckgo.com/favicon.ico' },
-    { name: 'GitHub', url: 'https://github.com/search?q=', icon: 'https://github.com/favicon.ico' },
-    { name: 'Stack Overflow', url: 'https://stackoverflow.com/search?q=', icon: 'https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico' },
-];
-
-// 默认导航数据 (作为公共数据和用户首次登录时的初始数据)
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
         category: '常用开发',
         order: 0,
         links: [
-            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区', icon: 'Bot' },
-            { name: 'GitHub', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'Code' },
-            { name: 'Stack Overflow', url: 'https://stackoverflow.com/', description: '开发者问答社区', icon: 'Wrench' },
+            // ⭐️ 硬编码图标 ⭐️
+            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区', icon: 'https://huggingface.co/favicon.ico' },
+            { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'https://github.com/fluidicon.png' },
+            { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台', icon: 'https://www.cloudflare.com/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: '' },
+            { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案', icon: 'https://supabase.com/favicon.ico' },
+            { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务', icon: 'https://firebase.google.cn/images/favicons/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: '' },
         ],
     },
     {
         id: 'cat-2',
-        category: 'AI 工具',
+        category: 'AI大模型',
         order: 1,
         links: [
-            { name: 'ChatGPT', url: 'https://chat.openai.com/', description: 'OpenAI 语言模型', icon: 'Cloud' },
-            { name: 'Google Gemini', url: 'https://gemini.google.com/', description: '谷歌 AI 助手', icon: 'Database' },
+             // ⭐️ 硬编码图标 ⭐️
+            { name: 'chatgpt', url: 'https://chatgpt.com/', description: 'OpenAI 对话模型', icon: 'https://chatgpt.com/favicon.ico' },
+            { name: 'gemini', url: 'https://gemini.google.com/app', description: 'Google AI 应用', icon: 'https://gemini.google.com/favicon.ico' },
+            { name: 'deepseek', url: 'https://www.deepseek.com/', description: '深度求索 AI 平台', icon: 'https://www.deepseek.com/favicon.ico' },
+            { name: '阿里千问', url: 'https://chat.qwen.ai/', description: '阿里通义千问', icon: 'https://chat.qwen.ai/favicon.ico' },
+            { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用', icon: 'https://yuanbao.tencent.com/favicon.ico' },
+            { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI', icon: 'https://www.doubao.com/favicon.ico' },
+            { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具', icon: 'https://jimeng.jianying.com/favicon.ico' },
+            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/favicon.ico' },
+        ],
+    },
+    {
+        id: 'cat-3',
+        category: '影视娱乐',
+        order: 2,
+        links: [
+            // ⭐️ 硬编码图标 ⭐️
+            { name: '哔哩哔哩', url: 'https://bilibili.com', description: 'B 站视频分享社区', icon: 'https://www.bilibili.com/favicon.ico' },
+            { name: 'youtube', url: 'https://youtube.com', description: '全球最大视频平台', icon: 'https://www.youtube.com/s/desktop/4f17f4b8/img/favicon_96x96.png' },
+            { name: '爱奇艺', url: 'https://www.iqiyi.com', description: '国内视频播放平台', icon: 'https://www.iqiyi.com/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: '在线音乐', url: 'https://music.eooce.com/', description: '免费在线音乐播放', icon: '' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: '视频下载', url: 'https://tubedown.cn/', description: '通用视频下载工具', icon: '' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: '星空音乐下载', url: 'https://www.vh.hk/', description: '音乐下载工具', icon: '' },
+            { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区', icon: 'https://www.instagram.com/static/images/ico/favicon.ico/31604a141b77.ico' },
+            { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台', icon: 'https://www.kuaishou.com/favicon.ico' },
+            { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台', icon: 'https://www.douyin.com/favicon.ico' },
+            { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台', icon: 'https://www.tiktok.com/favicon.ico' },
+            { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用', icon: 'https://www.snapchat.com/favicon.ico' },
+        ],
+    },
+    {
+        id: 'cat-4',
+        category: 'IP检测 地址生成',
+        order: 3,
+        links: [
+            // ⭐️ 硬编码图标 ⭐️
+            { name: 'browserscan', url: 'https://www.browserscan.net/zh', description: '浏览器指纹与安全检测', icon: 'https://www.browserscan.net/favicon.ico' },
+            { name: 'ping0', url: 'https://ping0.cc/', description: '网络延迟与连通性监测', icon: 'https://ping0.cc/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: '真实地址生成器', url: 'https://address.nnuu.nyc.mn/', description: '随机地址生成工具', icon: '' },
+            { name: 'Itdog', url: 'https://www.itdog.cn/tcping', description: '网络延迟和丢包检测', icon: 'https://www.itdog.cn/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'IP地址查询', url: 'https://ip.ssss.nyc.mn/', description: 'IP 地址归属地查询', icon: '' },
+        ],
+    },
+    {
+        id: 'cat-5',
+        category: '搜索引擎',
+        order: 4,
+        links: [
+            // 百度：使用官方 Favicon URL
+            { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎', icon: 'https://www.baidu.com/favicon.ico' }, 
+            // ⭐️ 修复谷歌导航栏图标 ⭐️
+            { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' },
+            // 必应：使用官方 Favicon URL
+            { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+        ],
+    },
+    {
+        id: 'cat-6',
+        category: '云计算',
+        order: 5,
+        links: [
+             // ⭐️ 硬编码图标 ⭐️
+            { name: 'AWS', url: 'https://aws.amazon.com/', description: '亚马逊云服务', icon: 'https://a0.awsstatic.com/main/images/site/touch-icon-180x180.png' },
+            { name: 'Azure', url: 'https://azure.microsoft.com/', description: '微软云服务', icon: 'https://azure.microsoft.com/favicon.ico' },
+            { name: '阿里云', url: 'https://www.aliyun.com/', description: '阿里巴巴云服务', icon: 'https://www.aliyun.com/favicon.ico' },
+            { name: '腾讯云', url: 'https://cloud.tencent.com/', description: '腾讯云服务', icon: 'https://cloud.tencent.com/favicon.ico' },
+            { name: '华为云', url: 'https://www.huaweicloud.com/', description: '华为云服务', icon: 'https://www.huaweicloud.com/favicon.ico' },
+            { name: 'Oracle Cloud', url: 'https://www.oracle.com/cloud/', description: '甲骨文云服务', icon: 'https://www.oracle.com/asset/ctx/design/images/favicon.ico' },
+            { name: 'IBM Cloud', url: 'https://www.ibm.com/cloud', description: 'IBM 云服务', icon: 'https://www.ibm.com/favicon.ico' },
+        ],
+    },
+    {
+        id: 'cat-7',
+        category: '工具箱',
+        order: 6,
+        links: [
+            // ⭐️ 硬编码图标 ⭐️
+            { name: '在线工具网', url: 'https://tool.lu/', description: '程序员综合在线工具', icon: 'https://tool.lu/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'Py混淆', url: 'https://freecodingtools.org/tools/obfuscator/python', description: 'Python 代码混淆工具', icon: '' },
+            { name: '二维码生成', url: 'https://cli.im/', description: '在线二维码制作', icon: 'https://cli.im/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'Argo Tunnel json获取', url: 'https://fscarmen.cloudflare.now.cc/', description: 'Cloudflare Argo Tunnel 配置工具', icon: '' },
+            { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换', icon: 'https://www.qqxiuzi.cn/favicon.ico' },
+            { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除', icon: 'https://remove.photos/favicon.ico' },
+            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务', icon: '' },
+            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/favicon.ico' },
+            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/favicon.ico' },
+            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: 'https://convertio.co/favicon.ico' },
+            { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: 'https://d1tools.com/favicon.ico' },
+            { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: 'https://www.toolnb.com/favicon.ico' },
+            { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: 'https://www.json.cn/favicon.ico' },
+            { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找', icon: 'https://www.iamwawa.cn/favicon.ico' },
+            { name: '网站打包app', url: 'https://blackace.app/', description: '将网站打包成 App', icon: 'https://blackace.app/favicon.ico' },
+        ],
+    },
+    {
+        id: 'cat-8',
+        category: 'IP代理',
+        order: 7,
+        links: [
+            // ⭐️ 硬编码图标 ⭐️
+            { name: '在线代理', url: 'https://www.proxyshare.com/zh/proxysite', description: '免费在线代理服务', icon: 'https://www.proxyshare.com/favicon.ico' },
+            { name: '免费网络代理', url: 'https://www.lumiproxy.com/zh-hans/online-proxy/proxysite/', description: '免费代理服务', icon: 'https://www.lumiproxy.com/favicon.ico' },
+        ],
+    },
+    {
+        id: 'cat-9',
+        category: '电商平台',
+        order: 8,
+        links: [
+             // ⭐️ 硬编码图标 ⭐️
+            { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站', icon: 'https://www.taobao.com/favicon.ico' },
+            { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商', icon: 'https://www.jd.com/favicon.ico' },
+            { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台', icon: 'https://www.amazon.cn/favicon.ico' },
         ],
     },
 ];
 
-const APP_TITLE = '极速导航网 (国际版)';
-const EXTERNAL_ENGINES = FULL_EXTERNAL_ENGINES;
-
+// 🔹 调试栏隐藏
+const DebugBar = () => null;
 
 // =========================================================================
-// 辅助组件 (LinkCard 进行了图标错误回退修复)
+// ⬇️ 图标映射和处理逻辑 ⬇️
 // =========================================================================
 
-// 🔹 LinkIcon 组件
-const LinkIcon = ({ iconName, className = "w-4 h-4" }) => {
-  const IconComponent = {
-    ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User, Settings,
-    Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, ChevronDown, ChevronUp
-  }[iconName] || ExternalLink;
+// 🔹 图标名称到 Lucide 组件的映射
+const ICON_MAP = {
+    // 常用开发
+    'huggingface': Wand, 
+    'github': Github,
+    'cloudflare': Cloud,
+    'clawcloudrun': Code,
+    'dpdns': Network,
+    'supabase': Database,
+    'firebase': Server, 
 
-  return <IconComponent className={className} />;
+    // AI 大模型
+    'chatgpt': Bot,
+    'gemini': Wand, 
+    'deepseek': Bot,
+    '阿里千问': Bot,
+    '腾讯元宝': Bot,
+    '豆包': Bot,
+    '即梦': Wand,
+    '通义万相': Wand,
+
+    // 影视娱乐
+    '哔哩哔哩': Play,
+    'youtube': Play,
+    '爱奇艺': Monitor,
+    '在线音乐': Play,
+    '视频下载': Monitor,
+    '星空音乐下载': Play,
+    'instagram': Camera,
+    '快手': Camera,
+    '抖音': Camera, 
+    'tiktok': Camera,
+    'snapchat': Camera,
+
+    // IP检测
+    'browserscan': Network,
+    'ping0': Network,
+    '真实地址生成器': Network,
+    'itdog': Network,
+    'ip地址查询': Network,
+    
+    // 搜索引擎
+    '谷歌': Search,
+    '百度': Search,
+    '必应': Search,
+
+    // 云计算
+    'aws': Server,
+    'azure': Server,
+    '阿里云': Server,
+    '腾讯云': Server,
+    '华为云': Server,
+    'oracle cloud': Database,
+    'ibm cloud': Database,
+
+    // 工具箱 (全部映射到 Wrench/Code/Wand)
+    '在线工具网': Wrench, 
+    'py混淆': Wrench,
+    '二维码生成': Wrench,
+    'argo tunnel json获取': Wrench,
+    'base64转换': Wrench,
+    '一键抠图': Wand, 
+    '网址缩短': Wrench,
+    'flexclip': Wand,
+    'js混淆': Wrench,
+    '文件格式转换': Wrench,
+    '第一工具网': Wrench,
+    'php混淆加密': Wrench,
+    'json工具': Wrench, 
+    'emoji 表情大全': Wrench,
+    '网站打包app': Code,
+
+    // IP代理
+    '在线代理': Network,
+    '免费网络代理': Network,
+
+    // 电商平台
+    '淘宝网': ShoppingCart,
+    '京东商城': ShoppingCart,
+    '亚马逊': ShoppingCart,
 };
 
-// 🔹 LinkCard 组件 (主页显示的导航卡片) - **图标回退修复在此处**
-const LinkCard = React.memo(({ link }) => {
-    // 跟踪外部图标是否加载失败
-    const [imageError, setImageError] = useState(false);
-    
-    // 如果图标路径改变，重置错误状态，重新尝试加载
+// 🔹 辅助函数：根据链接名称获取 Lucide 组件 (用于回退)
+const DefaultFallbackIcon = Globe; 
+
+const getLucideIcon = (linkName) => {
+    const key = linkName.toLowerCase().replace(/\s/g, ''); 
+    const IconComponent = ICON_MAP[key];
+    return IconComponent || DefaultFallbackIcon;
+};
+
+
+// 🔹 辅助组件：处理图标的加载和回退 (硬编码优先 + DuckDuckGo 服务)
+const LinkIcon = ({ link }) => {
+    const [hasError, setHasError] = useState(false);
+
     useEffect(() => {
-        setImageError(false);
-    }, [link.icon]);
+        setHasError(false);
+    }, [link.url, link.icon]);
 
-    const isExternalIcon = link.icon && (link.icon.startsWith('data:image') || link.icon.startsWith('http'));
+    const imageUrl = useMemo(() => {
+        // 1. 优先使用硬编码的 icon 字段 (用户手动输入或 DEFAULT_NAV_DATA 中的值)
+        if (link.icon) {
+            return link.icon;
+        }
+
+        // 2. 如果没有硬编码，使用 DuckDuckGo 的 Favicon 服务
+        try {
+            const urlToParse = link.url;
+            const urlObj = new URL(urlToParse);
+            return `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
+        } catch {
+            return ''; 
+        }
+    }, [link.icon, link.url]);
     
-    const renderIcon = () => {
-        if (isExternalIcon && !imageError) {
-            return (
-                // 尝试加载外部图标或 Base64 图像
+    const FallbackIconComponent = getLucideIcon(link.name); 
+    
+    return (
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+            {hasError || !imageUrl ? (
+                <FallbackIconComponent className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
+            ) : (
                 <img 
-                    src={link.icon} 
+                    src={imageUrl} 
                     alt={link.name} 
-                    className="w-5 h-5 rounded-full" 
-                    onError={() => setImageError(true)} // 关键修复：图片加载失败时设置错误状态，触发回退
+                    className="w-6 h-6 object-contain"
+                    // 如果图片加载失败 (无论是硬编码还是动态服务)，设置错误状态，回退到 Lucide 符号
+                    onError={() => setHasError(true)} 
+                    loading="lazy"
                 />
-            );
-        } else {
-            // 如果是 lucide-react 图标名称，或者外部图片加载失败，使用 LinkIcon
-            // 如果 link.icon 为空，LinkIcon 会默认显示 ExternalLink
-            return (
-                <LinkIcon 
-                    iconName={link.icon} 
-                    className="w-5 h-5 text-blue-500 dark:text-blue-400" 
-                />
-            );
-        }
-    };
-
-    return (
-        <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700 block h-full">
-            <div className="flex items-center space-x-3 mb-2">
-                <div className="flex-shrink-0">
-                    {renderIcon()}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{link.name}</h3>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{link.description || link.url}</p>
-        </a>
-    );
-});
-
-// 🔹 SearchLayout 组件
-const SearchLayout = ({ searchTerm, setSearchTerm }) => {
-  const [selectedEngine, setSelectedEngine] = useState(EXTERNAL_ENGINES[0]);
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      window.open(selectedEngine.url + encodeURIComponent(searchTerm), '_blank');
-      setSearchTerm('');
-    }
-  };
-
-  return (
-    <div className="mb-12">
-      <form onSubmit={handleSearch} className="flex items-center w-full max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
-        <div className="p-3">
-          {selectedEngine.icon.startsWith('data:image') || selectedEngine.icon.startsWith('http') ? (
-            <img src={selectedEngine.icon} alt={selectedEngine.name} className="w-5 h-5 rounded-full" />
-          ) : (
-            <LinkIcon iconName={selectedEngine.icon} className="w-5 h-5 text-blue-500" />
-          )}
-        </div>
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder={`使用 ${selectedEngine.name} 搜索...`}
-          className="flex-grow p-3 text-gray-800 dark:text-gray-100 bg-transparent focus:outline-none"
-        />
-        <button type="submit" className="p-3 text-white bg-blue-600 rounded-r-xl hover:bg-blue-700 transition-colors flex items-center space-x-1">
-          <Search className="w-5 h-5" />
-          <span className="hidden sm:inline">搜索</span>
-        </button>
-      </form>
-      <div className="flex justify-center mt-3 space-x-3 text-sm flex-wrap gap-2">
-        {EXTERNAL_ENGINES.map(engine => (
-          <button
-            key={engine.name}
-            onClick={() => setSelectedEngine(engine)}
-            className={`px-3 py-1 rounded-full transition-colors ${selectedEngine.name === engine.name ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
-          >
-            {engine.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-
-// 🔹 LinkForm 组件 (用于 AdminPanel 内部)
-const LinkForm = ({ links, setLinks }) => {
-    const [newLink, setNewLink] = useState({ name: '', url: '', description: '', icon: '' });
-
-    const handleAddLink = () => {
-        if (newLink.name && newLink.url) {
-            setLinks([...links, newLink]);
-            setNewLink({ name: '', url: '', description: '', icon: '' });
-        }
-    };
-
-    const handleDeleteLink = (index) => {
-        setLinks(links.filter((_, i) => i !== index));
-    };
-
-    const handleLinkChange = (index, field, value) => {
-        const updatedLinks = links.map((link, i) => 
-            i === index ? { ...link, [field]: value } : link
-        );
-        setLinks(updatedLinks);
-    };
-
-    return (
-        <div className="space-y-3 p-3 border border-dashed rounded dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
-            <h5 className="font-semibold text-gray-800 dark:text-gray-100">链接列表</h5>
-            {links.map((link, index) => (
-                <div key={index} className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded shadow-sm">
-                    <input type="text" value={link.name} onChange={(e) => handleLinkChange(index, 'name', e.target.value)} placeholder="名称" className="border p-1 rounded text-sm w-24 dark:bg-gray-700 dark:border-gray-600"/>
-                    <input type="url" value={link.url} onChange={(e) => handleLinkChange(index, 'url', e.target.value)} placeholder="URL" className="border p-1 rounded text-sm flex-grow dark:bg-gray-700 dark:border-gray-600"/>
-                    <input type="text" value={link.description || ''} onChange={(e) => handleLinkChange(index, 'description', e.target.value)} placeholder="描述 (可选)" className="border p-1 rounded text-sm w-24 dark:bg-gray-700 dark:border-gray-600 hidden sm:block"/>
-                    <input type="text" value={link.icon || ''} onChange={(e) => handleLinkChange(index, 'icon', e.target.value)} placeholder="图标名/URL (可选)" className="border p-1 rounded text-sm w-24 dark:bg-gray-700 dark:border-gray-600 hidden lg:block"/>
-                    <button onClick={() => handleDeleteLink(index)} className="text-red-500 hover:text-red-700 flex-shrink-0"><X className="w-4 h-4"/></button>
-                </div>
-            ))}
-            <div className="flex space-x-2">
-                <input type="text" value={newLink.name} onChange={e => setNewLink({...newLink, name: e.target.value})} placeholder="名称" className="border p-2 rounded text-sm w-20 dark:bg-gray-600 dark:border-gray-500"/>
-                <input type="url" value={newLink.url} onChange={e => setNewLink({...newLink, url: e.target.value})} placeholder="URL" className="border p-2 rounded text-sm flex-grow dark:bg-gray-600 dark:border-gray-500"/>
-                <input type="text" value={newLink.description} onChange={e => setNewLink({...newLink, description: e.target.value})} placeholder="描述" className="border p-2 rounded text-sm w-24 dark:bg-gray-600 dark:border-gray-500 hidden sm:block"/>
-                <input type="text" value={newLink.icon} onChange={e => setNewLink({...newLink, icon: e.target.value})} placeholder="图标" className="border p-2 rounded text-sm w-24 dark:bg-gray-600 dark:border-gray-500 hidden lg:block"/>
-                <button onClick={handleAddLink} className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm flex-shrink-0">添加</button>
-            </div>
-        </div>
-    );
-};
-
-// 🔹 PublicNav 组件 (显示导航页面，无论是公共数据还是私人数据)
-const PublicNav = ({ navData, searchTerm, isPrivate }) => {
-    // 过滤掉所有链接都被搜索过滤掉的分类
-    const visibleCategories = navData
-        .map(category => ({
-            ...category,
-            links: category.links?.filter(link => 
-                link.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                link.description?.toLowerCase().includes(searchTerm.toLowerCase())
-            ) || []
-        }))
-        .filter(category => category.links.length > 0);
-
-    const title = isPrivate ? "我的定制导航" : "公共导航主页";
-
-    if (visibleCategories.length === 0) {
-        return (
-            <div className="text-center py-20">
-                <Search className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600"/>
-                <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">{title}：未找到匹配 "{searchTerm}" 的结果。</p>
-                {isPrivate && <p className="mt-2 text-sm text-gray-400">请点击右上角的 **设置** 按钮添加您的私人链接。</p>}
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-10">
-            {isPrivate && (
-                <div className="text-center p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg mb-6">
-                    当前显示的是 **{title}**。
-                </div>
             )}
-            {visibleCategories.map(category => (
-                <section key={category.id} className="relative">
-                    <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-800 dark:text-white dark:border-gray-700">
-                        {category.category}
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {category.links.map(link => (
-                            <LinkCard key={link.url} link={link} />
-                        ))}
+        </div>
+    );
+};
+
+// =========================================================================
+// ⬆️ 图标映射和处理逻辑 ⬆️
+// =========================================================================
+
+
+// 🔹 链接卡片 (保持不变)
+const LinkCard = ({ link }) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
+      <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
+        
+        <LinkIcon link={link} /> 
+
+        <div className="min-w-0 flex-grow">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{link.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">{link.description}</p>
+        </div>
+        <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+      </a>
+    </div>
+  );
+};
+
+// 🔹 公共主页 (保持不变)
+const PublicNav = ({ navData, searchTerm }) => {
+    if (navData.length === 0 && searchTerm) {
+        return (
+            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+                <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                    没有找到与 "{searchTerm}" 相关的链接。
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">请尝试其他关键词。</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-8 min-h-[60vh]">
+            {navData.map(cat => (
+                cat.links && cat.links.length > 0 && (
+                    <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {cat.links.map(link => <LinkCard key={link.id || link.url} link={link} />)}
+                        </div>
                     </div>
-                </section>
+                )
             ))}
         </div>
     );
 };
 
-
-// 🔹 注册弹窗 (RegisterModal)
-const RegisterModal = ({ onClose, onRegister, error, onSwitchToLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const handleSubmit = (e) => { e.preventDefault(); onRegister(email, password); };
+// 🔹 链接表单 (新增 Icon URL 输入框)
+const LinkForm = ({ links, setLinks }) => {
+  const handleChange = (index, field, value) => {
+    const newLinks = [...links];
+    newLinks[index][field] = value;
+    setLinks(newLinks);
+  };
+  // 新增 icon 字段的默认值
+  const addLink = () => setLinks([...links, { name: '', url: '', description: '', icon: '' }]); 
+  const removeLink = (index) => setLinks(links.filter((_, i) => i !== index));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><User className="w-6 h-6 mr-3 text-green-500"/>新用户注册</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          <input type="password" placeholder="密码 (至少6位)" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
-          <button type="submit" className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg">注册</button>
-        </form>
-        <div className="mt-4 text-center">
-            <button onClick={onSwitchToLogin} className="text-sm text-blue-500 hover:underline">
-                已有账号？去登录
-            </button>
+    <div className="space-y-2 text-sm"> 
+      {links.map((l, idx) => (
+        <div key={idx} className="flex flex-wrap items-center gap-2 border p-2 rounded dark:border-gray-600">
+          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-20 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/>
+          {/* ⭐️ 图标 URL 输入框 ⭐️ */}
+          <input placeholder="图标 URL (可选)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded flex-1 min-w-[150px] dark:bg-gray-700 dark:border-gray-600"/>
+          
+          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 flex-shrink-0">删除</button>
         </div>
-      </div>
+      ))}
+      <button onClick={addLink} className="bg-blue-500 text-white px-3 py-1 rounded mt-1 hover:bg-blue-600">新增链接</button>
     </div>
-  );
-};
+  )
+}
 
-// 🔹 登录弹窗 (LoginModal)
-const LoginModal = ({ onClose, onLogin, error, onSwitchToRegister }) => {
+// 🔹 登录弹窗 (保持不变)
+const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
@@ -318,194 +411,344 @@ const LoginModal = ({ onClose, onLogin, error, onSwitchToRegister }) => {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>用户登录</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
           <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
         </form>
-        <div className="mt-4 text-center">
-            <button onClick={onSwitchToRegister} className="text-sm text-blue-500 hover:underline">
-                没有账号？去注册
-            </button>
-        </div>
       </div>
     </div>
   );
 };
 
+// 🔹 管理面板 (保持不变)
+const AdminPanel = ({ db, navData, fetchData }) => {
+  const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
+  const [editId, setEditId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const navCollection = collection(db, `artifacts/${APP_ID}/public/data/navData`);
 
-// 🔹 管理面板 (AdminPanel) - 现在用于所有注册用户的私有数据编辑
-const AdminPanel = ({ db, navData, userId, isAdmin, onGoHome }) => {
-    // 核心修改：所有注册用户操作私有数据
-    const collectionPath = isAdmin 
-        ? `artifacts/${APP_ID}/public/data/navData` // 管理员操作公共数据
-        : `artifacts/${APP_ID}/users/${userId}/navData`; // 普通注册用户操作私有数据
-        
-    const navCollection = collection(db, collectionPath);
-    
-    const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
-    const [editId, setEditId] = useState(null);
-    const [editData, setEditData] = useState({});
-    const [isAdding, setIsAdding] = useState(false);
-    
-    const title = isAdmin ? '管理员面板 (编辑公共数据)' : '我的定制面板 (编辑私有数据)';
+  const handleAddCategory = async () => {
+    if (!newCategory.category) return alert('请输入分类名称');
+    // 确保 links 数组中的每个对象都有 icon 字段
+    const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
+    await addDoc(navCollection, {...newCategory, links: linksWithIcon});
+    setNewCategory({ category: '', order: 0, links: [] });
+    fetchData();
+  };
+  const startEdit = (item) => { 
+    // 确保 links 数组中的每个对象都有 icon 字段
+    const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
+    setEditId(item.id); 
+    setEditData({...item, links: linksWithIcon}); 
+  };
+  const saveEdit = async () => { 
+    // 确保 links 数组中的每个对象都有 icon 字段
+    const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
+    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), {...editData, links: linksWithIcon}); 
+    setEditId(null); 
+    fetchData(); 
+  };
+  const handleDelete = async (id) => { 
+    if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
+        await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); 
+        fetchData();
+    }
+  };
 
-    const handleAddCategory = async () => {
-        if (!newCategory.category) return console.warn('请输入分类名称');
-        try {
-            // 在 Firestore 中创建新分类
-            await addDoc(navCollection, {
-                category: newCategory.category,
-                order: Number(newCategory.order) || 0,
-                links: newCategory.links.map(l => ({ name: l.name, url: l.url, description: l.description || '', icon: l.icon || '' })),
-            });
-            setNewCategory({ category: '', order: 0, links: [] });
-            setIsAdding(false);
-        } catch (error) {
-            console.error("Error adding document: ", error);
-        }
-    };
-
-    const startEdit = (item) => { 
-      const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
-      setEditId(item.id); 
-      setEditData({...item, links: linksWithIcon}); 
-    };
-
-    const saveEdit = async () => { 
-      if (!editData.category) return console.warn('分类名称不能为空');
+  return (
+    <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
+      <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (完整 CRUD)</h3>
+      <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
+          <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
+          <div className="flex flex-col gap-3">
+              <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
+              <div className="flex items-center space-x-2">
+                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                  <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
+              </div>
+              <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
+              <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
+          </div>
+      </div>
       
-      const linksWithIcon = editData.links.map(link => ({
-        name: link.name, 
-        url: link.url, 
-        description: link.description || '', 
-        icon: link.icon || '' 
-      }));
+      <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有分类</h4>
+      {navData.map(item=>(
+        <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
+          {editId === item.id ? (
+            // 编辑状态
+            <>
+              <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+              <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                  <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              </div>
+              <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
+              <div className="flex space-x-2 mt-3">
+                <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
+                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
+              </div>
+            </>
+          ) : (
+            // 显示状态
+            <>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
+                <div className="flex space-x-2">
+                  <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
+                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
+                </div>
+              </div>
+              <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
+              </ul>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
-      try {
-        await updateDoc(doc(db, collectionPath, editId), {
-            category: editData.category,
-            order: Number(editData.order) || 0,
-            links: linksWithIcon,
-        }); 
-        setEditId(null); 
-      } catch (error) {
-        console.error("Error updating document: ", error);
-      }
-    };
+// 🔹 页脚组件 (保持不变)
+const Footer = ({ setCurrentPage }) => {
+  const currentYear = new Date().getFullYear();
+  
+  const footerLinks = [
+    { name: '关于本站', action: () => setCurrentPage('about') },
+    { name: '免责声明', action: () => setCurrentPage('disclaimer') },
+  ];
+
+  return (
+    <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
+      <div className="container mx-auto px-4 text-center">
+        <div className="flex flex-col items-center space-y-4"> 
+          
+          <div className="text-center">
+            <h3 
+              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
+              onClick={() => setCurrentPage('home')}
+            >
+              第一象限
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              © {currentYear} 极速导航网. 保留所有权利.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6">
+            {footerLinks.map((link, idx) => (
+              <a 
+                key={idx}
+                href="#"
+                onClick={(e) => { e.preventDefault(); link.action(); }}
+                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
+              >
+                {link.name}
+              </a>
+            ))}
+            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// 🔹 关于本站页面组件 (保持不变)
+const AboutPage = () => (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
+        <div className="space-y-4 text-gray-700 dark:text-gray-300">
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【站点功能】</h3>
+            <p>
+                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【创设初衷：拒绝广告】</h3>
+            <p>
+                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
+            <p>
+                由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
+                <br/> 
+                联系邮箱: 
+                <a 
+                    href="mailto:115382613@qq.com" 
+                    className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
+                >
+                    115382613@qq.com
+                </a>
+            </p>
+        </div>
+    </div>
+);
+
+
+// 🔹 免责声明页面组件 (保持不变)
+const DisclaimerPage = () => (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
+        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
+            <p>
+                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
+            <p>
+                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
+            <p>
+                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
+            </p>
+            <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
+                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
+            </p>
+        </div>
+    </div>
+);
+
+
+// =========================================================================
+// ⬇️ 搜索按钮配置与逻辑 (硬编码图标，最可靠) ⬇️
+// =========================================================================
+
+// 🔹 外部搜索引擎配置 (硬编码图标)
+const externalEngines = [
+  // 百度：使用官方 Favicon URL
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
+  // ⭐️ 修复谷歌搜索框图标：改用 DuckDuckGo 代理服务加载 ⭐️
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
+  // 必应：使用官方 Favicon URL
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+];
+
+// 🔹 外部搜索处理函数 (保持不变)
+const handleExternalSearch = (engineUrl, query) => {
+  if (query) {
+    window.open(engineUrl + encodeURIComponent(query), '_blank');
+  } else {
+    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
+    window.open(baseDomain, '_blank');
+  }
+};
+
+// 🔹 搜索输入框组件 (保持不变)
+const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
+    <div className="relative">
+        <input 
+            type="text" 
+            placeholder="搜索链接名称、描述或网址..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+        />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+        {searchTerm && (
+            <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                title="清空站内搜索"
+            >
+                <X className="w-5 h-5"/>
+            </button>
+        )}
+    </div>
+));
+
+// 🔹 子组件：处理单个外部搜索按钮的图标
+const ExternalSearchButton = ({ engine, searchTerm }) => {
+    const [hasError, setHasError] = useState(false);
     
-    const handleDelete = async (id) => { 
-      // 使用 window.confirm 作为临时替代方案
-      // NOTE: 在生产环境中应使用自定义模态框替代 alert/confirm
-      if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
-          try {
-            await deleteDoc(doc(db, collectionPath, id));
-          } catch (error) {
-            console.error("Error deleting document: ", error);
-          }
-      }
-    };
+    // 直接使用 engine.icon 作为源，无论是 Base64 还是 URL 都能兼容
+    const imageUrl = engine.icon; 
+
+    const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
 
     return (
-        <div className="mt-6 p-4 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white flex justify-between items-center">
-                {title}
-                <button 
-                    onClick={onGoHome} 
-                    className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors text-base"
-                >
-                    <Globe className="w-4 h-4 mr-1" />
-                    返回导航页
-                </button>
-            </h3>
-            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                {isAdmin 
-                    ? '您正在修改公共导航数据，这将影响所有游客和首次注册用户的默认设置。' 
-                    : `欢迎回来，${userId}！您在这里设置的导航界面是您私有的。`}
-            </p>
-
-            <button 
-                onClick={() => setIsAdding(!isAdding)} 
-                className="mb-4 flex items-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-            >
-                {isAdding ? <ChevronUp className="w-5 h-5 mr-2" /> : <ChevronDown className="w-5 h-5 mr-2" />}
-                {isAdding ? '收起新增面板' : '展开新增分类'}
-            </button>
-            
-            {isAdding && (
-                <div className="p-4 mb-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-blue-200 dark:border-blue-800 transition-all duration-300">
-                    <h4 className="font-semibold mb-3 text-lg text-gray-800 dark:text-gray-100">新增分类</h4>
-                    <div className="flex flex-col gap-3">
-                        <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-700 dark:border-gray-600" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
-                        <div className="flex items-center space-x-2">
-                            <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                            <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-700 dark:border-gray-600" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
-                        </div>
-                        <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
-                        <button onClick={handleAddCategory} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 self-start">确认新增分类</button>
-                    </div>
-                </div>
+        <button
+            onClick={handleSearch}
+            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+            className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
+        >
+            {hasError || !imageUrl ? (
+                // 最终的 Lucide 回退
+                <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+            ) : (
+                <img 
+                    src={imageUrl} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full object-contain"
+                    onError={() => setHasError(true)} 
+                    loading="lazy"
+                />
             )}
-            
-            <h4 className="font-semibold mb-3 text-lg text-gray-800 dark:text-white">现有分类列表</h4>
-            <div className="space-y-4">
-                {navData.map(item=>(
-                  <div key={item.id} className="border p-4 rounded bg-white dark:bg-gray-800 shadow-lg">
-                    {editId === item.id ? (
-                      // 编辑状态
-                      <>
-                        <input className="text-xl font-bold border p-2 mb-2 rounded w-full dark:bg-gray-700 dark:border-gray-600" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
-                        <div className="flex items-center space-x-2 mb-3">
-                            <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                            <input type="number" className="border p-2 rounded w-20 dark:bg-gray-700 dark:border-gray-600" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
-                        </div>
-                        <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
-                        <div className="flex space-x-3 mt-4">
-                          <button onClick={saveEdit} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">保存修改</button>
-                          <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">取消</button>
-                        </div>
-                      </>
-                    ) : (
-                      // 显示状态
-                      <>
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="text-xl font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
-                          <div className="flex space-x-2">
-                            <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-4 py-1 rounded hover:bg-yellow-600">编辑</button>
-                            <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-4 py-1 rounded hover:bg-red-600">删除</button>
-                          </div>
-                        </div>
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 ml-2 text-sm text-gray-600 dark:text-gray-300 border-t pt-2 dark:border-gray-700">
-                          {item.links?.map((l,idx)=><li key={idx} className="truncate"><span className="font-semibold">{l.name}</span> - <a href={l.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{l.url}</a></li>)}
-                        </ul>
-                      </>
-                    )}
-                  </div>
-                ))}
-            </div>
-        </div>
+        </button>
     );
 };
 
+// 🔹 外部搜索按钮组件 
+const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
+    <div className={className}>
+        {externalEngines.map(engine => (
+            <ExternalSearchButton 
+                key={engine.name} 
+                engine={engine} 
+                searchTerm={searchTerm} 
+            />
+        ))}
+    </div>
+));
 
-// 🔹 首页组件 (HomePage)
-const HomePage = () => { 
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-    const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [user, setUser] = useState(null);
-    const [userId, setUserId] = useState(null); // 存储真实 UID 或 'anonymous'
-    const [isAuthReady, setIsAuthReady] = useState(false); // 新增：标记认证是否完成首次检查
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [showLoginModal, setShowLoginModal] = useState(false);
-    const [showRegisterModal, setShowRegisterModal] = useState(false);
-    const [loginError, setLoginError] = useState('');
-    const [currentPage, setCurrentPage] = useState('home'); // 'home' (导航主页) 或 'admin' (编辑面板)
+// =========================================================================
+// ⬆️ 搜索按钮配置与逻辑 ⬆️
+// =========================================================================
 
-    // Firebase App 初始化 
-    // 🔥🔥🔥 您的 Firebase 配置已更新为提供的值 🔥🔥🔥
+
+// 🚀 SearchLayout 组件 (保持不变)
+const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
+    if (isAdmin || currentPage !== 'home') return null;
+
+    return (
+        <div className="mb-8 max-w-2xl mx-auto">
+            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            <ExternalSearchButtons 
+                className="flex justify-center space-x-4 mt-4" 
+                searchTerm={searchTerm} 
+            />
+        </div>
+    );
+});
+
+
+// 🔹 主应用 (App 组件)
+export default function App() {
+  const [firebaseApp, setFirebaseApp] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [db, setDb] = useState(null);
+  const [userId, setUserId] = useState(null);
+  
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
+  const [isDark, setIsDark] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  
+  const [currentPage, setCurrentPage] = useState('home'); 
+  const [searchTerm, setSearchTerm] = useState(''); 
+  
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+
+  useEffect(()=>{
     const firebaseConfig = {
       apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
       authDomain: "wangzhandaohang.firebaseapp.com",
@@ -513,344 +756,159 @@ const HomePage = () => {
       storageBucket: "wangzhandaohang.firebasestorage.app",
       messagingSenderId: "169263636408",
       appId: "1:169263636408:web:ee3608652b2872a539b94d",
-      measurementId: "G-6JGHTS41NH"
     };
+    const app = initializeApp(firebaseConfig);
+    const _auth = getAuth(app);
+    const _db = getFirestore(app);
+    setFirebaseApp(app); setAuth(_auth); setDb(_db);
 
-    const app = useMemo(() => {
-        try {
-            return initializeApp(firebaseConfig);
-        } catch (e) {
-            console.error("Firebase initialization failed:", e);
-            return null;
-        }
-    }, []);
+    const unsub = onAuthStateChanged(_auth, user=>{
+      if(user) setUserId(user.uid);
+      else { signInAnonymously(_auth).catch(console.error); setUserId('anonymous'); }
+    });
+    return unsub;
+  },[]);
 
-    const db = app ? getFirestore(app) : null;
-    const auth = app ? getAuth(app) : null;
+  const isAdmin = userId === ADMIN_USER_ID;
 
-    useEffect(() => {
-        // 主题设置逻辑
-        document.documentElement.className = theme === 'dark' ? 'dark' : 'light';
-        localStorage.setItem('theme', theme);
-    }, [theme]);
+  useEffect(()=>{
+    if(!db) return;
+    const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
+    const unsub = onSnapshot(navCol, snapshot=>{
+      const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      data.sort((a,b)=>(a.order||0)-(b.order||0));
+      
+      setIsFirebaseConnected(true); 
 
-    // 认证状态监听和初始化
-    useEffect(() => {
-        if (!auth) return;
-        
-        // 尝试使用初始令牌登录
-        const initializeAuth = async () => {
-             // 检查是否有 Canvas 提供的初始 auth token
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                try {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } catch (e) {
-                    console.error("Custom token sign-in failed:", e);
-                    // 令牌登录失败，回退到匿名登录
-                    await signInAnonymously(auth);
-                }
-            } else {
-                // 如果没有提供初始令牌，直接匿名登录
-                await signInAnonymously(auth);
-            }
-        }
-        
-        // 启动初始化流程
-        initializeAuth();
+      if (data.length > 0 || isAdmin) { 
+          setNavData(data);
+      }
+      
+    }, 
+    (error) => {
+        console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
+        setIsFirebaseConnected(false); 
+        setNavData(DEFAULT_NAV_DATA);
+    });
+    return unsub;
+  },[db, isAdmin]); 
 
+  const fetchData = async ()=>{
+    if(!db) return;
+    const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
+    try {
+        const snapshot = await getDocs(navCol);
+        const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+        data.sort((a,b)=>(a.order||0)-(b.order||0));
+        setNavData(data);
+    } catch (error) {
+        console.error("Admin fetch failed:", error);
+    }
+  };
 
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                const id = currentUser.isAnonymous ? 'anonymous' : currentUser.uid;
-                setUserId(id);
-                setIsAdmin(currentUser.uid === ADMIN_USER_ID);
-            } else {
-                setUserId('anonymous'); // 用户登出，但 onAuthStateChanged 会确保匿名登录被触发
-                setIsAdmin(false);
-            }
-            // 首次认证检查完成，允许数据加载
-            setIsAuthReady(true);
+  const handleLogin = async (email,password)=>{
+    try {
+      await signInWithEmailAndPassword(auth,email,password);
+      setShowLogin(false); 
+      setLoginError('');
+      await fetchData(); 
+    } catch(e){ setLoginError(e.message); }
+  };
+  
+  const filteredNavData = useMemo(() => {
+    if (!searchTerm) {
+      return navData; 
+    }
+
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+    return navData
+      .map(category => {
+        const filteredLinks = (category.links || []).filter(link => {
+          const name = link.name?.toLowerCase() || '';
+          const description = link.description?.toLowerCase() || '';
+          const url = link.url?.toLowerCase() || '';
+
+          return name.includes(lowerCaseSearchTerm) || 
+                 description.includes(lowerCaseSearchTerm) ||
+                 url.includes(lowerCaseSearchTerm);
         });
-        
-        return () => unsubscribe();
-    }, [auth]);
 
-
-    // 核心数据初始化和实时监听 (已修复 useEffect 警告)
-    useEffect(() => {
-        if (!db || !userId || !isAuthReady) {
-            // 在认证就绪前阻止 Firestore 操作
-            return () => {};
-        }
-
-        const isPrivateUser = userId !== 'anonymous';
-        let collectionPath;
-
-        if (isPrivateUser) {
-            collectionPath = `artifacts/${APP_ID}/users/${userId}/navData`;
-        } else {
-            collectionPath = `artifacts/${APP_ID}/public/data/navData`;
-        }
-        
-        const navCollection = collection(db, collectionPath);
-        const navQuery = query(navCollection, orderBy("order", "asc"));
-
-        // 1. 异步数据初始化 (仅针对新注册用户)
-        const initializePrivateData = async () => {
-            if (isPrivateUser) {
-                try {
-                    const initialSnapshot = await getDocs(navCollection);
-                    if (initialSnapshot.empty) {
-                        console.log("Private data empty. Initializing with default data.");
-                        // 写入默认数据到用户的私有路径
-                        for (const item of DEFAULT_NAV_DATA) {
-                            // 使用 setDoc 代替 addDoc 确保文档结构清晰，但为了保持原逻辑，继续使用 addDoc
-                            await addDoc(navCollection, {
-                                category: item.category,
-                                order: item.order,
-                                links: item.links,
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error initializing private data:", e);
-                }
-            }
+        return {
+          ...category,
+          links: filteredLinks,
         };
+      })
+      .filter(category => category.links.length > 0);
+  }, [navData, searchTerm]);
+
+
+  return (
+    <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
+      <DebugBar />
+      {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
+      <div className="container mx-auto px-4 py-8 flex-grow">
         
-        // 立即调用异步初始化函数
-        initializePrivateData();
-        
-        // 2. 实时监听数据变化 (同步设置 onSnapshot)
-        const unsubscribe = onSnapshot(navQuery, (snapshot) => {
-            let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        <header className="mb-12 relative">
+            <h1 
+                className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
+                onClick={() => setCurrentPage('home')}
+            >
+                极速导航网
+            </h1>
             
-            // 如果监听到的数据为空，使用硬编码数据作为回退
-            if (data.length === 0 && !isPrivateUser) {
-                setNavData(DEFAULT_NAV_DATA.map(cat => ({...cat, id: cat.category.replace(/\s/g, '-') })));
-                return;
-            }
-
-            setNavData(data);
-        }, (error) => {
-            console.error("Error fetching Firestore data, falling back to default:", error);
-            setNavData(DEFAULT_NAV_DATA);
-        });
-
-        // 返回 onSnapshot 的清理函数 (这是同步的，符合 React 规范)
-        return () => unsubscribe();
-    }, [db, userId, isAuthReady]); // 依赖项：db, userId, isAuthReady
-
-
-    const handleRegister = async (email, password) => {
-        setLoginError('');
-        try {
-          await createUserWithEmailAndPassword(auth, email, password);
-          setShowRegisterModal(false); 
-          setShowLoginModal(false);
-          // 注册成功后，onAuthStateChanged 会自动触发，设置 isAuthReady=true，并加载用户私有数据
-        } catch(e){ 
-            setLoginError(`注册失败: ${e.message}`); 
-        }
-    };
-
-    const handleLogin = async (email, password) => {
-        setLoginError('');
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            setShowLoginModal(false);
-            setShowRegisterModal(false);
-        } catch (error) {
-            console.error("Login failed:", error);
-            setLoginError('登录失败：邮箱或密码错误。');
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            // 退出登录后 onAuthStateChanged 会触发匿名登录，重新加载公共数据
-        } catch (e) {
-            console.error("Logout failed:", e);
-        }
-    };
-
-    const handleToggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
-
-    // 搜索过滤后的导航数据
-    const filteredNavData = useMemo(() => {
-        if (!searchTerm) return navData;
-        const lowerCaseSearchTerm = searchTerm.toLowerCase();
-        
-        // 过滤分类内的链接
-        return navData
-            .map(category => ({
-                ...category,
-                links: category.links?.filter(link => 
-                    link.name.toLowerCase().includes(lowerCaseSearchTerm) || 
-                    link.description?.toLowerCase().includes(lowerCaseSearchTerm) ||
-                    category.category.toLowerCase().includes(lowerCaseSearchTerm)
-                ) || []
-            }))
-            .filter(category => category.links.length > 0);
-    }, [navData, searchTerm]);
-
-
-    // 判断是否是注册用户（非匿名）
-    const isRegisteredUser = userId && userId !== 'anonymous';
-
-
-    return (
-        <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
-            <div className="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen pt-4">
-              <div className="container mx-auto px-4 max-w-7xl">
-        
-                {/* 头部导航栏 */}
-                <header className="flex justify-between items-center py-4 mb-8">
-                    <h1 
-                        className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer" 
-                        onClick={() => setCurrentPage('home')}
+            <div className="flex flex-col gap-2 absolute top-0 right-0">
+                <button 
+                    onClick={()=>setIsDark(!isDark)} 
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    title="切换主题"
+                >
+                    {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
+                </button>
+                {!isAdmin && (
+                    <button 
+                        onClick={() => setShowLogin(true)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="管理员登录"
                     >
-                        {APP_TITLE}
-                    </h1>
-                    <div className="flex items-center space-x-3">
-                        {/* 当前用户ID显示（方便调试和识别） */}
-                        {isAuthReady && userId && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 p-2 border rounded-full hidden sm:block">
-                                ID: {userId.substring(0, 4)}...{userId.substring(userId.length - 4)}
-                            </span>
-                        )}
-
-                        {/* 主页按钮 (仅当不在主页时显示) */}
-                        {currentPage !== 'home' && (
-                            <button 
-                                onClick={() => setCurrentPage('home')} 
-                                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-blue-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                                title="主页"
-                            >
-                                <Globe className="w-5 h-5"/>
-                            </button>
-                        )}
-                        
-                        {/* 注册用户专属：设置/管理面板按钮 */}
-                        {isRegisteredUser && (
-                            <button 
-                                onClick={() => setCurrentPage('admin')} 
-                                className={`p-2 rounded-full ${currentPage === 'admin' ? 'bg-purple-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-purple-500 hover:bg-gray-300 dark:hover:bg-gray-600'} transition-colors`}
-                                title="我的定制面板"
-                            >
-                                <Settings className="w-5 h-5"/>
-                            </button>
-                        )}
-
-                        {/* 主题切换按钮 */}
-                        <button 
-                            onClick={handleToggleTheme} 
-                            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                            title="切换主题"
-                        >
-                            {theme === 'light' ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
-                        </button>
-
-                        {/* 核心认证按钮逻辑 */}
-                        {isRegisteredUser ? (
-                            // 已登录用户 (注册用户)
-                            <button 
-                                onClick={handleLogout} 
-                                className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                title={`退出登录 (${user?.email || '用户'})`}
-                            >
-                                <LogIn className="w-5 h-5"/> 
-                            </button>
-                        ) : (
-                            // 游客 (匿名用户)
-                            <div className="flex space-x-2">
-                                <button 
-                                    onClick={() => setShowLoginModal(true)} 
-                                    className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-                                    title="登录"
-                                >
-                                    <LogIn className="w-5 h-5"/> 
-                                </button>
-                                <button 
-                                    onClick={() => setShowRegisterModal(true)} 
-                                    className="p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-                                    title="新用户注册"
-                                >
-                                    <User className="w-5 h-5"/> 
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </header>
-                
-                {/* 搜索区域 */}
-                <SearchLayout searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
-                
-                {/* 核心内容渲染 */}
-                {!isAuthReady || !db || !auth || !userId ? (
-                    <div className="text-center py-20 text-gray-500 dark:text-gray-400">正在初始化应用和认证状态...</div>
-                ) : (
-                    currentPage === 'admin' && isRegisteredUser ? (
-                        // 注册用户且当前页面为 Admin Panel
-                        <AdminPanel 
-                            db={db} 
-                            navData={navData} 
-                            userId={userId} 
-                            isAdmin={isAdmin} // 管理员操作公共数据，普通用户操作私有数据
-                            onGoHome={() => setCurrentPage('home')}
-                        />
-                    ) : (
-                        // 游客 (匿名) 或 注册用户的主页 ('home')
-                        <PublicNav 
-                            navData={filteredNavData} 
-                            searchTerm={searchTerm} 
-                            isPrivate={isRegisteredUser}
-                        />
-                    )
+                        <User className="w-5 h-5"/> 
+                    </button>
                 )}
-              </div>
+                {isAdmin && (
+                    <button 
+                        onClick={() => signOut(auth)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="退出管理"
+                    >
+                        <User className="w-5 h-5"/> 
+                    </button>
+                )}
             </div>
-            
-            <Footer appTitle={APP_TITLE} />
-            
-            {/* 登录/注册弹窗渲染 */}
-            {showLoginModal && (
-                <LoginModal 
-                    onClose={() => {setShowLoginModal(false); setLoginError('');}} 
-                    onLogin={handleLogin} 
-                    error={loginError}
-                    onSwitchToRegister={() => { setShowLoginModal(false); setShowRegisterModal(true); setLoginError(''); }}
-                />
-            )}
-            {showRegisterModal && (
-                <RegisterModal 
-                    onClose={() => {setShowRegisterModal(false); setLoginError('');}} 
-                    onRegister={handleRegister} 
-                    error={loginError}
-                    onSwitchToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); setLoginError(''); }}
-                />
-            )}
-        </div>
-    );
-};
-
-// 🔹 页脚 (Footer) - 简化，移除无用的页面跳转按钮
-const Footer = ({ appTitle }) => (
-    <footer className="w-full mt-12 py-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-300">
-      <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-        <p>&copy; {new Date().getFullYear()} {appTitle}. All rights reserved.</p>
-        <div className="flex space-x-4 mt-3 sm:mt-0">
-          <a href="https://github.com/your-repo" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 flex items-center">
-            <Github className="w-4 h-4 mr-1"/> GitHub
-          </a>
-        </div>
+        </header>
+        
+        <SearchLayout 
+            isAdmin={isAdmin}
+            currentPage={currentPage}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+        />
+        
+        {isAdmin ? (
+            <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+        ) : (
+            currentPage === 'home' ? (
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
+            ) : currentPage === 'about' ? (
+                <AboutPage />
+            ) : currentPage === 'disclaimer' ? (
+                <DisclaimerPage />
+            ) : (
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
+            )
+        )}
       </div>
-    </footer>
-);
-
-// 默认导出主应用组件
-export default HomePage;
+      
+      <Footer setCurrentPage={setCurrentPage} />
+    </div>
+  )
+}
