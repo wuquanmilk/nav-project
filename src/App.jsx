@@ -551,6 +551,7 @@ const Footer = ({ setCurrentPage }) => {
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
+              {/* ✅ 邮箱地址已修改 (Footer) */}
               <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
                 <Mail className="w-5 h-5" />
               </a>
@@ -580,6 +581,7 @@ const AboutPage = () => (
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
                 <br/> 
                 联系邮箱: 
+                {/* ✅ 邮箱地址已修改 (AboutPage) */}
                 <a 
                     href="mailto:115382613@qq.com" 
                     className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
@@ -618,36 +620,37 @@ const DisclaimerPage = () => (
 
 
 // =========================================================================
-// ⬇️ 搜索按钮配置与逻辑 (硬编码图标，最可靠) ⬇️
+// ⬇️ 搜索按钮配置与逻辑 (仅谷歌硬编码) ⬇️
 // =========================================================================
 
-// 🔹 外部搜索引擎配置 (硬编码图标)
+// 🔹 外部搜索引擎配置 (仅谷歌硬编码，百度和必应保持原样)
 const externalEngines = [
-  // 修正后的百度图标地址
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
-  // ✅ 仅此行被修改为更稳定的 Google PNG 图标地址
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://ssl.gstatic.com/images/branding/product/1x/google_fav_512dp.png' }, 
-  // 修正后的必应图标地址
-  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' }, // 保持原样，使用CDN加载
+  // 🔥🔥🔥 核心修改：使用 Base64 编码的 Google 图标，确保 100% 在任何网络下都能显示 🔥🔥🔥
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGggZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1YzAtMS41Ny0uMTUtMy4wOS0uMzgtNC41NUgyNHY5LjAyaDEyLjk0Yy0uNTggMi45Ni0yLjI2IDUuNDgtNC43OCA3LjE4bDcuNzMgNmM0LjUxLTQuMTggNy4wOS0xMC4zNiA3LjA5LTE3LjY1eiIvPjxwYXRoIGZpbGw9IiNGQkJDMDUiIGQ9Ik0xMC41MyAyOC41OWMtLjQ4LTEuNDUtLjc2LTIuOTktLjc2LTQuNTlzLjI3LTMuMTQuNzYtNC41OWwtNy45OC02LjE5Qy45MiAxNi40NiAwIDIwLjEyIDAgMjRjMCAzLjg4LjkyIDcuNTQgMi41NiAxMC43OGw3Ljk3LTYuMTl6Ii8+PHBhdGggZmlsbD0iIzM0QTg1MyIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjEzIDE1Ljg5LTUuODFsLTcuNzMtNmMtMi4xNSAxLjQ1LTQuOTIgMi4zLTguMTYgMi4zLTYuMjYgMC0xMS41Ny00LjIyLTEzLjQ3LTkuOTFsLTcuOTggNi4xOUM2LjUxIDQyLjYyIDE0LjYyIDQ4IDI0IDQ4eiIvPjwvc3ZnPg==' },
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' }, // 保持原样，使用CDN加载
 ];
 
 // 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
   if (query) {
+    // 编码查询字符串并新窗口打开
     window.open(engineUrl + encodeURIComponent(query), '_blank');
   } else {
+    // 如果没有关键词，直接打开搜索引擎主页
     const baseDomain = new URL(engineUrl.split('?')[0]).origin;
     window.open(baseDomain, '_blank');
   }
 };
 
-// 🔹 搜索输入框组件 (保持不变)
+// 🔹 搜索输入框组件 (提取到 App 外部，接收 props)
 const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     <div className="relative">
         <input 
             type="text" 
             placeholder="搜索链接名称、描述或网址..." 
             value={searchTerm}
+            // 确保 onChange 正确更新状态
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
         />
@@ -664,14 +667,23 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     </div>
 ));
 
-// 🔹 子组件：处理单个外部搜索按钮的图标 (保持不变)
+// 🔹 子组件：处理单个外部搜索按钮的图标 (新增，用于稳定显示 Favicon)
 const ExternalSearchButton = ({ engine, searchTerm }) => {
     const [hasError, setHasError] = useState(false);
     
-    // 直接使用硬编码的 URL，不再需要 useMemo/useEffect 监听变化，因为它是固定的
-    const imageUrl = engine.icon; 
+    // 链接变化时，重置错误状态
+    useEffect(() => {
+        setHasError(false);
+    }, [engine.name]); 
 
     const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
+
+    // ⭐️ 核心逻辑修改：判断是否为 Base64 编码的图标 ⭐️
+    // 如果是 data:image 开头，说明是硬编码的 Base64，直接使用
+    // 否则认为是域名，使用 Google S2 CDN 加载 (保持你原有的逻辑)
+    const iconSrc = engine.icon.startsWith('data:image') 
+        ? engine.icon 
+        : `https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`;
 
     return (
         <button
@@ -679,15 +691,15 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
             title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
             className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
         >
-            {hasError || !imageUrl ? (
-                // 最终的 Lucide 回退
+            {/* 如果硬编码的 icon URL 不存在或加载出错，则回退到 Lucide Search 图标 */}
+            {hasError || !engine.icon ? (
                 <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
             ) : (
                 <img 
-                    src={imageUrl} 
+                    src={iconSrc} 
                     alt={engine.name} 
                     className="w-6 h-6 rounded-full object-contain"
-                    onError={() => setHasError(true)} 
+                    onError={() => setHasError(true)} // 加载失败，触发回退
                     loading="lazy"
                 />
             )}
@@ -695,11 +707,12 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
     );
 };
 
-// 🔹 外部搜索按钮组件 (保持不变) 
+
+// 🔹 外部搜索按钮组件 (提取到 App 外部，接收 props)
 const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
         {externalEngines.map(engine => (
-            <ExternalSearchButton 
+             <ExternalSearchButton 
                 key={engine.name} 
                 engine={engine} 
                 searchTerm={searchTerm} 
@@ -708,18 +721,17 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// =========================================================================
-// ⬆️ 搜索按钮配置与逻辑 ⬆️
-// =========================================================================
-
-
-// 🚀 SearchLayout 组件 (保持不变)
+// 🚀 SearchLayout 组件 (使用稳定的单一布局)
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || currentPage !== 'home') return null;
 
+    // 统一使用 "搜索框在上，按钮在下" 的稳定结构
     return (
         <div className="mb-8 max-w-2xl mx-auto">
+            {/* 站内搜索框 */}
             <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            
+            {/* 外部搜索按钮 (下方，居中) */}
             <ExternalSearchButtons 
                 className="flex justify-center space-x-4 mt-4" 
                 searchTerm={searchTerm} 
@@ -727,6 +739,11 @@ const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTe
         </div>
     );
 });
+
+
+// =========================================================================
+// ⬆️ 搜索按钮配置与逻辑 (仅谷歌硬编码) ⬆️
+// =========================================================================
 
 
 // 🔹 主应用 (App 组件)
@@ -744,6 +761,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   
+  // 仅保留状态定义，但在 SearchLayout 中不再用于条件渲染
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   useEffect(()=>{
@@ -776,6 +794,7 @@ export default function App() {
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
+      // 成功获取到数据，标记连接成功
       setIsFirebaseConnected(true); 
 
       if (data.length > 0 || isAdmin) { 
@@ -783,9 +802,11 @@ export default function App() {
       }
       
     }, 
+    // ✅ 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
     (error) => {
         console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
+        // 确保 navData 即使在连接失败时也至少有默认数据
         setNavData(DEFAULT_NAV_DATA);
     });
     return unsub;
@@ -809,6 +830,7 @@ export default function App() {
       await signInWithEmailAndPassword(auth,email,password);
       setShowLogin(false); 
       setLoginError('');
+      // 登录成功后强制重新拉取数据并更新 admin 视图
       await fetchData(); 
     } catch(e){ setLoginError(e.message); }
   };
@@ -847,6 +869,7 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
+        {/* Header: 标题居中，按钮垂直堆叠的圆形图标 */}
         <header className="mb-12 relative">
             <h1 
                 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
@@ -855,7 +878,9 @@ export default function App() {
                 极速导航网
             </h1>
             
+            {/* 按钮区域: 绝对定位到右上角, 垂直堆叠 */}
             <div className="flex flex-col gap-2 absolute top-0 right-0">
+                {/* 切换主题按钮 (圆形) */}
                 <button 
                     onClick={()=>setIsDark(!isDark)} 
                     className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -863,6 +888,7 @@ export default function App() {
                 >
                     {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
                 </button>
+                {/* 管理员登录/退出按钮 (圆形, 使用 User 图标) */}
                 {!isAdmin && (
                     <button 
                         onClick={() => setShowLogin(true)} 
@@ -884,6 +910,7 @@ export default function App() {
             </div>
         </header>
         
+        {/* 搜索区域 (使用稳定的外部组件 SearchLayout) */}
         <SearchLayout 
             isAdmin={isAdmin}
             currentPage={currentPage}
@@ -891,6 +918,7 @@ export default function App() {
             setSearchTerm={setSearchTerm}
         />
         
+        {/* 核心内容渲染 */}
         {isAdmin ? (
             <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : (
