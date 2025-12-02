@@ -17,10 +17,9 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标 (恢复了所有丰富的 Lucide 图标，但移除了错误的 'Tool')
+// 导入需要的图标 (已包含所有需要的 Lucide 图标)
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
-  // 导航链接新增的图标： (Tool 已被移除，统一使用 Wrench)
   Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
 } from 'lucide-react'; 
 
@@ -155,16 +154,15 @@ const DEFAULT_NAV_DATA = [
         ],
     },
 ];
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 结束 🔥🔥🔥
 
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
 // =========================================================================
-// ⬇️ 【修复开始】Favicon + 特定 Lucide 图标回退逻辑 ⬇️
+// ⬇️ 主导航图标的 Favicon + 特定 Lucide 图标回退逻辑 ⬇️
 // =========================================================================
 
-// 🔹 图标名称到 Lucide 组件的映射 (恢复并确保 Wrench 替代了 Tool)
+// 🔹 图标名称到 Lucide 组件的映射
 const ICON_MAP = {
     // 常用开发
     'huggingface': Wand, 
@@ -253,25 +251,19 @@ const getLucideIcon = (linkName) => {
     // 统一转为小写并移除空格进行匹配，以提高容错性
     const key = linkName.toLowerCase().replace(/\s/g, ''); 
     
-    // 尝试精确匹配，获取特定 Lucide 图标组件
     const IconComponent = ICON_MAP[key];
-
-    // 如果精确匹配成功，返回组件；否则返回通用地球图标
     return IconComponent || DefaultFallbackIcon;
 };
 
 
 // 🔹 辅助组件：处理图标的加载和回退
 const LinkIcon = ({ link }) => {
-    // 状态：跟踪 Favicon 是否加载失败
     const [hasError, setHasError] = useState(false);
 
-    // 当链接URL变化时，重置错误状态
     useEffect(() => {
         setHasError(false);
     }, [link.url]);
 
-    // 计算 Favicon 的 URL
     const imageUrl = useMemo(() => {
         try {
             const urlToParse = link.icon || link.url;
@@ -279,7 +271,6 @@ const LinkIcon = ({ link }) => {
             // 核心：使用 Google Favicon CDN 服务获取网站图标
             return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
         } catch {
-            // 解析失败时返回空字符串，这将导致回退图标被渲染
             return ''; 
         }
     }, [link.icon, link.url]);
@@ -287,7 +278,6 @@ const LinkIcon = ({ link }) => {
     // 确定 Lucide 回退图标 (使用用户定义的特定图标)
     const FallbackIconComponent = getLucideIcon(link.name); 
     
-    // 渲染容器
     return (
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
             {/* 逻辑判断：如果URL无效或图片加载失败，则使用 Lucide 回退图标 */}
@@ -309,7 +299,7 @@ const LinkIcon = ({ link }) => {
     );
 };
 // =========================================================================
-// ⬆️ 【修复结束】Favicon + 特定 Lucide 图标回退逻辑 ⬆️
+// ⬆️ 主导航图标的 Favicon + 特定 Lucide 图标回退逻辑 ⬆️
 // =========================================================================
 
 
@@ -526,7 +516,6 @@ const Footer = ({ setCurrentPage }) => {
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* 邮箱地址已修改 (Footer) */}
               <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
                 <Mail className="w-5 h-5" />
               </a>
@@ -556,7 +545,6 @@ const AboutPage = () => (
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
                 <br/> 
                 联系邮箱: 
-                {/* 邮箱地址已修改 (AboutPage) */}
                 <a 
                     href="mailto:115382613@qq.com" 
                     className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
@@ -613,14 +601,13 @@ const handleExternalSearch = (engineUrl, query) => {
   }
 };
 
-// 🔹 搜索输入框组件 (提取到 App 外部，接收 props)
+// 🔹 搜索输入框组件 (保持不变)
 const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     <div className="relative">
         <input 
             type="text" 
             placeholder="搜索链接名称、描述或网址..." 
             value={searchTerm}
-            // 确保 onChange 正确更新状态
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
         />
@@ -637,26 +624,73 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     </div>
 ));
 
-// 🔹 外部搜索按钮组件 (提取到 App 外部，接收 props)
+// =========================================================================
+// ⬇️ 【修复核心】外部搜索按钮 Favicon 错误回退逻辑 ⬇️
+// =========================================================================
+
+// 🔹 子组件：处理单个外部搜索按钮的图标加载和回退
+const ExternalSearchButton = ({ engine, searchTerm }) => {
+    // 状态：跟踪 Favicon 是否加载失败
+    const [hasError, setHasError] = useState(false);
+    
+    // 当搜索引擎或图标源变化时，重置错误状态
+    useEffect(() => {
+        setHasError(false);
+    }, [engine.icon]);
+
+    // 计算 Favicon 的 URL (仍然使用 Google CDN)
+    const imageUrl = useMemo(() => {
+        try {
+            const urlObj = new URL(engine.icon);
+            // 核心：使用 Google CDN 获取 Favicon
+            return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+        } catch {
+            return '';
+        }
+    }, [engine.icon]);
+
+    const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
+
+    return (
+        <button
+            onClick={handleSearch}
+            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+            className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
+        >
+            {/* 逻辑判断：如果 Favicon 加载失败或 URL 无效，则使用 Lucide Search 图标 */}
+            {hasError || !imageUrl ? (
+                // 强制回退到 Lucide Search 图标，确保国内环境的可靠性
+                <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+            ) : (
+                // 尝试加载 Favicon
+                <img 
+                    src={imageUrl} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full object-contain"
+                    // 关键：加载失败时设置 hasError 为 true，触发 <Search> 渲染
+                    onError={() => setHasError(true)} 
+                    loading="lazy"
+                />
+            )}
+        </button>
+    );
+};
+
+// 🔹 外部搜索按钮组件 (现在使用子组件渲染)
 const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
         {externalEngines.map(engine => (
-            <button
-                key={engine.name}
-                onClick={() => handleExternalSearch(engine.url, searchTerm)}
-                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
-            >
-                {/* 外部搜索按钮的 Favicon 保持不变 */}
-                <img 
-                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
-                    alt={engine.name} 
-                    className="w-6 h-6 rounded-full"
-                />
-            </button>
+            <ExternalSearchButton 
+                key={engine.name} 
+                engine={engine} 
+                searchTerm={searchTerm} 
+            />
         ))}
     </div>
 ));
+// =========================================================================
+// ⬆️ 【修复核心】外部搜索按钮 Favicon 错误回退逻辑 ⬆️
+// =========================================================================
 
 // 🚀 SearchLayout 组件 (使用稳定的单一布局)
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
