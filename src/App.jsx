@@ -18,38 +18,140 @@ import {
   getDocs
 } from 'firebase/firestore';
 // 导入需要的图标
-import { ExternalLink, Moon, Sun, User, X, Github, Mail, Globe, Search } from 'lucide-react'; 
+import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥 默认备用导航数据 (新增：用于 Firebase 加载失败时的显示)
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (用于 Firebase 加载失败时的显示) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
-        id: 'default-1',
-        category: '⭐ 常用工具',
-        order: 10,
+        id: 'cat-1',
+        category: '常用开发',
+        order: 0,
         links: [
-            { name: 'Google', url: 'https://www.google.com/', description: '全球最大搜索引擎' },
-            { name: '百度', url: 'https://www.baidu.com/', description: '中文搜索和资讯服务' },
-            { name: 'Bing', url: 'https://www.bing.com/', description: '微软旗下搜索引擎' },
-            { name: 'YouTube', url: 'https://www.youtube.com/', description: '全球视频分享网站' },
-            { name: '淘宝/天猫', url: 'https://www.taobao.com/', description: '大型综合购物平台' },
+            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
+            { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
+            { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
+            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录' },
+            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台' },
+            { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案' },
+            { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务' },
         ],
     },
     {
-        id: 'default-2',
-        category: '🌐 科技与开发',
-        order: 20,
+        id: 'cat-2',
+        category: 'AI大模型',
+        order: 1,
         links: [
-            { name: 'GitHub', url: 'https://github.com/', description: '代码托管与开源协作平台' },
-            { name: 'Stack Overflow', url: 'https://stackoverflow.com/', description: '程序开发问答社区' },
-            { name: 'V2EX', url: 'https://www.v2ex.com/', description: '创意工作者社区' },
-            { name: '掘金', url: 'https://juejin.cn/', description: '高质量技术社区' },
+            { name: 'chatgpt', url: 'https://chatgpt.com/', description: 'OpenAI 对话模型' },
+            { name: 'gemini', url: 'https://gemini.google.com/app', description: 'Google AI 应用' },
+            { name: 'deepseek', url: 'https://www.deepseek.com/', description: '深度求索 AI 平台' },
+            { name: '阿里千问', url: 'https://chat.qwen.ai/', description: '阿里通义千问' },
+            { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
+            { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
+            { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
+            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务' },
+        ],
+    },
+    {
+        id: 'cat-3',
+        category: '影视娱乐',
+        order: 2,
+        links: [
+            { name: '哔哩哔哩', url: 'https://bilibili.com', description: 'B 站视频分享社区' },
+            { name: 'youtube', url: 'https://youtube.com', description: '全球最大视频平台' },
+            { name: '爱奇艺', url: 'https://www.iqiyi.com', description: '国内视频播放平台' },
+            { name: '在线音乐', url: 'https://music.eooce.com/', description: '免费在线音乐播放' },
+            { name: '视频下载', url: 'https://tubedown.cn/', description: '通用视频下载工具' },
+            { name: '星空音乐下载', url: 'https://www.vh.hk/', description: '音乐下载工具' },
+            { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区' },
+            { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台' },
+            { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台' },
+            { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台' },
+            { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用' },
+        ],
+    },
+    {
+        id: 'cat-4',
+        category: 'IP检测 地址生成',
+        order: 3,
+        links: [
+            { name: 'browserscan', url: 'https://www.browserscan.net/zh', description: '浏览器指纹与安全检测' },
+            { name: 'ping0', url: 'https://ping0.cc/', description: '网络延迟与连通性监测' },
+            { name: '真实地址生成器', url: 'https://address.nnuu.nyc.mn/', description: '随机地址生成工具' },
+            { name: 'Itdog', url: 'https://www.itdog.cn/tcping', description: '网络延迟和丢包检测' },
+            { name: 'IP地址查询', url: 'https://ip.ssss.nyc.mn/', description: 'IP 地址归属地查询' },
+        ],
+    },
+    {
+        id: 'cat-5',
+        category: '搜索引擎',
+        order: 4,
+        links: [
+            { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎' },
+            { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎' },
+            { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎' },
+        ],
+    },
+    {
+        id: 'cat-6',
+        category: '云计算',
+        order: 5,
+        links: [
+            { name: 'AWS', url: 'https://aws.amazon.com/', description: '亚马逊云服务' },
+            { name: 'Azure', url: 'https://azure.microsoft.com/', description: '微软云服务' },
+            { name: '阿里云', url: 'https://www.aliyun.com/', description: '阿里巴巴云服务' },
+            { name: '腾讯云', url: 'https://cloud.tencent.com/', description: '腾讯云服务' },
+            { name: '华为云', url: 'https://www.huaweicloud.com/', description: '华为云服务' },
+            { name: 'Oracle Cloud', url: 'https://www.oracle.com/cloud/', description: '甲骨文云服务' },
+            { name: 'IBM Cloud', url: 'https://www.ibm.com/cloud', description: 'IBM 云服务' },
+        ],
+    },
+    {
+        id: 'cat-7',
+        category: '工具箱',
+        order: 6,
+        links: [
+            { name: '在线工具网', url: 'https://tool.lu/', description: '程序员综合在线工具' },
+            { name: 'Py混淆', url: 'https://freecodingtools.org/tools/obfuscator/python', description: 'Python 代码混淆工具' },
+            { name: '二维码生成', url: 'https://cli.im/', description: '在线二维码制作' },
+            { name: 'Argo Tunnel json获取', url: 'https://fscarmen.cloudflare.now.cc/', description: 'Cloudflare Argo Tunnel 配置工具' },
+            { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换' },
+            { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除' },
+            { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务' },
+            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑' },
+            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器' },
+            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换' },
+            { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合' },
+            { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆' },
+            { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验' },
+            { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找' },
+            { name: '网站打包app', url: 'https://blackace.app/', description: '将网站打包成 App' },
+        ],
+    },
+    {
+        id: 'cat-8',
+        category: 'IP代理',
+        order: 7,
+        links: [
+            { name: '在线代理', url: 'https://www.proxyshare.com/zh/proxysite', description: '免费在线代理服务' },
+            { name: '免费网络代理', url: 'https://www.lumiproxy.com/zh-hans/online-proxy/proxysite/', description: '免费代理服务' },
+        ],
+    },
+    {
+        id: 'cat-9',
+        category: '电商平台',
+        order: 8,
+        links: [
+            { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站' },
+            { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商' },
+            { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台' },
         ],
     },
 ];
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 结束 🔥🔥🔥
 
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
@@ -83,19 +185,14 @@ const LinkCard = ({ link }) => {
 
 // 🔹 公共主页
 const PublicNav = ({ navData, searchTerm }) => {
-    // 增加判断：如果 navData 是空数组，且没有搜索词，则不显示“没有找到”
-    const showNoResults = navData.length === 0 && searchTerm;
-
-    if (showNoResults) {
+    if (navData.length === 0 && searchTerm) {
         return (
             <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
                 <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
                     没有找到与 "{searchTerm}" 相关的链接。
                 </p>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">
-                    请在搜索框内选择搜索引擎并按 **Enter** 键进行全网搜索。
-                </p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">请尝试其他关键词。</p>
             </div>
         );
     }
@@ -103,12 +200,11 @@ const PublicNav = ({ navData, searchTerm }) => {
     return (
         <div className="space-y-8 min-h-[60vh]">
             {navData.map(cat => (
-                // 仅当分类下有链接时才渲染该分类
                 cat.links && cat.links.length > 0 && (
                     <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
                         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {cat.links.map(link => <LinkCard key={link.id} link={link} />)}
+                            {cat.links.map(link => <LinkCard key={link.id || link.url} link={link} />)}
                         </div>
                     </div>
                 )
@@ -116,65 +212,6 @@ const PublicNav = ({ navData, searchTerm }) => {
         </div>
     );
 };
-
-// 🔹 关于本站页面组件
-const AboutPage = () => (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
-        <div className="space-y-4 text-gray-700 dark:text-gray-300">
-            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【站点功能】</h3>
-            <p>
-                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
-            </p>
-            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【创设初衷：拒绝广告】</h3>
-            <p>
-                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
-            </p>
-            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
-            <p>
-                由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
-                <br/> 
-                联系邮箱: 
-                <a 
-                    href="mailto:115382613@qq.com" 
-                    className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
-                >
-                    115382613@qq.com
-                </a>
-            </p>
-        </div>
-    </div>
-);
-
-
-// 🔹 免责声明页面组件
-const DisclaimerPage = () => (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
-        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
-            <p>
-                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
-            <p>
-                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
-            <p>
-                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">4. 服务中断与修改</h3>
-            <p>
-                本站保留随时修改、暂停或永久终止提供本网站全部或部分服务的权利，恕不另行通知。因系统维护、网络故障、技术升级等原因导致的服务中断，本站不承担任何责任。
-            </p>
-            <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
-                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
-            </p>
-        </div>
-    </div>
-);
-
 
 // 🔹 链接表单 (不变)
 const LinkForm = ({ links, setLinks }) => {
@@ -190,18 +227,18 @@ const LinkForm = ({ links, setLinks }) => {
     <div className="space-y-2">
       {links.map((l, idx) => (
         <div key={idx} className="flex space-x-2">
-          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24"/>
-          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48"/>
-          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1"/>
-          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded">删除</button>
+          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
+          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
         </div>
       ))}
-      <button onClick={addLink} className="bg-blue-500 text-white px-3 py-1 rounded mt-1">新增链接</button>
+      <button onClick={addLink} className="bg-blue-500 text-white px-3 py-1 rounded mt-1 hover:bg-blue-600">新增链接</button>
     </div>
   )
 }
 
-// 🔹 登录弹窗 
+// 🔹 登录弹窗 (不变)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -211,7 +248,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><User className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
@@ -238,39 +275,59 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   };
   const startEdit = (item) => { setEditId(item.id); setEditData({...item}); };
   const saveEdit = async () => { await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), editData); setEditId(null); fetchData(); };
-  const handleDelete = async (id) => { await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); fetchData(); };
+  const handleDelete = async (id) => { 
+    if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
+        await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); 
+        fetchData();
+    }
+  };
 
   return (
     <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
-      <h3 className="text-xl font-bold mb-2">管理员面板 (完整 CRUD)</h3>
-      <div className="flex flex-col md:flex-row gap-2 mb-4">
-        <input placeholder="分类名" className="border p-2 rounded flex-1" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
-        <input type="number" placeholder="排序" className="border p-2 rounded w-24" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
-        <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
-        <button onClick={handleAddCategory} className="bg-blue-500 text-white px-4 rounded">新增分类</button>
+      <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (完整 CRUD)</h3>
+      <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
+          <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
+          <div className="flex flex-col gap-3">
+              <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
+              <div className="flex items-center space-x-2">
+                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                  <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
+              </div>
+              <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
+              <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
+          </div>
       </div>
+      
+      <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有分类</h4>
       {navData.map(item=>(
-        <div key={item.id} className="border p-2 mb-2 rounded bg-white dark:bg-gray-700">
+        <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
           {editId === item.id ? (
+            // 编辑状态
             <>
-              <input className="border p-1 mb-1 rounded w-full" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
-              <input type="number" className="border p-1 mb-1 rounded w-24" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+              <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                  <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              </div>
               <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
-              <div className="flex space-x-2 mt-1">
-                <button onClick={saveEdit} className="bg-green-500 text-white px-2 rounded">保存</button>
-                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-2 rounded">取消</button>
+              <div className="flex space-x-2 mt-3">
+                <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
+                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
               </div>
             </>
           ) : (
+            // 显示状态
             <>
-              <div className="flex justify-between items-center">
-                <h4>{item.category} (排序: {item.order})</h4>
-                <div className="flex space-x-1">
-                  <button onClick={()=>startEdit(item)} className="bg-yellow-400 text-white px-2 rounded">编辑</button>
-                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white px-2 rounded">删除</button>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
+                <div className="flex space-x-2">
+                  <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
+                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
                 </div>
               </div>
-              <ul className="ml-4">{item.links?.map((l,idx)=><li key={idx}>{l.name} - {l.url}</li>)}</ul>
+              <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
+              </ul>
             </>
           )}
         </div>
@@ -279,11 +336,10 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件
+// 🔹 页脚组件 (包含关于本站/免责声明)
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
-  // 自定义常用链接
   const footerLinks = [
     { name: '关于本站', action: () => setCurrentPage('about') },
     { name: '免责声明', action: () => setCurrentPage('disclaimer') },
@@ -292,10 +348,8 @@ const Footer = ({ setCurrentPage }) => {
   return (
     <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 text-center">
-        {/* 居中内容容器 */}
         <div className="flex flex-col items-center space-y-4"> 
           
-          {/* 左侧：版权信息 - 居中 */}
           <div className="text-center">
             <h3 
               className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
@@ -308,38 +362,22 @@ const Footer = ({ setCurrentPage }) => {
             </p>
           </div>
 
-          {/* 右侧：常用按钮链接和图标 - 居中 */}
           <div className="flex flex-wrap justify-center gap-6">
             {footerLinks.map((link, idx) => (
               <a 
                 key={idx}
-                href={link.url || '#'} 
-                onClick={link.action || null}
-                target={link.url ? (link.url.startsWith('http') || link.url.startsWith('mailto') ? "_blank" : "_self") : "_self"}
-                rel={link.url ? "noopener noreferrer" : undefined}
+                href="#"
+                onClick={(e) => { e.preventDefault(); link.action(); }}
                 className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
               >
                 {link.name}
               </a>
             ))}
-            {/* 图标链接示例 */}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              {/* GitHub */}
-              <a href="https://github.com/wuquanmilk" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* Google 链接 */}
-              <a href="https://www.google.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 transition-colors" title="Google Search">
-                <Globe className="w-5 h-5" /> 
-              </a>
-              {/* YouTube 链接 */}
-              <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-600 transition-colors" title="YouTube">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-youtube">
-                    <path d="M2.5 17c-2 0-2-2-2-4v-6c0-2 2-4 4-4h14c2 0 4 2 4 4v6c0 2-2 4-4 4h-14z"/><path d="m10 10 5 2-5 2z"/>
-                </svg>
-              </a>
-              {/* Mail (QQ邮箱) */}
-              <a href="https://mail.qq.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="QQ邮箱">
+              <a href="mailto:contact@example.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
                 <Mail className="w-5 h-5" />
               </a>
             </div>
@@ -350,29 +388,74 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
+// 🔹 关于本站页面组件 (不变)
+const AboutPage = () => (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
+        <div className="space-y-4 text-gray-700 dark:text-gray-300">
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【站点功能】</h3>
+            <p>
+                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【创设初衷：拒绝广告】</h3>
+            <p>
+                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
+            <p>
+                由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
+                <br/> 
+                联系邮箱: 
+                <a 
+                    href="mailto:contact@example.com" 
+                    className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
+                >
+                    contact@example.com
+                </a>
+            </p>
+        </div>
+    </div>
+);
+
+
+// 🔹 免责声明页面组件 (不变)
+const DisclaimerPage = () => (
+    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
+        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
+            <p>
+                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
+            <p>
+                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
+            <p>
+                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
+            </p>
+            <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
+                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
+            </p>
+        </div>
+    </div>
+);
+
+
 // 🔹 主应用 (App 组件)
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
   const [auth, setAuth] = useState(null);
   const [db, setDb] = useState(null);
   const [userId, setUserId] = useState(null);
-  // 🔥 修改：使用 DEFAULT_NAV_DATA 初始化导航数据
-  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
+  
+  // 使用 DEFAULT_NAV_DATA 初始化导航数据
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA);
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   
-  // 搜索引擎选择
-  const [selectedEngine, setSelectedEngine] = useState('google'); 
-  
-  // 搜索引擎配置 (使用新的卡通符号)
-  const SEARCH_ENGINES = useMemo(() => ({ 
-      google: { name: 'Google 🔍', url: 'https://www.google.com/search?q=' }, // 放大镜
-      baidu: { name: '百度 🐼', url: 'https://www.baidu.com/s?wd=' },    // 熊猫
-      bing: { name: 'Bing 💧', url: 'https://www.bing.com/search?q=' },     // 水滴
-  }), []);
-
-
   // 页面状态管理
   const [currentPage, setCurrentPage] = useState('home'); 
   // 搜索框状态
@@ -401,7 +484,7 @@ export default function App() {
 
   const isAdmin = userId === ADMIN_USER_ID;
 
-  // 🔥 修改：onSnapshot 逻辑，确保默认数据在非管理员且加载失败时保留
+  // onSnapshot 逻辑：尝试从 Firebase 加载数据，失败则保留 DEFAULT_NAV_DATA
   useEffect(()=>{
     if(!db) return;
     const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
@@ -409,22 +492,14 @@ export default function App() {
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
-      // 仅在获取到非空数据，或管理员登录时（管理员需要看到实时数据库状态，即使为空），才覆盖 navData
+      // 仅在获取到非空数据，或管理员登录时，才覆盖 navData
       if (data.length > 0 || isAdmin) { 
           setNavData(data);
       }
-      // 如果是非管理员用户，且返回数据为空（可能是网络阻断导致没有加载到任何内容），则保持 DEFAULT_NAV_DATA 不变。
       
     }, (error) => {
-        // 如果连接发生错误（例如网络阻断），在控制台打印警告，但不对 navData 进行任何操作，从而保留 DEFAULT_NAV_DATA。
         console.warn("Firebase connection failed or blocked. Using default links.", error);
     });
-    
-    // 如果是管理员且 navData 还是默认数据，尝试拉取一次确保管理面板显示真实数据
-    if (isAdmin && navData === DEFAULT_NAV_DATA) {
-        fetchData();
-    }
-    
     return unsub;
   },[db, isAdmin]); 
 
@@ -437,33 +512,19 @@ export default function App() {
         data.sort((a,b)=>(a.order||0)-(b.order||0));
         setNavData(data);
     } catch (error) {
-         console.error("Admin fetch failed:", error);
-         // 即使管理员操作失败，也应尝试通过 onSnapshot 或保留当前状态
+        console.error("Admin fetch failed:", error);
     }
   };
 
   const handleLogin = async (email,password)=>{
     try {
       await signInWithEmailAndPassword(auth,email,password);
-      setShowLogin(false); setLoginError('');
-      // 登录成功后强制重新拉取一次数据，确保管理员看到的是 Firebase 上的最新数据
+      setShowLogin(false); 
+      setLoginError('');
       await fetchData(); 
     } catch(e){ setLoginError(e.message); }
   };
   
-  // 处理外部搜索引擎跳转的函数
-  const handleExternalSearch = (e) => {
-      e.preventDefault(); 
-      if (searchTerm.trim()) {
-          const engine = SEARCH_ENGINES[selectedEngine];
-          const query = encodeURIComponent(searchTerm.trim());
-          
-          if (engine) {
-              window.open(`${engine.url}${query}`, '_blank');
-          }
-      }
-  };
-
   // 根据搜索词过滤导航数据
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
@@ -472,28 +533,23 @@ export default function App() {
 
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
-    // 过滤分类列表
     return navData
       .map(category => {
-        // 过滤每个分类下的链接
-        const filteredLinks = category.links.filter(link => {
+        const filteredLinks = (category.links || []).filter(link => {
           const name = link.name?.toLowerCase() || '';
           const description = link.description?.toLowerCase() || '';
           const url = link.url?.toLowerCase() || '';
 
-          // 匹配链接名称、描述或 URL
           return name.includes(lowerCaseSearchTerm) || 
                  description.includes(lowerCaseSearchTerm) ||
                  url.includes(lowerCaseSearchTerm);
         });
 
-        // 返回一个新的分类对象，只包含匹配的链接
         return {
           ...category,
           links: filteredLinks,
         };
       })
-      // 过滤掉链接列表为空的分类
       .filter(category => category.links.length > 0);
   }, [navData, searchTerm]);
 
@@ -503,31 +559,24 @@ export default function App() {
       <DebugBar />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
-        
-        {/* 1. Header (按钮区域 - 靠右对齐) */}
-        <header className="flex justify-end items-center mb-4">
+        <header className="flex justify-between items-center mb-12">
+          <h1 
+            className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer"
+            onClick={() => setCurrentPage('home')}
+          >
+            极速导航网
+          </h1>
           <div className="flex gap-4">
-            {/* 白天/黑夜切换按钮 */}
-            <button 
-              onClick={()=>setIsDark(!isDark)} 
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-              title={isDark ? "切换到白天模式" : "切换到黑夜模式"}
-            >
-              {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
-            </button>
-            
-            {/* 管理员登录入口 (人头像图标，中性颜色) */}
+            <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
             {!isAdmin && (
                 <button 
                     onClick={() => setShowLogin(true)} 
                     className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     title="管理员登录"
                 >
-                    <User className="w-5 h-5"/>
+                    <LogIn className="w-5 h-5"/>
                 </button>
             )}
-            
-            {/* 管理员退出入口 (人头像图标，红色表示退出) */}
             {isAdmin && (
                 <button 
                     onClick={() => signOut(auth)} 
@@ -540,53 +589,26 @@ export default function App() {
           </div>
         </header>
         
-        {/* 2. Centered Title Block (居中标题) */}
-        <div className="mb-12 text-center">
-            <h1 
-                className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block"
-                onClick={() => setCurrentPage('home')}
-            >
-                极速导航网
-            </h1>
-        </div>
-        
-        {/* 站内搜索框 (水平布局：搜索框长，选择器短，靠右) */}
+        {/* 站内搜索框 */}
         {!isAdmin && currentPage === 'home' && (
-            <div className="mb-8 max-w-2xl mx-auto flex items-center"> 
-                
-                {/* 搜索输入框 (表单) - 使用 flex-grow 占满大部分空间 */}
-                <form onSubmit={handleExternalSearch} className="relative flex-grow"> 
-                    <input 
-                        type="text" 
-                        placeholder={`搜索链接或按 Enter 搜索 ${SEARCH_ENGINES[selectedEngine].name}...`} 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-                    />
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-                    {searchTerm && (
-                        <button 
-                            type="button" 
-                            onClick={() => setSearchTerm('')} 
-                            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                            title="清空搜索"
-                        >
-                            <X className="w-5 h-5"/>
-                        </button>
-                    )}
-                </form>
-
-                {/* 搜索引擎选择器 - 放在右侧，保持宽度小巧 */}
-                <select
-                    value={selectedEngine}
-                    onChange={(e) => setSelectedEngine(e.target.value)}
-                    className="py-3 px-3 ml-2 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-base cursor-pointer w-auto"
-                >
-                    {/* 循环渲染选项 */}
-                    {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
-                        <option key={key} value={key}>{engine.name}</option>
-                    ))}
-                </select>
+            <div className="mb-8 relative max-w-2xl mx-auto">
+                <input 
+                    type="text" 
+                    placeholder="搜索链接名称、描述或网址..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+                {searchTerm && (
+                    <button 
+                        onClick={() => setSearchTerm('')} 
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                        title="清空搜索"
+                    >
+                        <X className="w-5 h-5"/>
+                    </button>
+                )}
             </div>
         )}
         
@@ -601,12 +623,11 @@ export default function App() {
             ) : currentPage === 'disclaimer' ? (
                 <DisclaimerPage />
             ) : (
-                <PublicNav navData={filteredNavData} searchTerm={searchTerm} /> // 默认返回 Home
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
             )
         )}
       </div>
       
-      {/* 传递 setCurrentPage 函数到 Footer */}
       <Footer setCurrentPage={setCurrentPage} />
     </div>
   )
