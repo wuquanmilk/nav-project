@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标
+// 导入需要的图标 (已引入 User)
 import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
@@ -156,13 +156,21 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-// 🔹 链接卡片
+// 🔹 链接卡片 (已修复图标逻辑)
 const LinkCard = ({ link }) => {
   const faviconUrl = useMemo(() => {
     try {
-      const urlObj = new URL(link.icon || link.url);
-      return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
-    } catch {
+      const targetUrl = link.icon || link.url;
+      const urlObj = new URL(targetUrl);
+      
+      // 1. 编码 Origin
+      const encodedUrl = encodeURIComponent(urlObj.origin);
+      
+      // 2. 切换到更可靠的 Google Favicon V2 endpoint (t2.gstatic.com)
+      return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=1&url=${encodedUrl}&size=64`;
+
+    } catch (e) {
+      // 如果链接本身格式有问题，则返回默认占位符
       return 'https://placehold.co/40x40/ccc/000?text=L';
     }
   }, [link.icon, link.url]);
@@ -171,7 +179,16 @@ const LinkCard = ({ link }) => {
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-          <img src={faviconUrl} alt={link.name} className="w-full h-full object-cover" />
+          <img 
+            src={faviconUrl} 
+            alt={link.name} 
+            className="w-full h-full object-cover" 
+            onError={(e) => {
+              // 如果 V2 接口仍失败，降级显示一个通用图标
+              e.target.onerror = null; 
+              e.target.src = 'https://placehold.co/40x40/ccc/000?text=L'; 
+            }} 
+          />
         </div>
         <div className="min-w-0 flex-grow">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{link.name}</h3>
@@ -559,34 +576,49 @@ export default function App() {
       <DebugBar />
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <header className="flex justify-between items-center mb-12">
-          <h1 
-            className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer"
-            onClick={() => setCurrentPage('home')}
-          >
-            极速导航网
-          </h1>
-          <div className="flex gap-4">
-            <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
-            {!isAdmin && (
-                <button 
-                    onClick={() => setShowLogin(true)} 
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    title="管理员登录"
+        
+        {/* 🔥 修改：使用 flex-col items-center 实现内容居中，并调整按钮布局 */}
+        <header className="flex flex-col items-center mb-8">
+            <div className="flex w-full justify-between items-start max-w-4xl mx-auto">
+                <div className="w-10 h-10 invisible" /> {/* 占位符 */}
+                
+                <h1 
+                    className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center flex-grow"
+                    onClick={() => setCurrentPage('home')}
                 >
-                    <LogIn className="w-5 h-5"/>
-                </button>
-            )}
-            {isAdmin && (
-                <button 
-                    onClick={() => signOut(auth)} 
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    title="退出管理"
-                >
-                    <User className="w-5 h-5"/>
-                </button>
-            )}
-          </div>
+                    极速导航网
+                </h1>
+                
+                {/* 按钮区域 */}
+                <div className="flex gap-4 flex-shrink-0">
+                    <button 
+                        onClick={()=>setIsDark(!isDark)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="切换主题"
+                    >
+                        {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
+                    </button>
+                    {!isAdmin && (
+                        <button 
+                            onClick={() => setShowLogin(true)} 
+                            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                            title="管理员登录"
+                        >
+                            {/* 🔥 修复：将 LogIn 更改为 User 图标 */}
+                            <User className="w-5 h-5"/>
+                        </button>
+                    )}
+                    {isAdmin && (
+                        <button 
+                            onClick={() => signOut(auth)} 
+                            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                            title="退出管理"
+                        >
+                            <User className="w-5 h-5"/>
+                        </button>
+                    )}
+                </div>
+            </div>
         </header>
         
         {/* 站内搜索框 */}
