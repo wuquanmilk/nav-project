@@ -24,6 +24,33 @@ import { ExternalLink, Moon, Sun, User, X, Github, Mail, Globe, Search } from 'l
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
+// 🔥 默认备用导航数据 (新增：用于 Firebase 加载失败时的显示)
+const DEFAULT_NAV_DATA = [
+    {
+        id: 'default-1',
+        category: '⭐ 常用工具',
+        order: 10,
+        links: [
+            { name: 'Google', url: 'https://www.google.com/', description: '全球最大搜索引擎' },
+            { name: '百度', url: 'https://www.baidu.com/', description: '中文搜索和资讯服务' },
+            { name: 'Bing', url: 'https://www.bing.com/', description: '微软旗下搜索引擎' },
+            { name: 'YouTube', url: 'https://www.youtube.com/', description: '全球视频分享网站' },
+            { name: '淘宝/天猫', url: 'https://www.taobao.com/', description: '大型综合购物平台' },
+        ],
+    },
+    {
+        id: 'default-2',
+        category: '🌐 科技与开发',
+        order: 20,
+        links: [
+            { name: 'GitHub', url: 'https://github.com/', description: '代码托管与开源协作平台' },
+            { name: 'Stack Overflow', url: 'https://stackoverflow.com/', description: '程序开发问答社区' },
+            { name: 'V2EX', url: 'https://www.v2ex.com/', description: '创意工作者社区' },
+            { name: '掘金', url: 'https://juejin.cn/', description: '高质量技术社区' },
+        ],
+    },
+];
+
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
@@ -56,7 +83,10 @@ const LinkCard = ({ link }) => {
 
 // 🔹 公共主页
 const PublicNav = ({ navData, searchTerm }) => {
-    if (navData.length === 0 && searchTerm) {
+    // 增加判断：如果 navData 是空数组，且没有搜索词，则不显示“没有找到”
+    const showNoResults = navData.length === 0 && searchTerm;
+
+    if (showNoResults) {
         return (
             <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
                 <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
@@ -326,15 +356,16 @@ export default function App() {
   const [auth, setAuth] = useState(null);
   const [db, setDb] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [navData, setNavData] = useState([]);
+  // 🔥 修改：使用 DEFAULT_NAV_DATA 初始化导航数据
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   
-  // 🔥 新增状态：搜索引擎选择
+  // 搜索引擎选择
   const [selectedEngine, setSelectedEngine] = useState('google'); 
   
-  // 🔥 更新常量：搜索引擎配置 (使用新的卡通符号)
+  // 搜索引擎配置 (使用新的卡通符号)
   const SEARCH_ENGINES = useMemo(() => ({ 
       google: { name: 'Google 🔍', url: 'https://www.google.com/search?q=' }, // 放大镜
       baidu: { name: '百度 🐼', url: 'https://www.baidu.com/s?wd=' },    // 熊猫
@@ -370,38 +401,60 @@ export default function App() {
 
   const isAdmin = userId === ADMIN_USER_ID;
 
+  // 🔥 修改：onSnapshot 逻辑，确保默认数据在非管理员且加载失败时保留
   useEffect(()=>{
     if(!db) return;
     const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
     const unsub = onSnapshot(navCol, snapshot=>{
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
-      setNavData(data);
+      
+      // 仅在获取到非空数据，或管理员登录时（管理员需要看到实时数据库状态，即使为空），才覆盖 navData
+      if (data.length > 0 || isAdmin) { 
+          setNavData(data);
+      }
+      // 如果是非管理员用户，且返回数据为空（可能是网络阻断导致没有加载到任何内容），则保持 DEFAULT_NAV_DATA 不变。
+      
+    }, (error) => {
+        // 如果连接发生错误（例如网络阻断），在控制台打印警告，但不对 navData 进行任何操作，从而保留 DEFAULT_NAV_DATA。
+        console.warn("Firebase connection failed or blocked. Using default links.", error);
     });
+    
+    // 如果是管理员且 navData 还是默认数据，尝试拉取一次确保管理面板显示真实数据
+    if (isAdmin && navData === DEFAULT_NAV_DATA) {
+        fetchData();
+    }
+    
     return unsub;
-  },[db]);
+  },[db, isAdmin]); 
 
   const fetchData = async ()=>{
     if(!db) return;
     const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
-    const snapshot = await getDocs(navCol);
-    const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
-    data.sort((a,b)=>(a.order||0)-(b.order||0));
-    setNavData(data);
+    try {
+        const snapshot = await getDocs(navCol);
+        const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+        data.sort((a,b)=>(a.order||0)-(b.order||0));
+        setNavData(data);
+    } catch (error) {
+         console.error("Admin fetch failed:", error);
+         // 即使管理员操作失败，也应尝试通过 onSnapshot 或保留当前状态
+    }
   };
 
   const handleLogin = async (email,password)=>{
     try {
       await signInWithEmailAndPassword(auth,email,password);
       setShowLogin(false); setLoginError('');
+      // 登录成功后强制重新拉取一次数据，确保管理员看到的是 Firebase 上的最新数据
+      await fetchData(); 
     } catch(e){ setLoginError(e.message); }
   };
   
-  // 🔥 更新：处理外部搜索引擎跳转的函数
+  // 处理外部搜索引擎跳转的函数
   const handleExternalSearch = (e) => {
-      e.preventDefault(); // 阻止表单默认提交，防止页面刷新
+      e.preventDefault(); 
       if (searchTerm.trim()) {
-          // 由于 selectedEngine 的值是 key (如 'google')，这里直接使用它作为键
           const engine = SEARCH_ENGINES[selectedEngine];
           const query = encodeURIComponent(searchTerm.trim());
           
@@ -497,7 +550,7 @@ export default function App() {
             </h1>
         </div>
         
-        {/* 🔥 站内搜索框 (水平布局：搜索框长，选择器短，靠右) */}
+        {/* 站内搜索框 (水平布局：搜索框长，选择器短，靠右) */}
         {!isAdmin && currentPage === 'home' && (
             <div className="mb-8 max-w-2xl mx-auto flex items-center"> 
                 
@@ -527,7 +580,6 @@ export default function App() {
                 <select
                     value={selectedEngine}
                     onChange={(e) => setSelectedEngine(e.target.value)}
-                    // 移除 min-w，使用 px-3 保持小宽度，添加 ml-2 间距
                     className="py-3 px-3 ml-2 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-base cursor-pointer w-auto"
                 >
                     {/* 循环渲染选项 */}
