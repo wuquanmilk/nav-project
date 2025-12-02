@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标，移除 LogIn, LogOut，新增 User
+// 导入需要的图标
 import { ExternalLink, Moon, Sun, User, X, Github, Mail, Globe, Search } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
@@ -63,7 +63,9 @@ const PublicNav = ({ navData, searchTerm }) => {
                 <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
                     没有找到与 "{searchTerm}" 相关的链接。
                 </p>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">请尝试其他关键词。</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">
+                    请在搜索框内选择搜索引擎并按 **Enter** 键进行全网搜索。
+                </p>
             </div>
         );
     }
@@ -85,7 +87,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 关于本站页面组件 (已修改)
+// 🔹 关于本站页面组件
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -101,7 +103,7 @@ const AboutPage = () => (
             <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
             <p>
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
-                <br/> {/* 换行 */}
+                <br/> 
                 联系邮箱: 
                 <a 
                     href="mailto:115382613@qq.com" 
@@ -168,7 +170,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 (图标已更新为 User)
+// 🔹 登录弹窗 
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -328,6 +330,17 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   
+  // 🔥 新增状态：搜索引擎选择
+  const [selectedEngine, setSelectedEngine] = useState('google'); 
+  
+  // 🔥 新增常量：搜索引擎配置
+  const SEARCH_ENGINES = useMemo(() => ({ 
+      google: { name: 'Google', url: 'https://www.google.com/search?q=' },
+      baidu: { name: '百度', url: 'https://www.baidu.com/s?wd=' }, // 百度使用 wd 参数
+      bing: { name: 'Bing', url: 'https://www.bing.com/search?q=' },
+  }), []);
+
+
   // 页面状态管理
   const [currentPage, setCurrentPage] = useState('home'); 
   // 搜索框状态
@@ -383,6 +396,19 @@ export default function App() {
     } catch(e){ setLoginError(e.message); }
   };
   
+  // 🔥 更新：处理外部搜索引擎跳转的函数
+  const handleExternalSearch = (e) => {
+      e.preventDefault(); // 阻止表单默认提交，防止页面刷新
+      if (searchTerm.trim()) {
+          const query = encodeURIComponent(searchTerm.trim());
+          const engine = SEARCH_ENGINES[selectedEngine]; // 使用选择的引擎
+          
+          if (engine) {
+              window.open(`${engine.url}${query}`, '_blank');
+          }
+      }
+  };
+
   // 根据搜索词过滤导航数据
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
@@ -469,26 +495,42 @@ export default function App() {
             </h1>
         </div>
         
-        {/* 站内搜索框 仅在首页显示 (已是居中) */}
+        {/* 🔥 站内搜索框 (新的 Flex 布局，包含搜索引擎选择器) */}
         {!isAdmin && currentPage === 'home' && (
-            <div className="mb-8 relative max-w-2xl mx-auto">
-                <input 
-                    type="text" 
-                    placeholder="搜索链接名称、描述或网址..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-                {searchTerm && (
-                    <button 
-                        onClick={() => setSearchTerm('')} 
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                        title="清空搜索"
-                    >
-                        <X className="w-5 h-5"/>
-                    </button>
-                )}
+            <div className="mb-8 max-w-2xl mx-auto flex items-stretch">
+                {/* 搜索引擎选择器 */}
+                <select
+                    value={selectedEngine}
+                    onChange={(e) => setSelectedEngine(e.target.value)}
+                    className="py-3 px-3 mr-2 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-sm cursor-pointer min-w-[6.5rem]"
+                >
+                    {/* 循环渲染选项 */}
+                    {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
+                        <option key={key} value={key}>{engine.name}</option>
+                    ))}
+                </select>
+                
+                {/* 搜索输入框 (表单) */}
+                <form onSubmit={handleExternalSearch} className="relative flex-grow">
+                    <input 
+                        type="text" 
+                        placeholder={`搜索链接或按 Enter 搜索 ${SEARCH_ENGINES[selectedEngine].name}...`} 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+                    />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+                    {searchTerm && (
+                        <button 
+                            type="button" 
+                            onClick={() => setSearchTerm('')} 
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                            title="清空搜索"
+                        >
+                            <X className="w-5 h-5"/>
+                        </button>
+                    )}
+                </form>
             </div>
         )}
         
