@@ -333,11 +333,11 @@ export default function App() {
   // 🔥 新增状态：搜索引擎选择
   const [selectedEngine, setSelectedEngine] = useState('google'); 
   
-  // 🔥 新增常量：搜索引擎配置
+  // 🔥 更新常量：搜索引擎配置 (添加 Emoji 符号辅助区分)
   const SEARCH_ENGINES = useMemo(() => ({ 
-      google: { name: 'Google', url: 'https://www.google.com/search?q=' },
-      baidu: { name: '百度', url: 'https://www.baidu.com/s?wd=' }, // 百度使用 wd 参数
-      bing: { name: 'Bing', url: 'https://www.bing.com/search?q=' },
+      google: { name: 'Google 🌈', url: 'https://www.google.com/search?q=' }, // 🌈 代表多色
+      baidu: { name: '百度 🇨🇳', url: 'https://www.baidu.com/s?wd=' },    // 🇨🇳 代表中国
+      bing: { name: 'Bing 🟦', url: 'https://www.bing.com/search?q=' },     // 🟦 代表蓝色/方块
   }), []);
 
 
@@ -401,7 +401,8 @@ export default function App() {
       e.preventDefault(); // 阻止表单默认提交，防止页面刷新
       if (searchTerm.trim()) {
           const query = encodeURIComponent(searchTerm.trim());
-          const engine = SEARCH_ENGINES[selectedEngine]; // 使用选择的引擎
+          const engineKey = selectedEngine.split(' ')[0].toLowerCase(); // 从 "Google 🌈" 中获取 "google"
+          const engine = SEARCH_ENGINES[engineKey];
           
           if (engine) {
               window.open(`${engine.url}${query}`, '_blank');
@@ -495,23 +496,26 @@ export default function App() {
             </h1>
         </div>
         
-        {/* 🔥 站内搜索框 (新的 Flex 布局，包含搜索引擎选择器) */}
+        {/* 🔥 站内搜索框 (垂直堆叠布局，选择器在上，搜索框在下) */}
         {!isAdmin && currentPage === 'home' && (
-            <div className="mb-8 max-w-2xl mx-auto flex items-stretch">
-                {/* 搜索引擎选择器 */}
-                <select
-                    value={selectedEngine}
-                    onChange={(e) => setSelectedEngine(e.target.value)}
-                    className="py-3 px-3 mr-2 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-sm cursor-pointer min-w-[6.5rem]"
-                >
-                    {/* 循环渲染选项 */}
-                    {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
-                        <option key={key} value={key}>{engine.name}</option>
-                    ))}
-                </select>
+            <div className="mb-8 max-w-2xl mx-auto"> 
                 
-                {/* 搜索输入框 (表单) */}
-                <form onSubmit={handleExternalSearch} className="relative flex-grow">
+                {/* 搜索引擎选择器 - 放在上面并居中 */}
+                <div className="mb-3 flex justify-center"> 
+                    <select
+                        value={selectedEngine}
+                        onChange={(e) => setSelectedEngine(e.target.value)}
+                        className="py-3 px-4 border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md text-base cursor-pointer min-w-[8rem]"
+                    >
+                        {/* 循环渲染选项 */}
+                        {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
+                            <option key={key} value={key}>{engine.name}</option>
+                        ))}
+                    </select>
+                </div>
+                
+                {/* 搜索输入框 (表单) - 占满宽度 */}
+                <form onSubmit={handleExternalSearch} className="relative"> 
                     <input 
                         type="text" 
                         placeholder={`搜索链接或按 Enter 搜索 ${SEARCH_ENGINES[selectedEngine].name}...`} 
