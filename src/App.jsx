@@ -24,8 +24,11 @@ import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } 
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已修正 icon 字段为正确的 URL 或域名) 🔥🔥🔥
-// 对于那些 S2 持续出错的链接，建议在此处使用其正确的 favicon URL，或在管理后台手动修改。
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已修正 icon 字段为正确的 纯域名 或空值) 🔥🔥🔥
+// 链接后面的 icon 字段：
+// 1. 如果是空值，则使用 link.url 的域名进行 S2 查找（用于大部分正常网站）。
+// 2. 如果是纯域名 (如 'claw.cloud')，则使用该域名进行 S2 查找（用于子域名修正）。
+// 3. 如果是完整的图片 URL (如 'https://example.com/logo.png')，则直接使用该图片。
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
@@ -35,11 +38,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
-            // 修正：使用主域名 claw.cloud 作为 S2 查找源
-            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'https://claw.cloud/' },
-            // 修正：使用主域名 digitalplat.org 作为 S2 查找源
-            // 如果此链接仍然出错，请手动将其 icon 字段修改为完整的图片 URL，例如: 'https://digitalplat.org/favicon.ico'
-            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'https://digitalplat.org/' },
+            // 修正：使用纯域名 claw.cloud 作为 S2 查找源
+            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'claw.cloud' },
+            // 修正：使用纯域名 digitalplat.org 作为 S2 查找源
+            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'digitalplat.org' },
             { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案' },
             { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务' },
         ],
@@ -56,9 +58,8 @@ const DEFAULT_NAV_DATA = [
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
             { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
             { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
-            // 修正：确保使用 tongyi.aliyun.com 作为 S2 查找源
-            // 如果此链接仍然出错，请手动将其 icon 字段修改为完整的图片 URL，例如: 'https://tongyi.aliyun.com/favicon.ico'
-            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/' },
+            // 修正：使用纯域名 tongyi.aliyun.com 作为 S2 查找源
+            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'tongyi.aliyun.com' },
         ],
     },
     {
@@ -127,10 +128,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换' },
             { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除' },
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务' },
-            // 修正：使用 www.flexclip.com 作为 S2 查找源
-            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/' },
-            // 修正：使用 obfuscator.io 作为 S2 查找源
-            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/' },
+            // 修正：使用纯域名 www.flexclip.com 作为 S2 查找源
+            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'www.flexclip.com' },
+            // 修正：使用纯域名 obfuscator.io 作为 S2 查找源
+            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'obfuscator.io' },
             { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换' },
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆' },
@@ -166,21 +167,26 @@ const DebugBar = () => null;
 
 // 🔹 链接卡片
 const LinkCard = ({ link }) => {
-  // 🚀 核心修复点：最终增强的图标 URL 解析逻辑
+  // 🚀 最终增强的图标 URL 解析逻辑 (解决 S2 干扰问题)
   const faviconUrl = useMemo(() => {
-    const source = link.icon;
-
-    // 1. 如果 link.icon 是一个完整的 URL，直接使用它。
-    if (source && source.startsWith('http')) {
+    // 1. 确定查找源：link.icon 优先于 link.url
+    const source = link.icon || link.url;
+    
+    // 2. HARDCODE BYPASS: 检查 source 是否是一个完整的、以图片扩展名结尾的 URL
+    //    只有满足这个条件才绕开 S2，直接加载图片。
+    if (source && source.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i) && source.startsWith('http')) {
         return source;
     }
-    
-    // 2. 否则，使用 link.url 配合 Google S2 代理服务。
+
+    // 3. S2 SERVICE (用户原来的核心逻辑): 否则，使用 Google S2 Favicon 服务。
     try {
-      const urlObj = new URL(link.url); // 此时只使用 link.url 的域名
+      // 确保 URL 带有协议，以便 new URL() 成功解析
+      const safeSource = source.startsWith('http') ? source : `https://${source}`;
+      const urlObj = new URL(safeSource); 
+      // S2 logic: works for domain-only inputs (like 'claw.cloud') or full URLs
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     } catch {
-      // URL 解析失败，使用占位符
+      // Fallback for invalid sources
       return 'https://placehold.co/40x40/ccc/000?text=L';
     }
   }, [link.icon, link.url]);
@@ -258,8 +264,8 @@ const LinkForm = ({ links, setLinks }) => {
           <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
-          {/* 🚀 提示管理员：输入完整的图片 URL 彻底修复图标问题 */}
-          <input placeholder="图标源(完整图片URL)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> 
+          {/* 🚀 提示管理员：输入纯域名 (如claw.cloud) 或完整图片URL */}
+          <input placeholder="图标源(纯域名/完整图片URL)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> 
           <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
         </div>
       ))}
@@ -595,7 +601,7 @@ export default function App() {
       apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
       authDomain: "wangzhandaohang.firebaseapp.com",
       projectId: "wangzhandaohang",
-      storageBucket: "wangzhandaohang.firebaseapp.com",
+      storageBucket: "wangzhandaohang.firebasestorage.app",
       messagingSenderId: "169263636408",
       appId: "1:169263636408:web:ee3608652b2872a539b94d",
     };
