@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入 Search 图标
+// 导入需要的图标
 import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
@@ -85,7 +85,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔥 新增：关于本站页面组件
+// 🔹 关于本站页面组件
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -106,7 +106,7 @@ const AboutPage = () => (
     </div>
 );
 
-// 🔥 新增：免责声明页面组件
+// 🔹 免责声明页面组件
 const DisclaimerPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
@@ -134,9 +134,9 @@ const DisclaimerPage = () => (
     </div>
 );
 
+
 // 🔹 链接表单 (不变)
 const LinkForm = ({ links, setLinks }) => {
-// ... (代码保持不变)
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
     newLinks[index][field] = value;
@@ -162,7 +162,6 @@ const LinkForm = ({ links, setLinks }) => {
 
 // 🔹 登录弹窗 (不变)
 const LoginModal = ({ onClose, onLogin, error }) => {
-// ... (代码保持不变)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
@@ -185,7 +184,6 @@ const LoginModal = ({ onClose, onLogin, error }) => {
 
 // 🔹 管理面板 (不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
-// ... (代码保持不变)
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -240,25 +238,22 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件 - 🔥 接收 setCurrentPage prop
+// 🔹 页脚组件 - 接收 setCurrentPage prop
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
   // 自定义常用链接
   const footerLinks = [
-    // 🔥 修改：使用 action 函数来切换页面
+    // 仅保留 About 和 Disclaimer，它们使用 action 切换内部页面
     { name: '关于本站', action: () => setCurrentPage('about') },
     { name: '免责声明', action: () => setCurrentPage('disclaimer') },
-    // 保持外部链接
-    { name: '提交收录', url: '#' }, 
-    { name: '反馈建议', url: 'mailto:contact@example.com' }, 
   ];
 
   return (
     <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          {/* 左侧：版权信息 - 🔥 点击 Logo 返回首页 */}
+          {/* 左侧：版权信息 - 点击 Logo 返回首页 */}
           <div className="text-center md:text-left">
             <h3 
               className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer" 
@@ -276,7 +271,7 @@ const Footer = ({ setCurrentPage }) => {
             {footerLinks.map((link, idx) => (
               <a 
                 key={idx}
-                // 如果有 action，则在点击时调用；如果没有，则使用 href
+                // 如果有 action，则在点击时调用；如果没有，则使用 # 占位
                 href={link.url || '#'} 
                 onClick={link.action || null}
                 target={link.url ? (link.url.startsWith('http') || link.url.startsWith('mailto') ? "_blank" : "_self") : "_self"}
@@ -288,11 +283,21 @@ const Footer = ({ setCurrentPage }) => {
             ))}
             {/* 图标链接示例 */}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              {/* 🔥 修改 Github 链接 */}
+              {/* GitHub */}
               <a href="https://github.com/wuquanmilk" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* 🔥 修改 Mail 链接 */}
+              {/* Google 链接 */}
+              <a href="https://www.google.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-500 transition-colors" title="Google Search">
+                <Globe className="w-5 h-5" /> 
+              </a>
+              {/* YouTube 链接 - 使用 SVG 代码，避免导入问题 */}
+              <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-red-600 transition-colors" title="YouTube">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-youtube">
+                    <path d="M2.5 17c-2 0-2-2-2-4v-6c0-2 2-4 4-4h14c2 0 4 2 4 4v6c0 2-2 4-4 4h-14z"/><path d="m10 10 5 2-5 2z"/>
+                </svg>
+              </a>
+              {/* Mail (QQ邮箱) */}
               <a href="https://mail.qq.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="QQ邮箱">
                 <Mail className="w-5 h-5" />
               </a>
@@ -315,9 +320,9 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
   
-  // 🔥 新增：页面状态管理
+  // 页面状态管理
   const [currentPage, setCurrentPage] = useState('home'); // 'home', 'about', 'disclaimer'
-  // 🔥 搜索框状态
+  // 搜索框状态
   const [searchTerm, setSearchTerm] = useState(''); 
 
   useEffect(()=>{
@@ -370,7 +375,7 @@ export default function App() {
     } catch(e){ setLoginError(e.message); }
   };
   
-  // 根据搜索词过滤导航数据 (不变)
+  // 根据搜索词过滤导航数据
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
       return navData; // 搜索词为空，返回全部数据
@@ -446,7 +451,7 @@ export default function App() {
             </div>
         )}
         
-        {/* 🔥 核心内容渲染：根据 currentPage 渲染不同内容 */}
+        {/* 核心内容渲染：根据 currentPage 渲染不同内容 */}
         {isAdmin ? (
             <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : (
@@ -462,7 +467,7 @@ export default function App() {
         )}
       </div>
       
-      {/* 🔥 修改：传递 setCurrentPage 函数到 Footer */}
+      {/* 传递 setCurrentPage 函数到 Footer */}
       <Footer setCurrentPage={setCurrentPage} />
     </div>
   )
