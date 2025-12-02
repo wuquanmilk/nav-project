@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标 (已根据导航数据扩展，并移除错误的 'Tool' 导入)
+// 导入需要的图标 (恢复了所有丰富的 Lucide 图标，但移除了错误的 'Tool')
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
   // 导航链接新增的图标： (Tool 已被移除，统一使用 Wrench)
@@ -160,15 +160,14 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-
 // =========================================================================
-// ⬇️ 【修复完成】图标映射和 LinkIcon 组件重写 ⬇️
+// ⬇️ 【修复开始】Favicon + 特定 Lucide 图标回退逻辑 ⬇️
 // =========================================================================
 
-// 🔹 图标名称到 Lucide 组件的映射
+// 🔹 图标名称到 Lucide 组件的映射 (恢复并确保 Wrench 替代了 Tool)
 const ICON_MAP = {
     // 常用开发
-    'huggingface': Wand, // AI/ML
+    'huggingface': Wand, 
     'github': Github,
     'cloudflare': Cloud,
     'clawcloudrun': Code,
@@ -247,39 +246,70 @@ const ICON_MAP = {
     '亚马逊': ShoppingCart,
 };
 
-// 🔹 辅助函数：根据链接名称获取 Lucide 组件
-// 默认图标：使用 Globe 作为链接通用图标
-const DefaultFallbackIcon = Globe; 
+// 🔹 辅助函数：根据链接名称获取 Lucide 组件 (用于回退)
+const DefaultFallbackIcon = Globe; // 最后的通用回退图标
 
 const getLucideIcon = (linkName) => {
     // 统一转为小写并移除空格进行匹配，以提高容错性
     const key = linkName.toLowerCase().replace(/\s/g, ''); 
     
-    // 尝试精确匹配
+    // 尝试精确匹配，获取特定 Lucide 图标组件
     const IconComponent = ICON_MAP[key];
 
-    // 如果精确匹配成功，返回组件
-    if (IconComponent) return IconComponent;
-
-    // 否则返回默认图标
-    return DefaultFallbackIcon;
+    // 如果精确匹配成功，返回组件；否则返回通用地球图标
+    return IconComponent || DefaultFallbackIcon;
 };
 
 
-// 🔹 辅助组件：处理图标的加载和降级 (使用 Lucide-React - 修复版本)
+// 🔹 辅助组件：处理图标的加载和回退
 const LinkIcon = ({ link }) => {
-    // 获取对应的 Lucide Icon 组件，如果找不到则使用 Globe
-    const IconComponent = getLucideIcon(link.name);
+    // 状态：跟踪 Favicon 是否加载失败
+    const [hasError, setHasError] = useState(false);
 
+    // 当链接URL变化时，重置错误状态
+    useEffect(() => {
+        setHasError(false);
+    }, [link.url]);
+
+    // 计算 Favicon 的 URL
+    const imageUrl = useMemo(() => {
+        try {
+            const urlToParse = link.icon || link.url;
+            const urlObj = new URL(urlToParse);
+            // 核心：使用 Google Favicon CDN 服务获取网站图标
+            return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
+        } catch {
+            // 解析失败时返回空字符串，这将导致回退图标被渲染
+            return ''; 
+        }
+    }, [link.icon, link.url]);
+    
+    // 确定 Lucide 回退图标 (使用用户定义的特定图标)
+    const FallbackIconComponent = getLucideIcon(link.name); 
+    
+    // 渲染容器
     return (
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-            {/* 直接渲染 Lucide 组件，稳定且与系统图标保持一致 */}
-            <IconComponent className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
+            {/* 逻辑判断：如果URL无效或图片加载失败，则使用 Lucide 回退图标 */}
+            {hasError || !imageUrl ? (
+                // 渲染特定的 Lucide 图标（Bot, Wrench, Cloud 等）
+                <FallbackIconComponent className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
+            ) : (
+                // 尝试加载 Favicon
+                <img 
+                    src={imageUrl} 
+                    alt={link.name} 
+                    className="w-6 h-6 object-contain"
+                    // 🚨 关键：加载失败时设置错误状态，将触发 FallbackIconComponent 渲染
+                    onError={() => setHasError(true)} 
+                    loading="lazy"
+                />
+            )}
         </div>
     );
 };
 // =========================================================================
-// ⬆️ 【修复完成】图标映射和 LinkIcon 组件重写 ⬆️
+// ⬆️ 【修复结束】Favicon + 特定 Lucide 图标回退逻辑 ⬆️
 // =========================================================================
 
 
@@ -496,7 +526,7 @@ const Footer = ({ setCurrentPage }) => {
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* ✅ 邮箱地址已修改 (Footer) */}
+              {/* 邮箱地址已修改 (Footer) */}
               <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
                 <Mail className="w-5 h-5" />
               </a>
@@ -526,7 +556,7 @@ const AboutPage = () => (
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
                 <br/> 
                 联系邮箱: 
-                {/* ✅ 邮箱地址已修改 (AboutPage) */}
+                {/* 邮箱地址已修改 (AboutPage) */}
                 <a 
                     href="mailto:115382613@qq.com" 
                     className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
@@ -617,6 +647,7 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
                 title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
                 className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
             >
+                {/* 外部搜索按钮的 Favicon 保持不变 */}
                 <img 
                     src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
                     alt={engine.name} 
@@ -703,7 +734,7 @@ export default function App() {
       }
       
     }, 
-    // ✅ 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
+    // 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
     (error) => {
         console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
