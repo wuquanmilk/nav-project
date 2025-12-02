@@ -17,7 +17,8 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe } from 'lucide-react';
+// 导入 Search 图标
+import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
@@ -54,20 +55,37 @@ const LinkCard = ({ link }) => {
 };
 
 // 🔹 公共主页
-const PublicNav = ({ navData }) => (
-  <div className="space-y-8 min-h-[60vh]">
-    {navData.map(cat => (
-      <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {cat.links?.map(link => <LinkCard key={link.id} link={link} />)}
-        </div>
-      </div>
-    ))}
-  </div>
-);
+const PublicNav = ({ navData, searchTerm }) => {
+    if (navData.length === 0 && searchTerm) {
+        return (
+            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+                <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                    没有找到与 "{searchTerm}" 相关的链接。
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">请尝试其他关键词。</p>
+            </div>
+        );
+    }
 
-// 🔹 链接表单
+    return (
+        <div className="space-y-8 min-h-[60vh]">
+            {navData.map(cat => (
+                // 仅当分类下有链接时才渲染该分类
+                cat.links && cat.links.length > 0 && (
+                    <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {cat.links.map(link => <LinkCard key={link.id} link={link} />)}
+                        </div>
+                    </div>
+                )
+            ))}
+        </div>
+    );
+};
+
+// 🔹 链接表单 (不变)
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -92,7 +110,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗
+// 🔹 登录弹窗 (不变)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -114,7 +132,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
-// 🔹 管理面板
+// 🔹 管理面板 (不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
@@ -170,7 +188,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 新增：页脚组件
+// 🔹 新增：页脚组件 (不变)
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   
@@ -225,7 +243,7 @@ const Footer = () => {
   );
 };
 
-// 🔹 主应用
+// 🔹 主应用 (App 组件)
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
   const [auth, setAuth] = useState(null);
@@ -235,6 +253,9 @@ export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
+  
+  // 🔥 新增：搜索框状态
+  const [searchTerm, setSearchTerm] = useState(''); 
 
   useEffect(()=>{
     const firebaseConfig = {
@@ -285,6 +306,40 @@ export default function App() {
       setShowLogin(false); setLoginError('');
     } catch(e){ setLoginError(e.message); }
   };
+  
+  // 🔥 新增：根据搜索词过滤导航数据
+  const filteredNavData = useMemo(() => {
+    if (!searchTerm) {
+      return navData; // 搜索词为空，返回全部数据
+    }
+
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+    // 过滤分类列表
+    return navData
+      .map(category => {
+        // 过滤每个分类下的链接
+        const filteredLinks = category.links.filter(link => {
+          const name = link.name?.toLowerCase() || '';
+          const description = link.description?.toLowerCase() || '';
+          const url = link.url?.toLowerCase() || '';
+
+          // 匹配链接名称、描述或 URL
+          return name.includes(lowerCaseSearchTerm) || 
+                 description.includes(lowerCaseSearchTerm) ||
+                 url.includes(lowerCaseSearchTerm);
+        });
+
+        // 返回一个新的分类对象，只包含匹配的链接
+        return {
+          ...category,
+          links: filteredLinks,
+        };
+      })
+      // 过滤掉链接列表为空的分类
+      .filter(category => category.links.length > 0);
+  }, [navData, searchTerm]);
+
 
   return (
     <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
@@ -301,10 +356,34 @@ export default function App() {
             {isAdmin && <button onClick={()=>signOut(auth)} className="text-red-500">退出管理</button>}
           </div>
         </header>
-        {isAdmin ? <AdminPanel db={db} navData={navData} fetchData={fetchData} /> : <PublicNav navData={navData} />}
+        
+        {/* 🔥 新增：站内搜索框 */}
+        {!isAdmin && (
+            <div className="mb-8 relative max-w-2xl mx-auto">
+                <input 
+                    type="text" 
+                    placeholder="搜索链接名称、描述或网址..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+                {searchTerm && (
+                    <button 
+                        onClick={() => setSearchTerm('')} 
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                        title="清空搜索"
+                    >
+                        <X className="w-5 h-5"/>
+                    </button>
+                )}
+            </div>
+        )}
+        
+        {/* 🔥 修改：向 PublicNav 传递过滤后的数据和搜索词 */}
+        {isAdmin ? <AdminPanel db={db} navData={navData} fetchData={fetchData} /> : <PublicNav navData={filteredNavData} searchTerm={searchTerm} />}
       </div>
       
-      {/* 🔹 这里引入了页脚 */}
       <Footer />
     </div>
   )
