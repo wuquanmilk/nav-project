@@ -17,11 +17,11 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标 (已根据导航数据扩展，以确保有足够的图标可用)
+// 导入需要的图标 (已根据导航数据扩展，并移除错误的 'Tool' 导入)
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
-  // 导航链接新增的图标：
-  Cloud, Database, Bot, Play, Camera, Network, Server, Tool, ShoppingCart, Wand, Monitor, Wrench, Code
+  // 导航链接新增的图标： (Tool 已被移除，统一使用 Wrench)
+  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
 } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
@@ -162,7 +162,7 @@ const DebugBar = () => null;
 
 
 // =========================================================================
-// ⬇️ 【修复开始】图标映射和 LinkIcon 组件重写 ⬇️
+// ⬇️ 【修复完成】图标映射和 LinkIcon 组件重写 ⬇️
 // =========================================================================
 
 // 🔹 图标名称到 Lucide 组件的映射
@@ -220,21 +220,21 @@ const ICON_MAP = {
     'oracle cloud': Database,
     'ibm cloud': Database,
 
-    // 工具箱
-    '在线工具网': Tool,
+    // 工具箱 (全部映射到 Wrench/Code/Wand)
+    '在线工具网': Wrench, 
     'py混淆': Wrench,
     '二维码生成': Wrench,
     'argo tunnel json获取': Wrench,
     'base64转换': Wrench,
-    '一键抠图': Wand, // AI
-    '网址缩短': Tool,
+    '一键抠图': Wand, 
+    '网址缩短': Wrench,
     'flexclip': Wand,
     'js混淆': Wrench,
     '文件格式转换': Wrench,
-    '第一工具网': Tool,
+    '第一工具网': Wrench,
     'php混淆加密': Wrench,
-    'json工具': Tool,
-    'emoji 表情大全': Tool,
+    'json工具': Wrench, 
+    'emoji 表情大全': Wrench,
     '网站打包app': Code,
 
     // IP代理
@@ -279,7 +279,7 @@ const LinkIcon = ({ link }) => {
     );
 };
 // =========================================================================
-// ⬆️ 【修复结束】图标映射和 LinkIcon 组件重写 ⬆️
+// ⬆️ 【修复完成】图标映射和 LinkIcon 组件重写 ⬆️
 // =========================================================================
 
 
