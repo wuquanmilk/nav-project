@@ -416,7 +416,7 @@ const AboutPage = () => (
                 <br/> 
                 联系邮箱: 
                 <a 
-                    href="mailto:contact@example.com" 
+                    href="mailto:115382613@qq.com" 
                     className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
                 >
                     contact@example.com
