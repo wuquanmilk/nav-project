@@ -857,33 +857,8 @@ export default function App() {
                 极速导航网
             </h1>
             
-            <div className="flex flex-col gap-2 absolute top-0 right-0">
-                <button 
-                    onClick={()=>setIsDark(!isDark)} 
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    title="切换主题"
-                >
-                    {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
-                </button>
-                {!isAdmin && (
-                    <button 
-                        onClick={() => setShowLogin(true)} 
-                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        title="管理员登录"
-                    >
-                        <User className="w-5 h-5"/> 
-                    </button>
-                )}
-                {isAdmin && (
-                    <button 
-                        onClick={() => signOut(auth)} 
-                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        title="退出管理"
-                    >
-                        <User className="w-5 h-5"/> 
-                    </button>
-                )}
-            </div>
+            {/* ⭐️ 原本的按钮位置被清空 ⭐️ */}
+            {/* <div className="flex flex-col gap-2 absolute top-0 right-0">...</div> */}
         </header>
         
         <SearchLayout 
@@ -907,6 +882,52 @@ export default function App() {
             )
         )}
       </div>
+      
+      {/* ⭐️ 新增：固定在右下角的按钮组 ⭐️ */}
+      {!isAdmin && currentPage === 'home' && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
+          {/* 主题切换按钮 */}
+          <button 
+              onClick={()=>setIsDark(!isDark)} 
+              className="p-3 rounded-full shadow-lg bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all border dark:border-gray-600"
+              title="切换主题"
+          >
+              {isDark ? <Sun className="w-6 h-6"/> : <Moon className="w-6 h-6"/>}
+          </button>
+
+          {/* 管理员登录按钮 */}
+          <button 
+              onClick={() => setShowLogin(true)} 
+              className="p-3 rounded-full shadow-lg bg-blue-500 text-white hover:bg-blue-600 transition-all"
+              title="管理员登录"
+          >
+              <User className="w-6 h-6"/> 
+          </button>
+        </div>
+      )}
+
+      {/* ⭐️ 新增：管理员退出按钮（固定在右下角） ⭐️ */}
+      {isAdmin && (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
+             {/* 主题切换按钮 (管理员模式也保留) */}
+          <button 
+              onClick={()=>setIsDark(!isDark)} 
+              className="p-3 rounded-full shadow-lg bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all border dark:border-gray-600"
+              title="切换主题"
+          >
+              {isDark ? <Sun className="w-6 h-6"/> : <Moon className="w-6 h-6"/>}
+          </button>
+
+          {/* 退出管理按钮 */}
+          <button 
+              onClick={() => signOut(auth)} 
+              className="p-3 rounded-full shadow-lg bg-red-500 text-white hover:bg-red-600 transition-all"
+              title="退出管理"
+          >
+              <User className="w-6 h-6"/> 
+          </button>
+        </div>
+      )}
       
       <Footer setCurrentPage={setCurrentPage} />
     </div>
