@@ -30,7 +30,65 @@ const APP_ID = 'default-app-id';
 
 // ⭐️ 谷歌图标 Base64 SVG 编码 (用于国际版稳定性修复，防止动态加载失败) ⭐️
 const GOOGLE_BASE64_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGogZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1Yz羞思T1.NTctLjE1LTMuMDktLjM4LTQuNTVIMjR2OS4wMmgxMi45NGMtMC41OCAyLjk2LTIuMjYgNS40OC00Ljc4IDcuMThsNy43MzYgNi4xOTY0LjUxLTQuMTggNy4wOS0xMC4zNiA3LjA5LTE3LjY1eiIvPjxwYXRoZmlsbD0iI0ZCQkMwNSIgZD0iTTEwLjUzIDI4LjU5Yy0wLjQ4LTEuNDUtLjc2LTIuOTktLjc2LTQuNTlzMC4yNy0zLjE0Ljc2LTQuNTlsLTcuOTgtNi4xOUMuOTIgMTYuNDYgMCAyMC4xMiAwIDI0YzAgMy44OC45MiA3LjU0IDIuNTYgMTAuNzhsNy45Ny02LjE5eiIvPjxwYXRoIGZpbGw9IiMzNEE4NTMiIGQ9Ik0xMC41MyAxNi4yNEM3LjI4IDE5LjAzIDQuODcgMjMuMDMgNC44NyAyNC45OWMwLjAwMSAzgcyLS42NiA3LjQ2LTkuNTVsLTcuOTgtNi4xOUM2LjUyIDcuNjcgMTQuNjMgMy42NCAyNCAzLjY0YzIuOTkgMCA1Ljc4LjU1IDguNDQgMS41NGwtNS43OCAzLjI0Yy0xLjUzLS43MS0zLjIzLS45OS00Ljk3LS45OS01LjM2IDAtMTAuMzMgMi40Ni0xMy42NiA2LjE1eiIvPjwvc3ZnPg==';
+// =========================================================================
+// 核心数据定义：外部搜索引擎列表
+// =========================================================================
 
+// 国际版搜索引擎
+const FULL_EXTERNAL_ENGINES = [
+    { name: 'Google', url: 'https://www.google.com/search?q=', icon: GOOGLE_BASE64_ICON },
+    { name: 'Bing', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/favicon.ico' },
+    { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=', icon: 'https://duckduckgo.com/favicon.ico' },
+    { name: 'GitHub', url: 'https://github.com/search?q=', icon: 'https://github.com/favicon.ico' },
+    { name: 'Stack Overflow', url: 'https://stackoverflow.com/search?q=', icon: 'https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico' },
+];
+
+// 国内版搜索引擎
+const DOMESTIC_EXTERNAL_ENGINES = [
+    { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' },
+    { name: 'Bing (国内)', url: 'https://cn.bing.com/search?q=', icon: 'https://cn.bing.com/favicon.ico' },
+    { name: '搜狗', url: 'https://www.sogou.com/web?query=', icon: 'https://www.sogou.com/favicon.ico' },
+];
+
+// =========================================================================
+// 核心数据定义：默认导航数据
+// =========================================================================
+
+// 国际版默认导航数据
+const FULL_NAV_DATA = [
+    {
+        id: 'cat-1',
+        category: '常用开发',
+        order: 0,
+        links: [
+            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区', icon: 'Bot' },
+            { name: 'GitHub', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'Code' },
+            { name: 'Stack Overflow', url: 'https://stackoverflow.com/', description: '开发者问答社区', icon: 'Wrench' },
+        ],
+    },
+    {
+        id: 'cat-2',
+        category: 'AI 工具',
+        order: 1,
+        links: [
+            { name: 'ChatGPT', url: 'https://chat.openai.com/', description: 'OpenAI 语言模型', icon: 'Cloud' },
+            { name: 'Google Gemini', url: 'https://gemini.google.com/', description: '谷歌 AI 助手', icon: 'Database' },
+        ],
+    },
+];
+
+// 国内版默认导航数据
+const DOMESTIC_NAV_DATA = [
+    {
+        id: 'cat-1',
+        category: '常用工具',
+        order: 0,
+        links: [
+            { name: '百度', url: 'https://www.baidu.com/', description: '国内常用搜索引擎', icon: 'Search' },
+            { name: '淘宝', url: 'https://www.taobao.com/', description: '电商购物平台', icon: 'ShoppingCart' },
+        ],
+    },
+];
 // =========================================================================
 // 核心切换开关：国内版 / 国际版 (保持不变)
 // =========================================================================
