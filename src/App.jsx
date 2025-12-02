@@ -157,31 +157,63 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-// 🔹 链接卡片 (原始 V1 图标逻辑)
-const LinkCard = ({ link }) => {
-  const faviconUrl = useMemo(() => {
-    try {
-      const urlObj = new URL(link.icon || link.url);
-      return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
-    } catch {
-      return 'https://placehold.co/40x40/ccc/000?text=L';
-    }
-  }, [link.icon, link.url]);
 
+// 🔹 辅助组件：处理图标的加载和降级 (新增/优化)
+const LinkIcon = ({ link }) => {
+    // 使用 useState 追踪图标加载是否出错
+    const [hasError, setHasError] = useState(false);
+    
+    const imageUrl = useMemo(() => {
+        try {
+            const urlToParse = link.icon || link.url;
+            const urlObj = new URL(urlToParse);
+            // 采用 Google S2 Favicons CDN，因为它稳定且全球覆盖率高
+            return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
+        } catch {
+            return ''; 
+        }
+    }, [link.icon, link.url]);
+
+    useEffect(() => {
+        // 链接或图标 URL 变化时，重置错误状态，重新尝试加载
+        setHasError(false); 
+    }, [link.icon, link.url]);
+
+    // 如果加载失败或 URL 无效，则显示内置的 Globe 图标
+    if (!imageUrl || hasError) {
+        return (
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+                {/* 使用 Lucide-react 的 Globe 图标作为稳定降级 */}
+                <Globe className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
+            </div>
+        );
+    }
+
+    // 尝试加载外部 Favicon
+    return (
+        <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
+            <img 
+                src={imageUrl} 
+                alt={link.name} 
+                className="w-full h-full object-cover" 
+                // 加载失败，设置错误状态，将触发 Globe 渲染
+                onError={() => setHasError(true)} 
+            />
+        </div>
+    );
+};
+
+
+// 🔹 链接卡片 (使用 LinkIcon 辅助组件 - 优化)
+const LinkCard = ({ link }) => {
+  // 简化 LinkCard 逻辑，聚焦于布局和点击事件
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-          <img 
-            src={faviconUrl} 
-            alt={link.name} 
-            className="w-full h-full object-cover" 
-            onError={(e) => {
-              e.target.onerror = null; 
-              e.target.src = 'https://placehold.co/40x40/ccc/000?text=L'; 
-            }} 
-          />
-        </div>
+        
+        {/* 使用LinkIcon处理复杂的图标逻辑 */}
+        <LinkIcon link={link} /> 
+
         <div className="min-w-0 flex-grow">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{link.name}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">{link.description}</p>
@@ -345,6 +377,29 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
+// 🔹 登录弹窗 (保持不变)
+const LoginModal = ({ onClose, onLogin, error }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
+          <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
+          {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+          <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
 // 🔹 页脚组件
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
@@ -386,7 +441,7 @@ const Footer = ({ setCurrentPage }) => {
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* 📧 已修改邮箱地址 (Footer) */}
+              {/* ✅ 邮箱地址已修改 (Footer) */}
               <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
                 <Mail className="w-5 h-5" />
               </a>
@@ -416,7 +471,7 @@ const AboutPage = () => (
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
                 <br/> 
                 联系邮箱: 
-                {/* 📧 已修改邮箱地址 (AboutPage) */}
+                {/* ✅ 邮箱地址已修改 (AboutPage) */}
                 <a 
                     href="mailto:115382613@qq.com" 
                     className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
@@ -482,8 +537,6 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
             value={searchTerm}
             // 确保 onChange 正确更新状态
             onChange={(e) => setSearchTerm(e.target.value)}
-            // 确保输入框在 re-render 时保持焦点，focus 属性可能会有帮助，但通常不是必须的
-            // 核心在于 DOM 元素的稳定
             className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
         />
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
@@ -519,11 +572,11 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// 🚀 修复后的 SearchLayout 组件 (使用稳定的单一布局，解决焦点丢失问题)
+// 🚀 修复后的 SearchLayout 组件 (使用稳定的单一布局)
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || currentPage !== 'home') return null;
 
-    // 统一使用 "搜索框在上，按钮在下" 的稳定结构，避免因 Firebase 状态变化而引起的 DOM 结构切换。
+    // 统一使用 "搜索框在上，按钮在下" 的稳定结构
     return (
         <div className="mb-8 max-w-2xl mx-auto">
             {/* 站内搜索框 */}
@@ -595,7 +648,7 @@ export default function App() {
       }
       
     }, 
-    // 🚀 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
+    // ✅ 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
     (error) => {
         console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
