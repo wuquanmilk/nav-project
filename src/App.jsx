@@ -17,8 +17,8 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标 (已引入 User, Search 等)
-import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
+// 导入需要的图标
+import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
@@ -156,23 +156,15 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-// 🔹 链接卡片 (已修复图标逻辑)
+// 🔹 链接卡片 (原始 V1 图标逻辑)
 const LinkCard = ({ link }) => {
-  
-  const defaultFallback = 'https://placehold.co/40x40/ccc/000?text=L';
-  const primaryFaviconUrl = useMemo(() => {
+  const faviconUrl = useMemo(() => {
     try {
-      const targetUrl = link.icon || link.url;
-      const urlObj = new URL(targetUrl);
-      
-      const encodedUrl = encodeURIComponent(urlObj.origin);
-      
-      // 优先使用 Google Favicon V2 endpoint (相对 V1 更稳定)
-      return `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=1&url=${encodedUrl}&size=64`;
-
-    } catch (e) {
-      // 链接无效，返回默认占位符
-      return defaultFallback;
+      const urlObj = new URL(link.icon || link.url);
+      // 原始 V1 接口
+      return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
+    } catch {
+      return 'https://placehold.co/40x40/ccc/000?text=L';
     }
   }, [link.icon, link.url]);
 
@@ -181,21 +173,12 @@ const LinkCard = ({ link }) => {
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
           <img 
-            src={primaryFaviconUrl} 
+            src={faviconUrl} 
             alt={link.name} 
             className="w-full h-full object-cover" 
             onError={(e) => {
-              // 第一次失败 (V2失败)
               e.target.onerror = null; 
-              try {
-                // 尝试降级到网站根目录的 /favicon.ico (很多网站支持)
-                const fallbackDomain = new URL(link.url).origin;
-                e.target.src = `${fallbackDomain}/favicon.ico`; 
-                // 如果第二次失败，将再次触发 onError，但我们已设置 onerror=null，所以只会显示浏览器默认的错误图标
-              } catch {
-                 // 如果 URL 本身格式错误，则使用默认占位符
-                 e.target.src = defaultFallback;
-              }
+              e.target.src = 'https://placehold.co/40x40/ccc/000?text=L'; 
             }} 
           />
         </div>
@@ -209,7 +192,7 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共主页 (不变)
+// 🔹 公共主页
 const PublicNav = ({ navData, searchTerm }) => {
     if (navData.length === 0 && searchTerm) {
         return (
@@ -239,7 +222,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (不变)
+// 🔹 链接表单
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -264,7 +247,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 (已修复图标)
+// 🔹 登录弹窗 (使用 LogIn 图标)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -274,8 +257,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        {/* 🔥 修复: 使用 User 图标 */}
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><User className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
@@ -287,7 +269,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
-// 🔹 管理面板 (不变)
+// 🔹 管理面板
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
@@ -363,7 +345,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件 (不变)
+// 🔹 页脚组件
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -415,7 +397,7 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件 (不变)
+// 🔹 关于本站页面组件
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -445,7 +427,7 @@ const AboutPage = () => (
 );
 
 
-// 🔹 免责声明页面组件 (不变)
+// 🔹 免责声明页面组件
 const DisclaimerPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
@@ -547,6 +529,7 @@ export default function App() {
     } catch(e){ setLoginError(e.message); }
   };
   
+  // 根据搜索词过滤导航数据
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
       return navData; 
@@ -581,48 +564,44 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
-        {/* 🔥 修复标题居中: 使用相对定位和绝对定位实现完美居中 */}
-        <header className="mb-8 relative">
-            <h1 
-                className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
-                onClick={() => setCurrentPage('home')}
+        {/* 原始 Header 布局 (未居中) */}
+        <header className="flex justify-between items-center mb-12">
+          <h1 
+              className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600"
+              onClick={() => setCurrentPage('home')}
+          >
+              第一象限 极速导航网
+          </h1>
+          <div className="flex gap-4">
+            <button 
+                onClick={()=>setIsDark(!isDark)} 
+                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
+                title="切换主题"
             >
-                极速导航网
-            </h1>
-            
-            {/* 按钮区域: 绝对定位到右上角 */}
-            <div className="flex gap-4 absolute top-0 right-0">
-                <button 
-                    onClick={()=>setIsDark(!isDark)} 
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    title="切换主题"
-                >
-                    {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
-                </button>
-                {!isAdmin && (
-                    <button 
-                        onClick={() => setShowLogin(true)} 
-                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        title="管理员登录"
-                    >
-                        {/* 🔥 修复: 使用 User 图标 */}
-                        <User className="w-5 h-5"/>
-                    </button>
-                )}
-                {isAdmin && (
-                    <button 
-                        onClick={() => signOut(auth)} 
-                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        title="退出管理"
-                    >
-                        {/* 🔥 修复: 使用 User 图标 */}
-                        <User className="w-5 h-5"/>
-                    </button>
-                )}
-            </div>
+                {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
+            </button>
+            {!isAdmin && 
+              <button 
+                  onClick={()=>setShowLogin(true)} 
+                  className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700 dark:text-blue-400 dark:border-gray-600"
+                  title="管理员登录"
+              >
+                  管理员登录
+              </button>
+            }
+            {isAdmin && 
+              <button 
+                  onClick={()=>signOut(auth)} 
+                  className="text-red-500 font-bold border border-red-500 px-3 py-1 rounded hover:bg-red-50 dark:hover:bg-gray-700 dark:border-red-400 dark:text-red-400"
+                  title="退出管理"
+              >
+                  退出管理
+              </button>
+            }
+          </div>
         </header>
         
-        {/* 站内搜索框 */}
+        {/* 新增站内搜索框 */}
         {!isAdmin && currentPage === 'home' && (
             <div className="mb-8 relative max-w-2xl mx-auto">
                 <input 
