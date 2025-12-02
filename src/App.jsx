@@ -487,17 +487,14 @@ const DisclaimerPage = () => (
 
 
 // =========================================================================
-// ⬇️ 搜索按钮配置与逻辑 (已修改) ⬇️
+// ⬇️ 搜索按钮配置与逻辑 (仅谷歌硬编码) ⬇️
 // =========================================================================
 
-// 🔹 外部搜索引擎配置 (硬编码图标，最可靠)
+// 🔹 外部搜索引擎配置 (仅谷歌硬编码，百度和必应保持原样)
 const externalEngines = [
-  // ✅ 百度图标硬编码
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' },
-  // ⭐️ 谷歌图标硬编码 (重点修复) ⭐️
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com/favicon.ico' },
-  // ✅ 必应图标硬编码
-  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' }, // 保持原样，使用CDN加载
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com/favicon.ico' }, // 👈 仅此项硬编码
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' }, // 保持原样，使用CDN加载
 ];
 
 // 🔹 外部搜索处理函数 (保持不变)
@@ -536,50 +533,36 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     </div>
 ));
 
-// 🔹 子组件：处理单个外部搜索按钮的图标 (新增，用于稳定显示 Favicon)
-const ExternalSearchButton = ({ engine, searchTerm }) => {
-    const [hasError, setHasError] = useState(false);
-    
-    // 链接变化时，重置错误状态
-    useEffect(() => {
-        setHasError(false);
-    }, [engine.name]); 
-
-    const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
-
-    return (
-        <button
-            onClick={handleSearch}
-            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-            className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
-        >
-            {/* 如果硬编码的 icon URL 不存在或加载出错，则回退到 Lucide Search 图标 */}
-            {hasError || !engine.icon ? (
-                <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
-            ) : (
-                <img 
-                    src={engine.icon} 
-                    alt={engine.name} 
-                    className="w-6 h-6 rounded-full object-contain"
-                    onError={() => setHasError(true)} // 加载失败，触发回退
-                    loading="lazy"
-                />
-            )}
-        </button>
-    );
-};
-
-
-// 🔹 外部搜索按钮组件 (提取到 App 外部，接收 props)
+// 🔹 外部搜索按钮组件 (提取到 App 外部，接收 props - 恢复原始结构，修改图标逻辑)
 const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
-        {externalEngines.map(engine => (
-             <ExternalSearchButton 
-                key={engine.name} 
-                engine={engine} 
-                searchTerm={searchTerm} 
-            />
-        ))}
+        {externalEngines.map(engine => {
+            
+            // ⭐️ 核心逻辑修改：判断是否为硬编码URL ⭐️
+            // 如果 icon 字段包含路径且有常见图片扩展名（如 .ico, .png），则认为是完整的硬编码URL
+            const isHardcodedUrl = engine.icon.includes('/') && (engine.icon.includes('.ico') || engine.icon.includes('.png') || engine.icon.includes('.jpg'));
+            
+            const iconSrc = isHardcodedUrl
+                ? engine.icon // 1. 如果是硬编码URL (谷歌)，则直接使用
+                : `https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`; // 2. 否则，使用 Google S2 CDN (百度/必应)
+            
+            return (
+                <button
+                    key={engine.name}
+                    onClick={() => handleExternalSearch(engine.url, searchTerm)}
+                    title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+                    // 恢复了原始的按钮样式
+                    className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
+                >
+                    <img 
+                        src={iconSrc} 
+                        alt={engine.name} 
+                        className="w-6 h-6 rounded-full" 
+                        loading="lazy"
+                    />
+                </button>
+            )
+        })}
     </div>
 ));
 
@@ -604,7 +587,7 @@ const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTe
 
 
 // =========================================================================
-// ⬆️ 搜索按钮配置与逻辑 ⬆️
+// ⬆️ 搜索按钮配置与逻辑 (仅谷歌硬编码) ⬆️
 // =========================================================================
 
 
