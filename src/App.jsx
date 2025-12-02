@@ -17,11 +17,14 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标
-import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
+// 导入需要的图标 (已根据导航数据扩展，以确保有足够的图标可用)
+import { 
+  ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
+  // 导航链接新增的图标：
+  Cloud, Database, Bot, Play, Camera, Network, Server, Tool, ShoppingCart, Wand, Monitor, Wrench, Code
+} from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
-// 🔥 修复：将管理员 UID 修正回原始值，确保登录权限
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
@@ -157,50 +160,127 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-// 🔹 辅助组件：处理图标的加载和降级 (优化后的 V2 图标逻辑)
-const LinkIcon = ({ link }) => {
-    // 使用 useState 追踪图标加载是否出错
-    const [hasError, setHasError] = useState(false);
+
+// =========================================================================
+// ⬇️ 【修复开始】图标映射和 LinkIcon 组件重写 ⬇️
+// =========================================================================
+
+// 🔹 图标名称到 Lucide 组件的映射
+const ICON_MAP = {
+    // 常用开发
+    'huggingface': Wand, // AI/ML
+    'github': Github,
+    'cloudflare': Cloud,
+    'clawcloudrun': Code,
+    'dpdns': Network,
+    'supabase': Database,
+    'firebase': Server, 
+
+    // AI 大模型
+    'chatgpt': Bot,
+    'gemini': Wand, 
+    'deepseek': Bot,
+    '阿里千问': Bot,
+    '腾讯元宝': Bot,
+    '豆包': Bot,
+    '即梦': Wand,
+    '通义万相': Wand,
+
+    // 影视娱乐
+    '哔哩哔哩': Play,
+    'youtube': Play,
+    '爱奇艺': Monitor,
+    '在线音乐': Play,
+    '视频下载': Monitor,
+    '星空音乐下载': Play,
+    'instagram': Camera,
+    '快手': Camera,
+    '抖音': Camera,
+    'tiktok': Camera,
+    'snapchat': Camera,
+
+    // IP检测
+    'browserscan': Network,
+    'ping0': Network,
+    '真实地址生成器': Network,
+    'itdog': Network,
+    'ip地址查询': Network,
     
-    const imageUrl = useMemo(() => {
-        try {
-            const urlToParse = link.icon || link.url;
-            const urlObj = new URL(urlToParse);
-            // 采用 Google S2 Favicons CDN，因为它稳定且全球覆盖率高
-            return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
-        } catch {
-            return ''; 
-        }
-    }, [link.icon, link.url]);
+    // 搜索引擎
+    '谷歌': Search,
+    '百度': Search,
+    '必应': Search,
 
-    useEffect(() => {
-        // 链接或图标 URL 变化时，重置错误状态，重新尝试加载
-        setHasError(false); 
-    }, [link.icon, link.url]);
+    // 云计算
+    'aws': Server,
+    'azure': Server,
+    '阿里云': Server,
+    '腾讯云': Server,
+    '华为云': Server,
+    'oracle cloud': Database,
+    'ibm cloud': Database,
 
-    // 如果加载失败或 URL 无效，则显示内置的 Globe 图标
-    if (!imageUrl || hasError) {
-        return (
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-                {/* 使用 Lucide-react 的 Globe 图标作为稳定降级 */}
-                <Globe className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
-            </div>
-        );
-    }
+    // 工具箱
+    '在线工具网': Tool,
+    'py混淆': Wrench,
+    '二维码生成': Wrench,
+    'argo tunnel json获取': Wrench,
+    'base64转换': Wrench,
+    '一键抠图': Wand, // AI
+    '网址缩短': Tool,
+    'flexclip': Wand,
+    'js混淆': Wrench,
+    '文件格式转换': Wrench,
+    '第一工具网': Tool,
+    'php混淆加密': Wrench,
+    'json工具': Tool,
+    'emoji 表情大全': Tool,
+    '网站打包app': Code,
 
-    // 尝试加载外部 Favicon
+    // IP代理
+    '在线代理': Network,
+    '免费网络代理': Network,
+
+    // 电商平台
+    '淘宝网': ShoppingCart,
+    '京东商城': ShoppingCart,
+    '亚马逊': ShoppingCart,
+};
+
+// 🔹 辅助函数：根据链接名称获取 Lucide 组件
+// 默认图标：使用 Globe 作为链接通用图标
+const DefaultFallbackIcon = Globe; 
+
+const getLucideIcon = (linkName) => {
+    // 统一转为小写并移除空格进行匹配，以提高容错性
+    const key = linkName.toLowerCase().replace(/\s/g, ''); 
+    
+    // 尝试精确匹配
+    const IconComponent = ICON_MAP[key];
+
+    // 如果精确匹配成功，返回组件
+    if (IconComponent) return IconComponent;
+
+    // 否则返回默认图标
+    return DefaultFallbackIcon;
+};
+
+
+// 🔹 辅助组件：处理图标的加载和降级 (使用 Lucide-React - 修复版本)
+const LinkIcon = ({ link }) => {
+    // 获取对应的 Lucide Icon 组件，如果找不到则使用 Globe
+    const IconComponent = getLucideIcon(link.name);
+
     return (
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-            <img 
-                src={imageUrl} 
-                alt={link.name} 
-                className="w-full h-full object-cover" 
-                // 加载失败，设置错误状态，将触发 Globe 渲染
-                onError={() => setHasError(true)} 
-            />
+            {/* 直接渲染 Lucide 组件，稳定且与系统图标保持一致 */}
+            <IconComponent className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
         </div>
     );
 };
+// =========================================================================
+// ⬆️ 【修复结束】图标映射和 LinkIcon 组件重写 ⬆️
+// =========================================================================
 
 
 // 🔹 链接卡片 (使用 LinkIcon 辅助组件 - 优化)
