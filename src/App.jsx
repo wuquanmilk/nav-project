@@ -21,7 +21,8 @@ import {
 import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
-const ADMIN_USER_ID = '6UiUdmPna4RJ2hNBoXhx3XCTFN2';
+// 🔥 修复：将管理员 UID 修正回原始值，确保登录权限
+const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
 // 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (用于 Firebase 加载失败时的显示) 🔥🔥🔥
@@ -479,6 +480,8 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
             value={searchTerm}
             // 确保 onChange 正确更新状态
             onChange={(e) => setSearchTerm(e.target.value)}
+            // 确保输入框在 re-render 时保持焦点，focus 属性可能会有帮助，但通常不是必须的
+            // 核心在于 DOM 元素的稳定
             className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
         />
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
@@ -514,6 +517,25 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
+// 🚀 修复后的 SearchLayout 组件 (使用稳定的单一布局，解决焦点丢失问题)
+const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
+    if (isAdmin || currentPage !== 'home') return null;
+
+    // 统一使用 "搜索框在上，按钮在下" 的稳定结构，避免因 Firebase 状态变化而引起的 DOM 结构切换。
+    return (
+        <div className="mb-8 max-w-2xl mx-auto">
+            {/* 站内搜索框 */}
+            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            
+            {/* 外部搜索按钮 (下方，居中) */}
+            <ExternalSearchButtons 
+                className="flex justify-center space-x-4 mt-4" 
+                searchTerm={searchTerm} 
+            />
+        </div>
+    );
+});
+
 
 // 🔹 主应用 (App 组件)
 export default function App() {
@@ -530,7 +552,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   
-  // 🔥 新增状态：追踪 Firebase 是否连接成功
+  // 仅保留状态定义，但在 SearchLayout 中不再用于条件渲染
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   useEffect(()=>{
@@ -565,12 +587,12 @@ export default function App() {
       
       if (data.length > 0 || isAdmin) { 
           setNavData(data);
-          setIsFirebaseConnected(true); // 🔥 成功连接
+          setIsFirebaseConnected(true); 
       }
       
     }, (error) => {
         console.warn("Firebase connection failed or blocked. Using default links.", error);
-        setIsFirebaseConnected(false); // 🔥 连接失败，使用默认数据
+        setIsFirebaseConnected(false); 
     });
     return unsub;
   },[db, isAdmin]); 
@@ -593,6 +615,7 @@ export default function App() {
       await signInWithEmailAndPassword(auth,email,password);
       setShowLogin(false); 
       setLoginError('');
+      // 登录成功后强制重新拉取数据并更新 admin 视图
       await fetchData(); 
     } catch(e){ setLoginError(e.message); }
   };
@@ -623,49 +646,6 @@ export default function App() {
       })
       .filter(category => category.links.length > 0);
   }, [navData, searchTerm]);
-
-
-  // 🔹 搜索区域渲染逻辑 (根据 isFirebaseConnected 切换布局)
-  // 💥 修复：将此逻辑作为函数定义在 App 内部或使用 useCallback，
-  // 确保它不会在每次 App 渲染时都被当作一个全新的组件，
-  // 或者直接使用一个普通函数/逻辑块并在 JSX 中调用。
-  const SearchArea = () => {
-    if (isAdmin || currentPage !== 'home') return null;
-
-    if (isFirebaseConnected) {
-        // 🔥 国外/连接成功模式：搜索框和按钮并排（按钮在右侧）
-        return (
-            <div className="mb-8 flex justify-center">
-                <div className="max-w-2xl w-full flex items-stretch gap-3">
-                    {/* 站内搜索框 (占主要宽度) */}
-                    <div className="flex-grow">
-                        <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-                    </div>
-
-                    {/* 外部搜索按钮 (右侧最小化) */}
-                    <ExternalSearchButtons 
-                        className="flex items-center space-x-2 flex-shrink-0" 
-                        searchTerm={searchTerm} 
-                    />
-                </div>
-            </div>
-        );
-    } else {
-        // 🔥 国内/Fallback模式：搜索框在上，按钮在下
-        return (
-            <div className="mb-8 max-w-2xl mx-auto">
-                {/* 站内搜索框 (上方) */}
-                <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-                
-                {/* 外部搜索按钮 (下方，居中) */}
-                <ExternalSearchButtons 
-                    className="flex justify-center space-x-4 mt-4" 
-                    searchTerm={searchTerm} 
-                />
-            </div>
-        );
-    }
-  };
 
 
   return (
@@ -715,8 +695,13 @@ export default function App() {
             </div>
         </header>
         
-        {/* 🔥 搜索区域 (调用 SearchArea 函数，该函数现在内部调用的是稳定的外部组件) */}
-        <SearchArea />
+        {/* 搜索区域 (使用稳定的外部组件 SearchLayout) */}
+        <SearchLayout 
+            isAdmin={isAdmin}
+            currentPage={currentPage}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+        />
         
         {/* 核心内容渲染 */}
         {isAdmin ? (
