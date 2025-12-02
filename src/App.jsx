@@ -18,22 +18,26 @@ import {
   updateDoc,
   query,
   orderBy,
+  getDocs,
+  setDoc,
 } from 'firebase/firestore';
 // 导入需要的图标
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
-  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, ChevronDown, ChevronUp
+  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, ChevronDown, ChevronUp,
+  Settings // 新增设置图标
 } from 'lucide-react'; 
 
-// 🔹 配置你的管理员 UID
-const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2'; // 替换为您的管理员 UID
+// 🔹 配置你的管理员 UID (请确保这是您在 Firebase Authentication 中的真实 UID)
+// 管理员 UID 用于演示公共数据管理，但现在所有注册用户都有自己的私有数据管理
+const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2'; 
 const APP_ID = 'default-app-id';
 
-// ⭐️ 谷歌图标 Base64 SVG 编码 (用于国际版稳定性修复，防止动态加载失败) ⭐️
-const GOOGLE_BASE64_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGggZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1Yy0wLjU1Ny0uMTUtMy4wOS0uMzg0LjU1LTMuNDctMS43Mi0yLjk2LTQuOTItNS40OC04LjQ3LTcuMThsLTcuNzM2LTcuMDI2NDIuNTg4IDYuMjk2Yy0xLjUzLS43MS0zLjIzLS45OS00Ljk3LS45OS01LjM2IDAtMTAuMzMgMi40Ni0xMy42NiA2LjE1TDkuNjggMi45YzMuODMtMy42NyA5LjAxLTUuOTYgMTUuMzItNS45NiAyLjk5IDAgNS43OC41NSA4LjQ0IDEuNTRsNS43OCAzLjI0Yy00LjU1LTIuOTYtOS45Mi00LjUzLTE1LjgzLTQuNTMtMTIuODggMC0yMy41IDEwLjQyLTIzLjUgMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45eiIvPjwvc3ZnPg==';
+// ⭐️ 谷歌图标 Base64 SVG 编码 (用于国际版稳定性修复) ⭐️
+const GOOGLE_BASE64_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGggZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1Yy0wLjU1Ny0uMTUtMy4wOS0uMzg0LjU1LTMuNDctMS43Mi0yLjk2LTQuOTItNS40OC04LjQ3LTcuMThsLTcuNzM2LTcuMDI2NDIuNTg4IDYuMjk2Yy0xLjUzLS43MS0zLjIzLS45OS00Ljk3LS45OS01LjM2IDAtMTAuMzMgMi40Ni0xMy42NiA2LjE1TDkuNjggMi45YzMuODMtMy42NyA5LjAxLTUuOTYgMTUuMzIgNS45NiAyLjk5IDAgNS43OC41NSA4LjQ0IDEuNTRsNS43OCAzLjI0Yy00LjU1LTIuOTYtOS45Mi00LjUzLTE1LjgzLTQuNTMtMTIuODggMC0yMy41IDEwLjQyLTIzLjUgMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0.NzQ-MTQuMzVMODkuNjggMi45eiIvPjwvc3ZnPg==';
 
 // =========================================================================
-// 核心数据定义：外部搜索引擎列表 (已恢复)
+// 核心数据定义：外部搜索引擎列表 和 默认导航数据
 // =========================================================================
 
 // 国际版搜索引擎
@@ -45,15 +49,8 @@ const FULL_EXTERNAL_ENGINES = [
     { name: 'Stack Overflow', url: 'https://stackoverflow.com/search?q=', icon: 'https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico' },
 ];
 
-// 国内版搜索引擎
-const DOMESTIC_EXTERNAL_ENGINES = [
-    { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' },
-    { name: 'Bing (国内)', url: 'https://cn.bing.com/search?q=', icon: 'https://cn.bing.com/favicon.ico' },
-    { name: '搜狗', url: 'https://www.sogou.com/web?query=', icon: 'https://www.sogou.com/favicon.ico' },
-];
-
-// 国际版默认导航数据
-const FULL_NAV_DATA = [
+// 默认导航数据 (作为公共数据和用户首次登录时的初始数据)
+const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
         category: '常用开发',
@@ -75,62 +72,71 @@ const FULL_NAV_DATA = [
     },
 ];
 
-// 国内版默认导航数据
-const DOMESTIC_NAV_DATA = [
-    {
-        id: 'cat-1',
-        category: '常用工具',
-        order: 0,
-        links: [
-            { name: '百度', url: 'https://www.baidu.com/', description: '国内常用搜索引擎', icon: 'Search' },
-            { name: '淘宝', url: 'https://www.taobao.com/', description: '电商购物平台', icon: 'ShoppingCart' },
-        ],
-    },
-];
+const APP_TITLE = '极速导航网 (国际版)';
+const EXTERNAL_ENGINES = FULL_EXTERNAL_ENGINES;
 
 
 // =========================================================================
-// 核心切换开关：国内版 / 国际版 (保持不变)
-// =========================================================================
-
-const IS_DOMESTIC_VERSION = false; 
-const APP_TITLE = IS_DOMESTIC_VERSION ? '极速导航网 (国内版)' : '极速导航网 (国际版)';
-const EXTERNAL_ENGINES = IS_DOMESTIC_VERSION ? DOMESTIC_EXTERNAL_ENGINES : FULL_EXTERNAL_ENGINES;
-const DEFAULT_NAV_DATA = IS_DOMESTIC_VERSION ? DOMESTIC_NAV_DATA : FULL_NAV_DATA;
-
-
-// =========================================================================
-// ⬇️ 辅助组件 (SearchLayout, LinkCard, PublicNav, LinkForm 等全部恢复) ⬇️
+// 辅助组件 (LinkCard 进行了图标错误回退修复)
 // =========================================================================
 
 // 🔹 LinkIcon 组件
 const LinkIcon = ({ iconName, className = "w-4 h-4" }) => {
   const IconComponent = {
-    ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
-    Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code,
+    ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User, Settings,
+    Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, ChevronDown, ChevronUp
   }[iconName] || ExternalLink;
 
   return <IconComponent className={className} />;
 };
 
-// 🔹 LinkCard 组件
-const LinkCard = React.memo(({ link }) => (
-    <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700 block h-full">
-        <div className="flex items-center space-x-3 mb-2">
-            <div className="flex-shrink-0">
-                {link.icon && link.icon.startsWith('data:image') ? (
-                    <img src={link.icon} alt={link.name} className="w-5 h-5 rounded-full" />
-                ) : link.icon && link.icon.startsWith('http') ? (
-                    <img src={link.icon} alt={link.name} className="w-5 h-5 rounded-full" />
-                ) : (
-                    <LinkIcon iconName={link.icon} className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                )}
+// 🔹 LinkCard 组件 (主页显示的导航卡片) - **图标回退修复在此处**
+const LinkCard = React.memo(({ link }) => {
+    // 跟踪外部图标是否加载失败
+    const [imageError, setImageError] = useState(false);
+    
+    // 如果图标路径改变，重置错误状态，重新尝试加载
+    useEffect(() => {
+        setImageError(false);
+    }, [link.icon]);
+
+    const isExternalIcon = link.icon && (link.icon.startsWith('data:image') || link.icon.startsWith('http'));
+    
+    const renderIcon = () => {
+        if (isExternalIcon && !imageError) {
+            return (
+                // 尝试加载外部图标或 Base64 图像
+                <img 
+                    src={link.icon} 
+                    alt={link.name} 
+                    className="w-5 h-5 rounded-full" 
+                    onError={() => setImageError(true)} // 关键修复：图片加载失败时设置错误状态，触发回退
+                />
+            );
+        } else {
+            // 如果是 lucide-react 图标名称，或者外部图片加载失败，使用 LinkIcon
+            // 如果 link.icon 为空，LinkIcon 会默认显示 ExternalLink
+            return (
+                <LinkIcon 
+                    iconName={link.icon} 
+                    className="w-5 h-5 text-blue-500 dark:text-blue-400" 
+                />
+            );
+        }
+    };
+
+    return (
+        <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700 block h-full">
+            <div className="flex items-center space-x-3 mb-2">
+                <div className="flex-shrink-0">
+                    {renderIcon()}
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{link.name}</h3>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{link.name}</h3>
-        </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{link.description || link.url}</p>
-    </a>
-));
+            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{link.description || link.url}</p>
+        </a>
+    );
+});
 
 // 🔹 SearchLayout 组件
 const SearchLayout = ({ searchTerm, setSearchTerm }) => {
@@ -226,8 +232,8 @@ const LinkForm = ({ links, setLinks }) => {
     );
 };
 
-// 🔹 PublicNav 组件
-const PublicNav = ({ navData, searchTerm }) => {
+// 🔹 PublicNav 组件 (显示导航页面，无论是公共数据还是私人数据)
+const PublicNav = ({ navData, searchTerm, isPrivate }) => {
     // 过滤掉所有链接都被搜索过滤掉的分类
     const visibleCategories = navData
         .map(category => ({
@@ -239,17 +245,25 @@ const PublicNav = ({ navData, searchTerm }) => {
         }))
         .filter(category => category.links.length > 0);
 
+    const title = isPrivate ? "我的定制导航" : "公共导航主页";
+
     if (visibleCategories.length === 0) {
         return (
             <div className="text-center py-20">
                 <Search className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600"/>
-                <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">未找到匹配 "{searchTerm}" 的结果。</p>
+                <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">{title}：未找到匹配 "{searchTerm}" 的结果。</p>
+                {isPrivate && <p className="mt-2 text-sm text-gray-400">请点击右上角的 **设置** 按钮添加您的私人链接。</p>}
             </div>
         );
     }
 
     return (
         <div className="space-y-10">
+            {isPrivate && (
+                <div className="text-center p-3 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-lg mb-6">
+                    当前显示的是 **{title}**。
+                </div>
+            )}
             {visibleCategories.map(category => (
                 <section key={category.id} className="relative">
                     <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-gray-800 dark:text-white dark:border-gray-700">
@@ -310,23 +324,24 @@ const LoginModal = ({ onClose, onLogin, error, onSwitchToRegister }) => {
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
           <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
-          <div className="mt-4 text-center">
-              <button onClick={onSwitchToRegister} className="text-sm text-blue-500 hover:underline">
-                  没有账号？去注册
-              </button>
-          </div>
         </form>
+        <div className="mt-4 text-center">
+            <button onClick={onSwitchToRegister} className="text-sm text-blue-500 hover:underline">
+                没有账号？去注册
+            </button>
+        </div>
       </div>
     </div>
   );
 };
 
-// 🔹 管理面板 (AdminPanel)
-const AdminPanel = ({ db, navData, fetchData, userId, isAdmin }) => {
-    // 核心修改：根据用户身份确定操作路径
+
+// 🔹 管理面板 (AdminPanel) - 现在用于所有注册用户的私有数据编辑
+const AdminPanel = ({ db, navData, userId, isAdmin, onGoHome }) => {
+    // 核心修改：所有注册用户操作私有数据
     const collectionPath = isAdmin 
         ? `artifacts/${APP_ID}/public/data/navData` // 管理员操作公共数据
-        : `users/${userId}/data/navData`;         // 普通用户操作私有数据
+        : `artifacts/${APP_ID}/users/${userId}/navData`; // 普通注册用户操作私有数据
         
     const navCollection = collection(db, collectionPath);
     
@@ -334,9 +349,11 @@ const AdminPanel = ({ db, navData, fetchData, userId, isAdmin }) => {
     const [editId, setEditId] = useState(null);
     const [editData, setEditData] = useState({});
     const [isAdding, setIsAdding] = useState(false);
+    
+    const title = isAdmin ? '管理员面板 (编辑公共数据)' : '我的定制面板 (编辑私有数据)';
 
     const handleAddCategory = async () => {
-        if (!newCategory.category) return alert('请输入分类名称');
+        if (!newCategory.category) return console.warn('请输入分类名称');
         try {
             // 在 Firestore 中创建新分类
             await addDoc(navCollection, {
@@ -348,7 +365,6 @@ const AdminPanel = ({ db, navData, fetchData, userId, isAdmin }) => {
             setIsAdding(false);
         } catch (error) {
             console.error("Error adding document: ", error);
-            alert("添加分类失败，请检查Firebase连接和权限。");
         }
     };
 
@@ -359,7 +375,7 @@ const AdminPanel = ({ db, navData, fetchData, userId, isAdmin }) => {
     };
 
     const saveEdit = async () => { 
-      if (!editData.category) return alert('分类名称不能为空');
+      if (!editData.category) return console.warn('分类名称不能为空');
       
       const linksWithIcon = editData.links.map(link => ({
         name: link.name, 
@@ -377,26 +393,38 @@ const AdminPanel = ({ db, navData, fetchData, userId, isAdmin }) => {
         setEditId(null); 
       } catch (error) {
         console.error("Error updating document: ", error);
-        alert("保存修改失败，请检查Firebase连接和权限。");
       }
     };
     
     const handleDelete = async (id) => { 
+      // 使用 window.confirm 作为临时替代方案
+      // NOTE: 在生产环境中应使用自定义模态框替代 alert/confirm
       if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
           try {
             await deleteDoc(doc(db, collectionPath, id));
           } catch (error) {
             console.error("Error deleting document: ", error);
-            alert("删除分类失败，请检查Firebase连接和权限。");
           }
       }
     };
 
     return (
         <div className="mt-6 p-4 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
-                {isAdmin ? '管理员面板 (公共数据)' : '我的面板 (私有数据)'}
+            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white flex justify-between items-center">
+                {title}
+                <button 
+                    onClick={onGoHome} 
+                    className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors text-base"
+                >
+                    <Globe className="w-4 h-4 mr-1" />
+                    返回导航页
+                </button>
             </h3>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                {isAdmin 
+                    ? '您正在修改公共导航数据，这将影响所有游客和首次注册用户的默认设置。' 
+                    : `欢迎回来，${userId}！您在这里设置的导航界面是您私有的。`}
+            </p>
 
             <button 
                 onClick={() => setIsAdding(!isAdding)} 
@@ -469,29 +497,30 @@ const HomePage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [user, setUser] = useState(null);
     const [userId, setUserId] = useState(null); // 存储真实 UID 或 'anonymous'
+    const [isAuthReady, setIsAuthReady] = useState(false); // 新增：标记认证是否完成首次检查
     const [isAdmin, setIsAdmin] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [loginError, setLoginError] = useState('');
-    const [currentPage, setCurrentPage] = useState('home'); 
+    const [currentPage, setCurrentPage] = useState('home'); // 'home' (导航主页) 或 'admin' (编辑面板)
 
     // Firebase App 初始化 
+    // 🔥🔥🔥 您的 Firebase 配置已更新为提供的值 🔥🔥🔥
     const firebaseConfig = {
-      // ❗❗❗ 请在这里填写您真实的 Firebase 配置 ❗❗❗
-      apiKey: "YOUR_API_KEY", 
-      authDomain: "YOUR_AUTH_DOMAIN", 
-      projectId: "YOUR_PROJECT_ID", 
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID",
-      // ❗❗❗ ❗❗❗ ❗❗❗ ❗❗❗ ❗❗❗ ❗❗❗
+      apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
+      authDomain: "wangzhandaohang.firebaseapp.com",
+      projectId: "wangzhandaohang",
+      storageBucket: "wangzhandaohang.firebasestorage.app",
+      messagingSenderId: "169263636408",
+      appId: "1:169263636408:web:ee3608652b2872a539b94d",
+      measurementId: "G-6JGHTS41NH"
     };
 
     const app = useMemo(() => {
         try {
             return initializeApp(firebaseConfig);
         } catch (e) {
-            // console.error("Firebase already initialized or config error:", e);
+            console.error("Firebase initialization failed:", e);
             return null;
         }
     }, []);
@@ -505,80 +534,114 @@ const HomePage = () => {
         localStorage.setItem('theme', theme);
     }, [theme]);
 
-    // 认证状态监听 (已实现多用户逻辑)
+    // 认证状态监听和初始化
     useEffect(() => {
         if (!auth) return;
+        
+        // 尝试使用初始令牌登录
+        const initializeAuth = async () => {
+             // 检查是否有 Canvas 提供的初始 auth token
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } catch (e) {
+                    console.error("Custom token sign-in failed:", e);
+                    // 令牌登录失败，回退到匿名登录
+                    await signInAnonymously(auth);
+                }
+            } else {
+                // 如果没有提供初始令牌，直接匿名登录
+                await signInAnonymously(auth);
+            }
+        }
+        
+        // 启动初始化流程
+        initializeAuth();
+
+
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                // 核心逻辑：区分匿名用户和注册用户
-                if (currentUser.isAnonymous) {
-                    setUserId('anonymous');
-                } else {
-                    setUserId(currentUser.uid);
-                }
-                // 检查是否为管理员 UID
+                const id = currentUser.isAnonymous ? 'anonymous' : currentUser.uid;
+                setUserId(id);
                 setIsAdmin(currentUser.uid === ADMIN_USER_ID);
             } else {
-                // 如果用户未登录，自动执行匿名登录，作为默认游客身份
-                signInAnonymously(auth).catch(console.error);
-                setUserId(null); // 在登录完成前保持 null
+                setUserId('anonymous'); // 用户登出，但 onAuthStateChanged 会确保匿名登录被触发
                 setIsAdmin(false);
             }
+            // 首次认证检查完成，允许数据加载
+            setIsAuthReady(true);
         });
+        
         return () => unsubscribe();
     }, [auth]);
 
-    // Firestore 数据获取 (已实现数据隔离)
-    const fetchData = useCallback(() => {
-        if (!db || !userId) {
+
+    // 核心数据初始化和实时监听 (已修复 useEffect 警告)
+    useEffect(() => {
+        if (!db || !userId || !isAuthReady) {
+            // 在认证就绪前阻止 Firestore 操作
             return () => {};
         }
 
+        const isPrivateUser = userId !== 'anonymous';
         let collectionPath;
-        let isPublicData = false;
 
-        if (userId === 'anonymous' || isAdmin) {
-            // 游客和管理员都读取公共数据
-            collectionPath = `artifacts/${APP_ID}/public/data/navData`;
-            isPublicData = true;
+        if (isPrivateUser) {
+            collectionPath = `artifacts/${APP_ID}/users/${userId}/navData`;
         } else {
-            // 普通注册用户：读取自己的私有数据
-            collectionPath = `users/${userId}/data/navData`;
+            collectionPath = `artifacts/${APP_ID}/public/data/navData`;
         }
         
-        // 按照 order 字段排序
-        const navQuery = query(collection(db, collectionPath), orderBy("order", "asc"));
+        const navCollection = collection(db, collectionPath);
+        const navQuery = query(navCollection, orderBy("order", "asc"));
 
+        // 1. 异步数据初始化 (仅针对新注册用户)
+        const initializePrivateData = async () => {
+            if (isPrivateUser) {
+                try {
+                    const initialSnapshot = await getDocs(navCollection);
+                    if (initialSnapshot.empty) {
+                        console.log("Private data empty. Initializing with default data.");
+                        // 写入默认数据到用户的私有路径
+                        for (const item of DEFAULT_NAV_DATA) {
+                            // 使用 setDoc 代替 addDoc 确保文档结构清晰，但为了保持原逻辑，继续使用 addDoc
+                            await addDoc(navCollection, {
+                                category: item.category,
+                                order: item.order,
+                                links: item.links,
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error initializing private data:", e);
+                }
+            }
+        };
+        
+        // 立即调用异步初始化函数
+        initializePrivateData();
+        
+        // 2. 实时监听数据变化 (同步设置 onSnapshot)
         const unsubscribe = onSnapshot(navQuery, (snapshot) => {
             let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            if (data.length === 0 && !isPublicData) {
-                // 注册用户第一次登录，私有数据为空，使用默认硬编码数据作为起点
-                console.log("User private data empty, using default hardcoded data.");
-                // 注意：这里只是显示默认数据，用户保存时才会真正写入私有路径
-                setNavData(DEFAULT_NAV_DATA.map(cat => ({...cat, id: cat.category.replace(/\s/g, '-') }))); 
-                return;
-            } else if (data.length === 0 && isPublicData) {
-                 // 公共数据为空，使用默认硬编码数据作为回退
-                setNavData(DEFAULT_NAV_DATA);
+            // 如果监听到的数据为空，使用硬编码数据作为回退
+            if (data.length === 0 && !isPrivateUser) {
+                setNavData(DEFAULT_NAV_DATA.map(cat => ({...cat, id: cat.category.replace(/\s/g, '-') })));
                 return;
             }
 
-            // 更新状态
             setNavData(data);
-
         }, (error) => {
-            console.error("Error fetching Firestore data, using default data:", error);
+            console.error("Error fetching Firestore data, falling back to default:", error);
             setNavData(DEFAULT_NAV_DATA);
         });
-        return () => unsubscribe();
-    }, [db, userId, isAdmin]);
 
-    useEffect(() => {
-        const cleanup = fetchData();
-        return cleanup;
-    }, [fetchData]);
+        // 返回 onSnapshot 的清理函数 (这是同步的，符合 React 规范)
+        return () => unsubscribe();
+    }, [db, userId, isAuthReady]); // 依赖项：db, userId, isAuthReady
+
 
     const handleRegister = async (email, password) => {
         setLoginError('');
@@ -586,6 +649,7 @@ const HomePage = () => {
           await createUserWithEmailAndPassword(auth, email, password);
           setShowRegisterModal(false); 
           setShowLoginModal(false);
+          // 注册成功后，onAuthStateChanged 会自动触发，设置 isAuthReady=true，并加载用户私有数据
         } catch(e){ 
             setLoginError(`注册失败: ${e.message}`); 
         }
@@ -603,10 +667,20 @@ const HomePage = () => {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            // 退出登录后 onAuthStateChanged 会触发匿名登录，重新加载公共数据
+        } catch (e) {
+            console.error("Logout failed:", e);
+        }
+    };
+
     const handleToggleTheme = () => {
         setTheme(prev => prev === 'light' ? 'dark' : 'light');
     };
 
+    // 搜索过滤后的导航数据
     const filteredNavData = useMemo(() => {
         if (!searchTerm) return navData;
         const lowerCaseSearchTerm = searchTerm.toLowerCase();
@@ -625,6 +699,10 @@ const HomePage = () => {
     }, [navData, searchTerm]);
 
 
+    // 判断是否是注册用户（非匿名）
+    const isRegisteredUser = userId && userId !== 'anonymous';
+
+
     return (
         <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
             <div className="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 min-h-screen pt-4">
@@ -639,14 +717,34 @@ const HomePage = () => {
                         {APP_TITLE}
                     </h1>
                     <div className="flex items-center space-x-3">
-                        {/* 主页按钮 */}
-                        <button 
-                            onClick={() => setCurrentPage('home')} 
-                            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-blue-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                            title="主页"
-                        >
-                            <Globe className="w-5 h-5"/>
-                        </button>
+                        {/* 当前用户ID显示（方便调试和识别） */}
+                        {isAuthReady && userId && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 p-2 border rounded-full hidden sm:block">
+                                ID: {userId.substring(0, 4)}...{userId.substring(userId.length - 4)}
+                            </span>
+                        )}
+
+                        {/* 主页按钮 (仅当不在主页时显示) */}
+                        {currentPage !== 'home' && (
+                            <button 
+                                onClick={() => setCurrentPage('home')} 
+                                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-blue-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                title="主页"
+                            >
+                                <Globe className="w-5 h-5"/>
+                            </button>
+                        )}
+                        
+                        {/* 注册用户专属：设置/管理面板按钮 */}
+                        {isRegisteredUser && (
+                            <button 
+                                onClick={() => setCurrentPage('admin')} 
+                                className={`p-2 rounded-full ${currentPage === 'admin' ? 'bg-purple-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-purple-500 hover:bg-gray-300 dark:hover:bg-gray-600'} transition-colors`}
+                                title="我的定制面板"
+                            >
+                                <Settings className="w-5 h-5"/>
+                            </button>
+                        )}
 
                         {/* 主题切换按钮 */}
                         <button 
@@ -658,22 +756,22 @@ const HomePage = () => {
                         </button>
 
                         {/* 核心认证按钮逻辑 */}
-                        {userId && userId !== 'anonymous' ? (
-                            // 已登录用户 (普通客户或管理员)
+                        {isRegisteredUser ? (
+                            // 已登录用户 (注册用户)
                             <button 
-                                onClick={() => signOut(auth)} 
+                                onClick={handleLogout} 
                                 className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                title={isAdmin ? `退出管理 (${user?.email})` : `退出登录 (${user?.email})`}
+                                title={`退出登录 (${user?.email || '用户'})`}
                             >
-                                <User className="w-5 h-5"/> 
+                                <LogIn className="w-5 h-5"/> 
                             </button>
                         ) : (
-                            // 游客 (匿名用户) 或未完成初始化
+                            // 游客 (匿名用户)
                             <div className="flex space-x-2">
                                 <button 
                                     onClick={() => setShowLoginModal(true)} 
                                     className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-                                    title="客户/管理员登录"
+                                    title="登录"
                                 >
                                     <LogIn className="w-5 h-5"/> 
                                 </button>
@@ -692,100 +790,66 @@ const HomePage = () => {
                 {/* 搜索区域 */}
                 <SearchLayout searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
                 
-                {/* 核心内容渲染 (新增初始化等待状态) */}
-                {!db || !auth || userId === null ? (
+                {/* 核心内容渲染 */}
+                {!isAuthReady || !db || !auth || !userId ? (
                     <div className="text-center py-20 text-gray-500 dark:text-gray-400">正在初始化应用和认证状态...</div>
                 ) : (
-                    (userId && userId !== 'anonymous') ? (
-                        // 注册用户或管理员登录后，显示 AdminPanel 供其修改自己的数据
+                    currentPage === 'admin' && isRegisteredUser ? (
+                        // 注册用户且当前页面为 Admin Panel
                         <AdminPanel 
                             db={db} 
                             navData={navData} 
-                            fetchData={fetchData}
                             userId={userId} 
-                            isAdmin={isAdmin} 
+                            isAdmin={isAdmin} // 管理员操作公共数据，普通用户操作私有数据
+                            onGoHome={() => setCurrentPage('home')}
                         />
                     ) : (
-                        // 游客或匿名用户，显示公共导航
-                        currentPage === 'home' ? (
-                            <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
-                        ) : currentPage === 'about' ? (
-                            <AboutPage />
-                        ) : currentPage === 'disclaimer' ? (
-                            <DisclaimerPage />
-                        ) : (
-                            <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
-                        )
+                        // 游客 (匿名) 或 注册用户的主页 ('home')
+                        <PublicNav 
+                            navData={filteredNavData} 
+                            searchTerm={searchTerm} 
+                            isPrivate={isRegisteredUser}
+                        />
                     )
                 )}
               </div>
             </div>
             
-            <Footer setCurrentPage={setCurrentPage} appTitle={APP_TITLE} />
+            <Footer appTitle={APP_TITLE} />
             
             {/* 登录/注册弹窗渲染 */}
             {showLoginModal && (
                 <LoginModal 
-                    onClose={() => setShowLoginModal(false)} 
+                    onClose={() => {setShowLoginModal(false); setLoginError('');}} 
                     onLogin={handleLogin} 
                     error={loginError}
-                    onSwitchToRegister={() => { setShowLoginModal(false); setShowRegisterModal(true); }}
+                    onSwitchToRegister={() => { setShowLoginModal(false); setShowRegisterModal(true); setLoginError(''); }}
                 />
             )}
             {showRegisterModal && (
                 <RegisterModal 
-                    onClose={() => setShowRegisterModal(false)} 
+                    onClose={() => {setShowRegisterModal(false); setLoginError('');}} 
                     onRegister={handleRegister} 
                     error={loginError}
-                    onSwitchToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); }}
+                    onSwitchToLogin={() => { setShowRegisterModal(false); setShowLoginModal(true); setLoginError(''); }}
                 />
             )}
         </div>
     );
 };
 
-// 🔹 页脚 (Footer)
-const Footer = ({ setCurrentPage, appTitle }) => (
+// 🔹 页脚 (Footer) - 简化，移除无用的页面跳转按钮
+const Footer = ({ appTitle }) => (
     <footer className="w-full mt-12 py-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500 dark:text-gray-400">
         <p>&copy; {new Date().getFullYear()} {appTitle}. All rights reserved.</p>
         <div className="flex space-x-4 mt-3 sm:mt-0">
-          <button onClick={() => setCurrentPage('about')} className="hover:text-blue-500">关于我们</button>
-          <button onClick={() => setCurrentPage('disclaimer')} className="hover:text-blue-500">免责声明</button>
           <a href="https://github.com/your-repo" target="_blank" rel="noopener noreferrer" className="hover:text-blue-500 flex items-center">
             <Github className="w-4 h-4 mr-1"/> GitHub
           </a>
         </div>
       </div>
     </footer>
-);
-
-// 🔹 占位页面 (AboutPage)
-const AboutPage = () => (
-    <div className="py-12 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
-        <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">关于我们</h2>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
-            这是一个由 React、Tailwind CSS 和 Firebase 驱动的现代化、高度可定制的个人导航门户。
-        </p>
-        <p className="text-gray-600 dark:text-gray-400">
-            我们的目标是提供一个快速、简洁的界面，帮助用户高效地访问他们最常用的网站和工具。通过多用户功能，每个注册用户都可以创建和维护自己的专属面板，实现真正的个性化。
-        </p>
-    </div>
-);
-
-// 🔹 占位页面 (DisclaimerPage)
-const DisclaimerPage = () => (
-    <div className="py-12 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
-        <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">免责声明</h2>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
-            本导航页面上的所有链接和内容均由用户自行添加和管理。
-        </p>
-        <ul className="list-disc list-inside space-y-2 text-gray-600 dark:text-gray-400">
-            <li>本站不对链接的有效性、安全性或内容承担任何责任。</li>
-            <li>用户应自行判断和承担访问外部网站的风险。</li>
-            <li>如果您是注册用户，您的私有数据将受到 Firebase 规则保护，但您需对数据的准确性和合法性负责。</li>
-        </ul>
-    </div>
 );
 
 // 默认导出主应用组件
