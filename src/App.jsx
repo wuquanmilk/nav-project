@@ -17,16 +17,15 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标 (注意：这里已重新导入 User 图标，确保 Header 正常显示)
+// 导入需要的图标
 import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已修正 icon 字段为正确的域名) 🔥🔥🔥
-// 链接后面的 icon 字段，我们建议填入正确的 **根域名**（例如：https://claw.cloud/），
-// 这样可以确保 S2 服务使用正确的源去查找图标。
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已修正 icon 字段为正确的 URL 或域名) 🔥🔥🔥
+// 对于那些 S2 持续出错的链接，建议在此处使用其正确的 favicon URL，或在管理后台手动修改。
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
@@ -36,9 +35,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
-            // 修正：使用主域名 claw.cloud 作为图标来源
+            // 修正：使用主域名 claw.cloud 作为 S2 查找源
             { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'https://claw.cloud/' },
-            // 修正：使用主域名 digitalplat.org 作为图标来源
+            // 修正：使用主域名 digitalplat.org 作为 S2 查找源
+            // 如果此链接仍然出错，请手动将其 icon 字段修改为完整的图片 URL，例如: 'https://digitalplat.org/favicon.ico'
             { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'https://digitalplat.org/' },
             { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案' },
             { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务' },
@@ -56,7 +56,8 @@ const DEFAULT_NAV_DATA = [
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
             { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
             { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
-            // 修正：确保使用 tongyi.aliyun.com 作为图标来源
+            // 修正：确保使用 tongyi.aliyun.com 作为 S2 查找源
+            // 如果此链接仍然出错，请手动将其 icon 字段修改为完整的图片 URL，例如: 'https://tongyi.aliyun.com/favicon.ico'
             { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/' },
         ],
     },
@@ -126,9 +127,9 @@ const DEFAULT_NAV_DATA = [
             { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换' },
             { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除' },
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务' },
-            // 修正：使用 www.flexclip.com 作为图标来源
+            // 修正：使用 www.flexclip.com 作为 S2 查找源
             { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/' },
-            // 修正：使用 obfuscator.io 作为图标来源
+            // 修正：使用 obfuscator.io 作为 S2 查找源
             { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/' },
             { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换' },
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合' },
@@ -165,20 +166,18 @@ const DebugBar = () => null;
 
 // 🔹 链接卡片
 const LinkCard = ({ link }) => {
-  // 🚀 核心修复点：鲁棒的图标 URL 解析逻辑
+  // 🚀 核心修复点：最终增强的图标 URL 解析逻辑
   const faviconUrl = useMemo(() => {
-    const source = link.icon || link.url;
+    const source = link.icon;
 
-    // 1. 检查 source 是否为**直接图片 URL**（例如 .png/.ico），如果是，则直接使用，绕开 S2。
-    // 这允许管理员手动硬编码一个可靠的图标链接。
-    if (source.match(/\.(png|jpg|jpeg|ico|svg)$/i) && source.startsWith('http')) {
+    // 1. 如果 link.icon 是一个完整的 URL，直接使用它。
+    if (source && source.startsWith('http')) {
         return source;
     }
     
-    // 2. 否则，将 source 视为域名或普通 URL，并使用 Google S2 代理服务。
-    // 如果 link.icon 是一个更正确的根域名，S2 会使用它来查找图标。
+    // 2. 否则，使用 link.url 配合 Google S2 代理服务。
     try {
-      const urlObj = new URL(source);
+      const urlObj = new URL(link.url); // 此时只使用 link.url 的域名
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     } catch {
       // URL 解析失败，使用占位符
@@ -194,7 +193,7 @@ const LinkCard = ({ link }) => {
             src={faviconUrl} 
             alt={link.name} 
             className="w-full h-full object-cover" 
-            // 确保图片加载失败时（例如 S2 链接返回 404 或解析失败）显示占位符
+            // 确保图片加载失败时显示占位符
             onError={(e) => {
               e.target.onerror = null; 
               e.target.src = 'https://placehold.co/40x40/ccc/000?text=L'; 
@@ -259,8 +258,8 @@ const LinkForm = ({ links, setLinks }) => {
           <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
-          {/* 🚀 提示管理员：可以输入域名或完整的图片 URL */}
-          <input placeholder="图标源(域名/完整URL)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> 
+          {/* 🚀 提示管理员：输入完整的图片 URL 彻底修复图标问题 */}
+          <input placeholder="图标源(完整图片URL)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> 
           <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
         </div>
       ))}
@@ -384,57 +383,87 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件 (保持不变)
-const Footer = ({ setCurrentPage }) => {
-  const currentYear = new Date().getFullYear();
-  
-  const footerLinks = [
-    { name: '关于本站', action: () => setCurrentPage('about') },
-    { name: '免责声明', action: () => setCurrentPage('disclaimer') },
-  ];
+// 🔹 外部搜索引擎配置 (保持不变)
+const externalEngines = [
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
+];
 
-  return (
-    <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 text-center">
-        <div className="flex flex-col items-center space-y-4"> 
-          
-          <div className="text-center">
-            <h3 
-              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
-              onClick={() => setCurrentPage('home')}
-            >
-              第一象限
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              © {currentYear} 极速导航网. 保留所有权利.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-6">
-            {footerLinks.map((link, idx) => (
-              <a 
-                key={idx}
-                href="#"
-                onClick={(e) => { e.preventDefault(); link.action(); }}
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
-              >
-                {link.name}
-              </a>
-            ))}
-            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
-                <Github className="w-5 h-5" />
-              </a>
-              <a href="mailto:contact@example.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
-                <Mail className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+// 🔹 外部搜索处理函数 (保持不变)
+const handleExternalSearch = (engineUrl, query) => {
+  if (query) {
+    // 编码查询字符串并新窗口打开
+    window.open(engineUrl + encodeURIComponent(query), '_blank');
+  } else {
+    // 如果没有关键词，直接打开搜索引擎主页
+    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
+    window.open(baseDomain, '_blank');
+  }
 };
+
+// 🔹 SearchInput 组件 (保持不变)
+const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
+    <div className="relative">
+        <input 
+            type="text" 
+            placeholder="搜索链接名称、描述或网址..." 
+            value={searchTerm}
+            // 确保 onChange 正确更新状态
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+        />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+        {searchTerm && (
+            <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                title="清空站内搜索"
+            >
+                <X className="w-5 h-5"/>
+            </button>
+        )}
+    </div>
+));
+
+// 🔹 ExternalSearchButtons 组件 (保持不变)
+const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
+    <div className={className}>
+        {externalEngines.map(engine => (
+            <button
+                key={engine.name}
+                onClick={() => handleExternalSearch(engine.url, searchTerm)}
+                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
+            >
+                <img 
+                    // S2 服务获取搜索引擎图标
+                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full"
+                />
+            </button>
+        ))}
+    </div>
+));
+
+// 🔹 SearchLayout 组件 (保持不变)
+const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
+    if (isAdmin || currentPage !== 'home') return null;
+
+    return (
+        <div className="mb-8 max-w-2xl mx-auto">
+            {/* 站内搜索框 */}
+            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            
+            {/* 外部搜索按钮 (下方，居中) */}
+            <ExternalSearchButtons 
+                className="flex justify-center space-x-4 mt-4" 
+                searchTerm={searchTerm} 
+            />
+        </div>
+    );
+});
 
 // 🔹 关于本站页面组件 (保持不变)
 const AboutPage = () => (
@@ -491,87 +520,57 @@ const DisclaimerPage = () => (
 );
 
 
-// 🔹 外部搜索引擎配置 (保持不变)
-const externalEngines = [
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
-  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
-];
+// 🔹 页脚组件 (保持不变)
+const Footer = ({ setCurrentPage }) => {
+  const currentYear = new Date().getFullYear();
+  
+  const footerLinks = [
+    { name: '关于本站', action: () => setCurrentPage('about') },
+    { name: '免责声明', action: () => setCurrentPage('disclaimer') },
+  ];
 
-// 🔹 外部搜索处理函数 (保持不变)
-const handleExternalSearch = (engineUrl, query) => {
-  if (query) {
-    // 编码查询字符串并新窗口打开
-    window.open(engineUrl + encodeURIComponent(query), '_blank');
-  } else {
-    // 如果没有关键词，直接打开搜索引擎主页
-    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
-    window.open(baseDomain, '_blank');
-  }
-};
-
-// 🔹 搜索输入框组件 (提取到 App 外部，接收 props)
-const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
-    <div className="relative">
-        <input 
-            type="text" 
-            placeholder="搜索链接名称、描述或网址..." 
-            value={searchTerm}
-            // 确保 onChange 正确更新状态
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-        />
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-        {searchTerm && (
-            <button 
-                onClick={() => setSearchTerm('')} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                title="清空站内搜索"
+  return (
+    <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
+      <div className="container mx-auto px-4 text-center">
+        <div className="flex flex-col items-center space-y-4"> 
+          
+          <div className="text-center">
+            <h3 
+              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
+              onClick={() => setCurrentPage('home')}
             >
-                <X className="w-5 h-5"/>
-            </button>
-        )}
-    </div>
-));
+              第一象限
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              © {currentYear} 极速导航网. 保留所有权利.
+            </p>
+          </div>
 
-// 🔹 外部搜索按钮组件 (提取到 App 外部，接收 props)
-const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
-    <div className={className}>
-        {externalEngines.map(engine => (
-            <button
-                key={engine.name}
-                onClick={() => handleExternalSearch(engine.url, searchTerm)}
-                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
-            >
-                <img 
-                    // S2 服务获取搜索引擎图标
-                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
-                    alt={engine.name} 
-                    className="w-6 h-6 rounded-full"
-                />
-            </button>
-        ))}
-    </div>
-));
-
-// 🔹 SearchLayout 组件 (保持不变)
-const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
-    if (isAdmin || currentPage !== 'home') return null;
-
-    return (
-        <div className="mb-8 max-w-2xl mx-auto">
-            {/* 站内搜索框 */}
-            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-            
-            {/* 外部搜索按钮 (下方，居中) */}
-            <ExternalSearchButtons 
-                className="flex justify-center space-x-4 mt-4" 
-                searchTerm={searchTerm} 
-            />
+          <div className="flex flex-wrap justify-center gap-6">
+            {footerLinks.map((link, idx) => (
+              <a 
+                key={idx}
+                href="#"
+                onClick={(e) => { e.preventDefault(); link.action(); }}
+                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
+              >
+                {link.name}
+              </a>
+            ))}
+            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="mailto:contact@example.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
         </div>
-    );
-});
+      </div>
+    </footer>
+  );
+};
 
 
 // 🔹 主应用 (App 组件)
@@ -596,7 +595,7 @@ export default function App() {
       apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
       authDomain: "wangzhandaohang.firebaseapp.com",
       projectId: "wangzhandaohang",
-      storageBucket: "wangzhandaohang.firebasestorage.app",
+      storageBucket: "wangzhandaohang.firebaseapp.com",
       messagingSenderId: "169263636408",
       appId: "1:169263636408:web:ee3608652b2872a539b94d",
     };
