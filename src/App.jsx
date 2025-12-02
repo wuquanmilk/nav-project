@@ -5,8 +5,7 @@ import {
   signInAnonymously,
   signOut,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, // 导入用户注册函数
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -16,23 +15,17 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
-  getDocs,
-  query,
+  getDocs
 } from 'firebase/firestore';
 // 导入需要的图标
 import { 
-  ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User, UserPlus,
+  ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
   Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
 } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
-
-// 🔹 新增：Firebase 集合路径常量
-const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
-const getUserNavPath = (uid) => `users/${uid}/data/navData`;
-
 
 // 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
@@ -331,11 +324,13 @@ const LinkIcon = ({ link }) => {
 // =========================================================================
 
 
-// 🔹 链接卡片 (已修改暗色模式背景)
+// 🔹 链接卡片 
 const LinkCard = ({ link }) => {
   return (
-    // ⭐️ 修改点：将 dark:bg-gray-800 改为 dark:bg-gray-700，使卡片在暗色模式下更亮、更突出
-    <div className="bg-white dark:bg-gray-700 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-600 hover:shadow-xl transition-shadow duration-300">
+    // ⭐️ 颜色优化 1: 卡片背景色改为 bg-gray-100 (浅灰) 和 bg-gray-700 (深灰)
+    <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-xl shadow-md flex flex-col h-full 
+    border border-gray-200 dark:border-gray-600 
+    hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
         
         <LinkIcon link={link} /> 
@@ -350,8 +345,8 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共/用户主页
-const PublicNav = ({ navData, searchTerm, isUserCustom }) => {
+// 🔹 公共主页
+const PublicNav = ({ navData, searchTerm }) => {
     if (navData.length === 0 && searchTerm) {
         return (
             <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
@@ -363,25 +358,13 @@ const PublicNav = ({ navData, searchTerm, isUserCustom }) => {
             </div>
         );
     }
-    
-    if (navData.length === 0 && isUserCustom) {
-         return (
-            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-                <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
-                    您的自定义导航面板是空的。
-                </p>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">请切换到**我的面板**并添加您的第一个链接！</p>
-            </div>
-        );
-    }
-
 
     return (
         <div className="space-y-8 min-h-[60vh]">
             {navData.map(cat => (
                 cat.links && cat.links.length > 0 && (
-                    // 类别容器保持 dark:bg-gray-800
-                    <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
+                    // ⭐️ 颜色优化 2: 分类容器阴影增强
+                    <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow duration-300">
                         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {cat.links.map(link => <LinkCard key={link.id || link.url} link={link} />)}
@@ -422,8 +405,8 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 
-const LoginModal = ({ onClose, onLogin, error, onSwitchToRegister }) => {
+// 🔹 登录弹窗 (保持不变)
+const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
@@ -432,100 +415,58 @@ const LoginModal = ({ onClose, onLogin, error, onSwitchToRegister }) => {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>用户/管理员登录</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
           <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
         </form>
-        <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            没有账号？ 
-            <button 
-                onClick={onSwitchToRegister}
-                className="text-blue-500 hover:text-blue-600 ml-1 font-medium"
-                type="button"
-            >
-                立即注册
-            </button>
-        </p>
       </div>
     </div>
   );
 };
 
-
-// 🔹 新增：注册弹窗
-const RegisterModal = ({ onClose, onRegister, error, onSwitchToLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const handleSubmit = (e) => { e.preventDefault(); onRegister(email, password); };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><UserPlus className="w-6 h-6 mr-3 text-green-500"/>注册新账号</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          <input type="password" placeholder="密码 (至少6位)" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" minLength="6" required/>
-          {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
-          <button type="submit" className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg">注册</button>
-        </form>
-         <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            已有账号？ 
-            <button 
-                onClick={onSwitchToLogin}
-                className="text-blue-500 hover:text-blue-600 ml-1 font-medium"
-                type="button"
-            >
-                返回登录
-            </button>
-        </p>
-      </div>
-    </div>
-  );
-};
-
-
-// 🔹 管理员面板 (管理公共数据)
+// 🔹 管理面板 (保持不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
-  // 路径指向公共数据
-  const navCollection = collection(db, PUBLIC_NAV_PATH); 
+  const navCollection = collection(db, `artifacts/${APP_ID}/public/data/navData`);
 
   const handleAddCategory = async () => {
     if (!newCategory.category) return alert('请输入分类名称');
+    // 确保 links 数组中的每个对象都有 icon 字段
     const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
     await addDoc(navCollection, {...newCategory, links: linksWithIcon});
     setNewCategory({ category: '', order: 0, links: [] });
     fetchData();
   };
   const startEdit = (item) => { 
+    // 确保 links 数组中的每个对象都有 icon 字段
     const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
     setEditId(item.id); 
     setEditData({...item, links: linksWithIcon}); 
   };
   const saveEdit = async () => { 
+    // 确保 links 数组中的每个对象都有 icon 字段
     const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-    await updateDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}); 
+    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), {...editData, links: linksWithIcon}); 
     setEditId(null); 
     fetchData(); 
   };
   const handleDelete = async (id) => { 
     if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
-        await deleteDoc(doc(db, PUBLIC_NAV_PATH, id)); 
+        await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); 
         fetchData();
     }
   };
 
   return (
     <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
-      <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (管理公共数据)</h3>
+      <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (完整 CRUD)</h3>
       <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
-          <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增公共分类</h4>
+          <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
           <div className="flex flex-col gap-3">
               <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
               <div className="flex items-center space-x-2">
@@ -533,11 +474,11 @@ const AdminPanel = ({ db, navData, fetchData }) => {
                   <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
               </div>
               <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
-              <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增公共分类</button>
+              <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
           </div>
       </div>
       
-      <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有公共分类</h4>
+      <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有分类</h4>
       {navData.map(item=>(
         <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
           {editId === item.id ? (
@@ -573,97 +514,6 @@ const AdminPanel = ({ db, navData, fetchData }) => {
       ))}
     </div>
   );
-};
-
-
-// 🔹 新增：普通用户自定义面板 (管理自己的数据)
-const UserPanel = ({ db, userId, navData, fetchData }) => {
-    const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
-    const [editId, setEditId] = useState(null);
-    const [editData, setEditData] = useState({});
-    // 路径指向用户自己的数据
-    const navCollection = collection(db, getUserNavPath(userId)); 
-
-    const handleAddCategory = async () => {
-      if (!newCategory.category) return alert('请输入分类名称');
-      const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
-      await addDoc(navCollection, {...newCategory, links: linksWithIcon});
-      setNewCategory({ category: '', order: 0, links: [] });
-      fetchData(userId); // 重新获取用户数据
-    };
-    const startEdit = (item) => { 
-      const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
-      setEditId(item.id); 
-      setEditData({...item, links: linksWithIcon}); 
-    };
-    const saveEdit = async () => { 
-      const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-      await updateDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon}); 
-      setEditId(null); 
-      fetchData(userId); // 重新获取用户数据
-    };
-    const handleDelete = async (id) => { 
-      if(window.confirm(`确认删除您的分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
-          await deleteDoc(doc(db, getUserNavPath(userId), id)); 
-          fetchData(userId); // 重新获取用户数据
-      }
-    };
-
-    return (
-        <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">我的自定义面板</h3>
-            <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
-                <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增自定义分类</h4>
-                <div className="flex flex-col gap-3">
-                    <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
-                    <div className="flex items-center space-x-2">
-                        <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                        <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
-                    </div>
-                    <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
-                    <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
-                </div>
-            </div>
-            
-            <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有自定义分类</h4>
-            {navData.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400 p-4">您还没有添加任何自定义分类。</p>
-            )}
-            {navData.map(item=>(
-              <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
-                {editId === item.id ? (
-                  // 编辑状态
-                  <>
-                    <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
-                    <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                        <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
-                    </div>
-                    <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
-                    <div className="flex space-x-2 mt-3">
-                      <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
-                      <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
-                    </div>
-                  </>
-                ) : (
-                  // 显示状态
-                  <>
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
-                      <div className="flex space-x-2">
-                        <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
-                        <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
-                      </div>
-                    </div>
-                    <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
-                      {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
-                    </ul>
-                  </>
-                )}
-              </div>
-            ))}
-        </div>
-    );
 };
 
 // 🔹 页脚组件 (保持不变)
@@ -773,99 +623,105 @@ const DisclaimerPage = () => (
 );
 
 
-// 🚀 SearchLayout 组件 (保持不变)
-const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm }) => {
-    if (isAdmin || currentPage !== 'home') return null;
-    
-    // 如果是注册用户且当前面板是我的面板，则隐藏公共搜索
-    if (isUser && currentPage === 'home') {
-        // 由于用户自定义链接也需要搜索功能，这里保留搜索
-    }
+// =========================================================================
+// ⬇️ 搜索按钮配置与逻辑 (硬编码图标，最可靠) ⬇️
+// =========================================================================
 
+// 🔹 外部搜索引擎配置 (硬编码图标)
+const externalEngines = [
+  // 百度：使用官方 Favicon URL
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
+  // ⭐️ 修复谷歌搜索框图标：改用 DuckDuckGo 代理服务加载 ⭐️
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
+  // 必应：使用官方 Favicon URL
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+];
 
-    // 外部搜索引擎配置 (硬编码图标)
-    const externalEngines = [
-        // 百度：使用官方 Favicon URL
-        { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
-        // ⭐️ 修复谷歌搜索框图标：改用 DuckDuckGo 代理服务加载 ⭐️
-        { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
-        // 必应：使用官方 Favicon URL
-        { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
-    ];
-    
-    // 外部搜索处理函数 (保持不变)
-    const handleExternalSearch = (engineUrl, query) => {
-      if (query) {
-        window.open(engineUrl + encodeURIComponent(query), '_blank');
-      } else {
-        const baseDomain = new URL(engineUrl.split('?')[0]).origin;
-        window.open(baseDomain, '_blank');
-      }
-    };
-    
-    // 搜索输入框组件 (保持不变)
-    const SearchInput = ({ searchTerm, setSearchTerm }) => (
-        <div className="relative">
-            <input 
-                type="text" 
-                placeholder="搜索链接名称、描述或网址..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-            />
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-            {searchTerm && (
-                <button 
-                    onClick={() => setSearchTerm('')} 
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                    title="清空站内搜索"
-                >
-                    <X className="w-5 h-5"/>
-                </button>
-            )}
-        </div>
-    );
-    
-    // 子组件：处理单个外部搜索按钮的图标
-    const ExternalSearchButton = ({ engine, searchTerm }) => {
-        const [hasError, setHasError] = useState(false);
-        const imageUrl = engine.icon; 
-        const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
+// 🔹 外部搜索处理函数 (保持不变)
+const handleExternalSearch = (engineUrl, query) => {
+  if (query) {
+    window.open(engineUrl + encodeURIComponent(query), '_blank');
+  } else {
+    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
+    window.open(baseDomain, '_blank');
+  }
+};
 
-        return (
-            <button
-                onClick={handleSearch}
-                title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-                className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
+// 🔹 搜索输入框组件 (保持不变)
+const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
+    <div className="relative">
+        <input 
+            type="text" 
+            placeholder="搜索链接名称、描述或网址..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+        />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+        {searchTerm && (
+            <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                title="清空站内搜索"
             >
-                {hasError || !imageUrl ? (
-                    // 最终的 Lucide 回退
-                    <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
-                ) : (
-                    <img 
-                        src={imageUrl} 
-                        alt={engine.name} 
-                        className="w-6 h-6 rounded-full object-contain"
-                        onError={() => setHasError(true)} 
-                        loading="lazy"
-                    />
-                )}
+                <X className="w-5 h-5"/>
             </button>
-        );
-    };
+        )}
+    </div>
+));
 
-    // 外部搜索按钮组件 
-    const ExternalSearchButtons = ({ className, searchTerm }) => (
-        <div className={className}>
-            {externalEngines.map(engine => (
-                <ExternalSearchButton 
-                    key={engine.name} 
-                    engine={engine} 
-                    searchTerm={searchTerm} 
+// 🔹 子组件：处理单个外部搜索按钮的图标
+const ExternalSearchButton = ({ engine, searchTerm }) => {
+    const [hasError, setHasError] = useState(false);
+    
+    // 直接使用 engine.icon 作为源，无论是 Base64 还是 URL 都能兼容
+    const imageUrl = engine.icon; 
+
+    const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
+
+    return (
+        <button
+            onClick={handleSearch}
+            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+            className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
+        >
+            {hasError || !imageUrl ? (
+                // 最终的 Lucide 回退
+                <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+            ) : (
+                <img 
+                    src={imageUrl} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full object-contain"
+                    onError={() => setHasError(true)} 
+                    loading="lazy"
                 />
-            ))}
-        </div>
+            )}
+        </button>
     );
+};
+
+// 🔹 外部搜索按钮组件 
+const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
+    <div className={className}>
+        {externalEngines.map(engine => (
+            <ExternalSearchButton 
+                key={engine.name} 
+                engine={engine} 
+                searchTerm={searchTerm} 
+            />
+        ))}
+    </div>
+));
+
+// =========================================================================
+// ⬆️ 搜索按钮配置与逻辑 ⬆️
+// =========================================================================
+
+
+// 🚀 SearchLayout 组件 (保持不变)
+const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
+    if (isAdmin || currentPage !== 'home') return null;
 
     return (
         <div className="mb-8 max-w-2xl mx-auto">
@@ -884,22 +740,18 @@ export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
   const [auth, setAuth] = useState(null);
   const [db, setDb] = useState(null);
-  const [userId, setUserId] = useState(null); // 存储用户的 UID
-  const [userEmail, setUserEmail] = useState(null); // 存储用户的 Email
+  const [userId, setUserId] = useState(null);
   
   const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false); // 新增注册弹窗状态
   const [loginError, setLoginError] = useState('');
   
   const [currentPage, setCurrentPage] = useState('home'); 
-  const [currentPanel, setCurrentPanel] = useState('public'); // public 或 user
   const [searchTerm, setSearchTerm] = useState(''); 
   
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
-  // 初始化 Firebase 和监听认证状态
   useEffect(()=>{
     const firebaseConfig = {
       apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
@@ -915,139 +767,58 @@ export default function App() {
     setFirebaseApp(app); setAuth(_auth); setDb(_db);
 
     const unsub = onAuthStateChanged(_auth, user=>{
-      if(user) {
-        setUserId(user.uid);
-        setUserEmail(user.email);
-        // 如果用户已登录，默认切换到用户面板，除非他是管理员
-        if (user.uid !== ADMIN_USER_ID) {
-            setCurrentPanel('user');
-        } else {
-            setCurrentPanel('public');
-        }
-      }
-      else { 
-        // 如果是匿名用户或退出登录，切换到公共面板
-        signInAnonymously(_auth).catch(console.error); 
-        setUserId('anonymous'); 
-        setUserEmail(null);
-        setCurrentPanel('public');
-      }
+      if(user) setUserId(user.uid);
+      else { signInAnonymously(_auth).catch(console.error); setUserId('anonymous'); }
     });
     return unsub;
   },[]);
 
-  // 辅助变量判断用户身份
-  const isRegisteredUser = userId && userId !== 'anonymous' && userId !== ADMIN_USER_ID;
   const isAdmin = userId === ADMIN_USER_ID;
 
-  // 核心数据获取逻辑
-  const fetchData = async (targetUserId = userId, targetPanel = currentPanel)=>{
-    if(!db || targetUserId === 'anonymous') return;
-    
-    let collectionPath;
-
-    if (targetUserId === ADMIN_USER_ID) {
-        // 管理员始终拉取公共数据
-        collectionPath = PUBLIC_NAV_PATH;
-    } else if (targetUserId && targetPanel === 'user') {
-        // 普通注册用户拉取自己的数据
-        collectionPath = getUserNavPath(targetUserId);
-    } else {
-        // 未登录/匿名用户或用户主动切换到公共面板，拉取公共数据
-        collectionPath = PUBLIC_NAV_PATH;
-    }
-
-    try {
-        const navCol = collection(db, collectionPath);
-        const snapshot = await getDocs(navCol);
-        const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
-        data.sort((a,b)=>(a.order||0)-(b.order||0));
-        
-        setIsFirebaseConnected(true); 
-        setNavData(data);
-    } catch (error) {
-        console.error("Firebase fetch failed. Falling back to default data.", error);
-        setIsFirebaseConnected(false); 
-        setNavData(DEFAULT_NAV_DATA);
-    }
-  };
-
-
-  // 监听 Firebase 数据变动 (onSnapshot)
   useEffect(()=>{
-    if(!db || userId === 'anonymous') return;
-
-    let collectionPath;
-    let fallbackToDefault = false;
-
-    if (isAdmin || currentPanel === 'public') {
-        // 管理员和所有查看公共面板的用户
-        collectionPath = PUBLIC_NAV_PATH;
-    } else if (isRegisteredUser && currentPanel === 'user') {
-        // 注册用户查看自定义面板
-        collectionPath = getUserNavPath(userId);
-    } else {
-        // 默认回退到公共数据路径
-        collectionPath = PUBLIC_NAV_PATH;
-        fallbackToDefault = true;
-    }
-    
-    // 如果是匿名用户或者路径不存在（例如用户数据为空），则不创建监听器
-    if (!collectionPath || userId === 'anonymous') {
-         setNavData(DEFAULT_NAV_DATA);
-         return;
-    }
-
-    const navCol = collection(db, collectionPath);
+    if(!db) return;
+    const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
     const unsub = onSnapshot(navCol, snapshot=>{
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
       setIsFirebaseConnected(true); 
 
-      if (data.length > 0 || isAdmin || isRegisteredUser) { 
+      if (data.length > 0 || isAdmin) { 
           setNavData(data);
       }
       
     }, 
     (error) => {
-        console.warn(`Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback. Path: ${collectionPath}`, error.message);
+        console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
         setNavData(DEFAULT_NAV_DATA);
     });
     return unsub;
-  },[db, userId, isAdmin, isRegisteredUser, currentPanel]); 
+  },[db, isAdmin]); 
 
-  // 登录/注册/退出逻辑
+  const fetchData = async ()=>{
+    if(!db) return;
+    const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
+    try {
+        const snapshot = await getDocs(navCol);
+        const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+        data.sort((a,b)=>(a.order||0)-(b.order||0));
+        setNavData(data);
+    } catch (error) {
+        console.error("Admin fetch failed:", error);
+    }
+  };
+
   const handleLogin = async (email,password)=>{
     try {
       await signInWithEmailAndPassword(auth,email,password);
       setShowLogin(false); 
       setLoginError('');
-      setCurrentPanel('user'); // 登录成功后默认跳转到用户自定义面板
+      await fetchData(); 
     } catch(e){ setLoginError(e.message); }
   };
   
-  const handleRegister = async (email, password) => {
-      try {
-          await createUserWithEmailAndPassword(auth, email, password);
-          setShowRegister(false);
-          setLoginError(''); // 清除任何可能的登录错误信息
-          setCurrentPanel('user'); // 注册成功后默认跳转到用户自定义面板
-      } catch (e) {
-          setLoginError(e.message);
-      }
-  };
-
-  const handleLogout = async () => {
-    await signOut(auth);
-    setUserId('anonymous'); // onAuthStateChanged 会处理匿名登录
-    setUserEmail(null);
-    setCurrentPanel('public'); // 退出登录后切换回公共面板
-    setCurrentPage('home'); // 确保回到主页
-  };
-
-  // 搜索过滤逻辑 (保持不变，但现在根据当前面板的 navData 进行过滤)
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
       return navData; 
@@ -1074,145 +845,70 @@ export default function App() {
       })
       .filter(category => category.links.length > 0);
   }, [navData, searchTerm]);
-  
-  // 渲染主体内容
-  const renderMainContent = () => {
-    if (currentPage !== 'home') {
-      if (currentPage === 'about') return <AboutPage />;
-      if (currentPage === 'disclaimer') return <DisclaimerPage />;
-      return <PublicNav navData={filteredNavData} searchTerm={searchTerm} isUserCustom={false} />;
-    }
-
-    if (isAdmin) {
-      // 管理员始终显示公共面板管理界面
-      return <AdminPanel db={db} navData={navData} fetchData={fetchData} />;
-    } 
-    
-    if (isRegisteredUser) {
-        // 注册用户根据 currentPanel 状态显示
-        return (
-            <>
-                <div className="flex justify-center space-x-4 mb-6 pt-4">
-                    <button 
-                        onClick={() => setCurrentPanel('public')}
-                        className={`px-4 py-2 rounded-full font-semibold transition-colors ${
-                            currentPanel === 'public' 
-                            ? 'bg-blue-600 text-white shadow-md' 
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                        }`}
-                    >
-                        公共面板
-                    </button>
-                    <button 
-                        onClick={() => setCurrentPanel('user')}
-                        className={`px-4 py-2 rounded-full font-semibold transition-colors ${
-                            currentPanel === 'user' 
-                            ? 'bg-blue-600 text-white shadow-md' 
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                        }`}
-                    >
-                        我的面板 (自定义)
-                    </button>
-                </div>
-
-                {currentPanel === 'user' ? (
-                    <UserPanel db={db} userId={userId} navData={filteredNavData} fetchData={fetchData} />
-                ) : (
-                    <PublicNav navData={filteredNavData} searchTerm={searchTerm} isUserCustom={false} />
-                )}
-            </>
-        );
-    }
-
-    // 匿名用户 (默认显示公共面板)
-    return <PublicNav navData={filteredNavData} searchTerm={searchTerm} isUserCustom={false} />;
-  }
 
 
   return (
     <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
       <DebugBar />
-      
-      {/* 弹窗 */}
-      {showLogin && (
-        <LoginModal 
-            onClose={()=>setShowLogin(false)} 
-            onLogin={handleLogin} 
-            error={loginError} 
-            onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true); setLoginError(''); }}
-        />
-      )}
-      {showRegister && (
-        <RegisterModal 
-            onClose={()=>setShowRegister(false)} 
-            onRegister={handleRegister} 
-            error={loginError} 
-            onSwitchToLogin={() => { setShowRegister(false); setShowLogin(true); setLoginError(''); }}
-        />
-      )}
-
+      {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
         <header className="mb-12 relative">
             <h1 
                 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
-                onClick={() => {setCurrentPage('home'); setCurrentPanel(isRegisteredUser ? 'user' : 'public');}}
+                onClick={() => setCurrentPage('home')}
             >
                 极速导航网
             </h1>
+            
+            <div className="flex flex-col gap-2 absolute top-0 right-0">
+                <button 
+                    onClick={()=>setIsDark(!isDark)} 
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    title="切换主题"
+                >
+                    {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
+                </button>
+                {!isAdmin && (
+                    <button 
+                        onClick={() => setShowLogin(true)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="管理员登录"
+                    >
+                        <User className="w-5 h-5"/> 
+                    </button>
+                )}
+                {isAdmin && (
+                    <button 
+                        onClick={() => signOut(auth)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="退出管理"
+                    >
+                        <User className="w-5 h-5"/> 
+                    </button>
+                )}
+            </div>
         </header>
         
         <SearchLayout 
             isAdmin={isAdmin}
-            isUser={isRegisteredUser}
             currentPage={currentPage}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
         />
         
-        {renderMainContent()}
-      </div>
-      
-      {/* ⭐️ 固定在右下角的按钮组 ⭐️ */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
-        {/* 1. 主题切换按钮 */}
-        <button 
-            onClick={()=>setIsDark(!isDark)} 
-            className="p-3 rounded-full shadow-lg bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-all border dark:border-gray-600"
-            title="切换主题"
-        >
-            {isDark ? <Sun className="w-6 h-6"/> : <Moon className="w-6 h-6"/>}
-        </button>
-        
-        {/* 2. 登录/注册/退出 按钮 */}
-        {!userId || userId === 'anonymous' ? (
-          <>
-            {/* 未登录状态：显示注册按钮 */}
-            <button 
-                onClick={() => { setShowRegister(true); setLoginError(''); }} 
-                className="p-3 rounded-full shadow-lg bg-green-500 text-white hover:bg-green-600 transition-all"
-                title="用户注册"
-            >
-                <UserPlus className="w-6 h-6"/> 
-            </button>
-            {/* 未登录状态：显示登录按钮 */}
-            <button 
-                onClick={() => { setShowLogin(true); setLoginError(''); }} 
-                className="p-3 rounded-full shadow-lg bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                title="用户/管理员登录"
-            >
-                <User className="w-6 h-6"/> 
-            </button>
-          </>
+        {isAdmin ? (
+            <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : (
-          // 已登录状态：显示退出按钮
-          <button 
-              onClick={handleLogout} 
-              className="p-3 rounded-full shadow-lg bg-red-500 text-white hover:bg-red-600 transition-all"
-              title={`退出登录 (${userEmail || (isAdmin ? '管理员' : '用户')})`}
-          >
-              <User className="w-6 h-6"/> 
-          </button>
+            currentPage === 'home' ? (
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
+            ) : currentPage === 'about' ? (
+                <AboutPage />
+            ) : currentPage === 'disclaimer' ? (
+                <DisclaimerPage />
+            ) : (
+                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
+            )
         )}
       </div>
       
