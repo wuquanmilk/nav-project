@@ -17,8 +17,8 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标
-import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search } from 'lucide-react'; 
+// 导入需要的图标，新增 LogOut
+import { ExternalLink, Moon, Sun, LogIn, LogOut, X, Github, Mail, Globe, Search } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
@@ -418,9 +418,36 @@ export default function App() {
         {/* 1. Header (按钮区域 - 靠右对齐) */}
         <header className="flex justify-end items-center mb-4">
           <div className="flex gap-4">
-            <button onClick={()=>setIsDark(!isDark)} className="p-2 rounded-full bg-gray-200 dark:bg-gray-700">{isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}</button>
-            {!isAdmin && <button onClick={()=>setShowLogin(true)} className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50">管理员登录</button>}
-            {isAdmin && <button onClick={()=>signOut(auth)} className="text-red-500">退出管理</button>}
+            {/* 白天/黑夜切换按钮 (不变) */}
+            <button 
+              onClick={()=>setIsDark(!isDark)} 
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              title={isDark ? "切换到白天模式" : "切换到黑夜模式"}
+            >
+              {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
+            </button>
+            
+            {/* 🔥 管理员登录入口 (圆形按钮，使用 LogIn 图标) */}
+            {!isAdmin && (
+                <button 
+                    onClick={() => setShowLogin(true)} 
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-blue-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    title="管理员登录"
+                >
+                    <LogIn className="w-5 h-5"/>
+                </button>
+            )}
+            
+            {/* 🔥 管理员退出入口 (圆形按钮，使用 LogOut 图标) */}
+            {isAdmin && (
+                <button 
+                    onClick={() => signOut(auth)} 
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    title="退出管理"
+                >
+                    <LogOut className="w-5 h-5"/>
+                </button>
+            )}
           </div>
         </header>
         
@@ -430,7 +457,7 @@ export default function App() {
                 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block"
                 onClick={() => setCurrentPage('home')}
             >
-                极速导航网 {/* ⬅️ 已修改 */}
+                极速导航网
             </h1>
         </div>
         
