@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标 (已包含所有需要的 Lucide 图标)
+// 导入需要的图标
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User,
   Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
@@ -27,7 +27,7 @@ import {
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (用于 Firebase 加载失败时的显示) 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
@@ -159,7 +159,7 @@ const DEFAULT_NAV_DATA = [
 const DebugBar = () => null;
 
 // =========================================================================
-// ⬇️ 主导航图标的 Favicon + 特定 Lucide 图标回退逻辑 ⬇️
+// ⬇️ 图标映射和处理逻辑 (国内优化版) ⬇️
 // =========================================================================
 
 // 🔹 图标名称到 Lucide 组件的映射
@@ -245,18 +245,16 @@ const ICON_MAP = {
 };
 
 // 🔹 辅助函数：根据链接名称获取 Lucide 组件 (用于回退)
-const DefaultFallbackIcon = Globe; // 最后的通用回退图标
+const DefaultFallbackIcon = Globe; 
 
 const getLucideIcon = (linkName) => {
-    // 统一转为小写并移除空格进行匹配，以提高容错性
     const key = linkName.toLowerCase().replace(/\s/g, ''); 
-    
     const IconComponent = ICON_MAP[key];
     return IconComponent || DefaultFallbackIcon;
 };
 
 
-// 🔹 辅助组件：处理图标的加载和回退
+// 🔹 辅助组件：处理图标的加载和回退 (使用国内友好的源)
 const LinkIcon = ({ link }) => {
     const [hasError, setHasError] = useState(false);
 
@@ -268,29 +266,25 @@ const LinkIcon = ({ link }) => {
         try {
             const urlToParse = link.icon || link.url;
             const urlObj = new URL(urlToParse);
-            // 核心：使用 Google Favicon CDN 服务获取网站图标
-            return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
+            // ⭐️⭐️ 核心修改：使用国内可访问的图标源 (api.iowen.cn) ⭐️⭐️
+            // 这个接口在服务器端获取图标，解决了国内直接访问 Google 失败的问题
+            return `https://api.iowen.cn/favicon/${urlObj.hostname}.png`;
         } catch {
             return ''; 
         }
     }, [link.icon, link.url]);
     
-    // 确定 Lucide 回退图标 (使用用户定义的特定图标)
     const FallbackIconComponent = getLucideIcon(link.name); 
     
     return (
         <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-700 flex items-center justify-center">
-            {/* 逻辑判断：如果URL无效或图片加载失败，则使用 Lucide 回退图标 */}
             {hasError || !imageUrl ? (
-                // 渲染特定的 Lucide 图标（Bot, Wrench, Cloud 等）
                 <FallbackIconComponent className="w-6 h-6 text-blue-500 dark:text-blue-400"/>
             ) : (
-                // 尝试加载 Favicon
                 <img 
                     src={imageUrl} 
                     alt={link.name} 
                     className="w-6 h-6 object-contain"
-                    // 🚨 关键：加载失败时设置错误状态，将触发 FallbackIconComponent 渲染
                     onError={() => setHasError(true)} 
                     loading="lazy"
                 />
@@ -298,18 +292,18 @@ const LinkIcon = ({ link }) => {
         </div>
     );
 };
+
 // =========================================================================
-// ⬆️ 主导航图标的 Favicon + 特定 Lucide 图标回退逻辑 ⬆️
+// ⬆️ 图标映射和处理逻辑 (国内优化版) ⬆️
 // =========================================================================
 
 
-// 🔹 链接卡片 (使用 LinkIcon 辅助组件 - 优化)
+// 🔹 链接卡片
 const LinkCard = ({ link }) => {
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
         
-        {/* 使用LinkIcon处理复杂的图标逻辑 */}
         <LinkIcon link={link} /> 
 
         <div className="min-w-0 flex-grow">
@@ -352,7 +346,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (管理面板内部使用，保持不变)
+// 🔹 链接表单
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -399,7 +393,7 @@ const LoginModal = ({ onClose, onLogin, error }) => {
   );
 };
 
-// 🔹 管理面板 (保持不变)
+// 🔹 管理面板
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
@@ -625,25 +619,22 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
 ));
 
 // =========================================================================
-// ⬇️ 【修复核心】外部搜索按钮 Favicon 错误回退逻辑 ⬇️
+// ⬇️ 搜索按钮图标逻辑 (国内优化版) ⬇️
 // =========================================================================
 
-// 🔹 子组件：处理单个外部搜索按钮的图标加载和回退
+// 🔹 子组件：处理单个外部搜索按钮的图标
 const ExternalSearchButton = ({ engine, searchTerm }) => {
-    // 状态：跟踪 Favicon 是否加载失败
     const [hasError, setHasError] = useState(false);
     
-    // 当搜索引擎或图标源变化时，重置错误状态
     useEffect(() => {
         setHasError(false);
     }, [engine.icon]);
 
-    // 计算 Favicon 的 URL (仍然使用 Google CDN)
     const imageUrl = useMemo(() => {
         try {
             const urlObj = new URL(engine.icon);
-            // 核心：使用 Google CDN 获取 Favicon
-            return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+            // ⭐️⭐️ 核心修改：同样使用国内源获取搜索引擎图标 ⭐️⭐️
+            return `https://api.iowen.cn/favicon/${urlObj.hostname}.png`;
         } catch {
             return '';
         }
@@ -657,17 +648,13 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
             title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
             className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
         >
-            {/* 逻辑判断：如果 Favicon 加载失败或 URL 无效，则使用 Lucide Search 图标 */}
             {hasError || !imageUrl ? (
-                // 强制回退到 Lucide Search 图标，确保国内环境的可靠性
                 <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
             ) : (
-                // 尝试加载 Favicon
                 <img 
                     src={imageUrl} 
                     alt={engine.name} 
                     className="w-6 h-6 rounded-full object-contain"
-                    // 关键：加载失败时设置 hasError 为 true，触发 <Search> 渲染
                     onError={() => setHasError(true)} 
                     loading="lazy"
                 />
@@ -688,21 +675,14 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
         ))}
     </div>
 ));
-// =========================================================================
-// ⬆️ 【修复核心】外部搜索按钮 Favicon 错误回退逻辑 ⬆️
-// =========================================================================
 
-// 🚀 SearchLayout 组件 (使用稳定的单一布局)
+// 🚀 SearchLayout 组件
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || currentPage !== 'home') return null;
 
-    // 统一使用 "搜索框在上，按钮在下" 的稳定结构
     return (
         <div className="mb-8 max-w-2xl mx-auto">
-            {/* 站内搜索框 */}
             <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-            
-            {/* 外部搜索按钮 (下方，居中) */}
             <ExternalSearchButtons 
                 className="flex justify-center space-x-4 mt-4" 
                 searchTerm={searchTerm} 
@@ -727,7 +707,6 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   
-  // 仅保留状态定义，但在 SearchLayout 中不再用于条件渲染
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
 
   useEffect(()=>{
@@ -760,7 +739,6 @@ export default function App() {
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
-      // 成功获取到数据，标记连接成功
       setIsFirebaseConnected(true); 
 
       if (data.length > 0 || isAdmin) { 
@@ -768,11 +746,9 @@ export default function App() {
       }
       
     }, 
-    // 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
     (error) => {
         console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
-        // 确保 navData 即使在连接失败时也至少有默认数据
         setNavData(DEFAULT_NAV_DATA);
     });
     return unsub;
@@ -796,7 +772,6 @@ export default function App() {
       await signInWithEmailAndPassword(auth,email,password);
       setShowLogin(false); 
       setLoginError('');
-      // 登录成功后强制重新拉取数据并更新 admin 视图
       await fetchData(); 
     } catch(e){ setLoginError(e.message); }
   };
@@ -835,7 +810,6 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
-        {/* Header: 标题居中，按钮垂直堆叠的圆形图标 */}
         <header className="mb-12 relative">
             <h1 
                 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
@@ -844,9 +818,7 @@ export default function App() {
                 极速导航网
             </h1>
             
-            {/* 按钮区域: 绝对定位到右上角, 垂直堆叠 */}
             <div className="flex flex-col gap-2 absolute top-0 right-0">
-                {/* 切换主题按钮 (圆形) */}
                 <button 
                     onClick={()=>setIsDark(!isDark)} 
                     className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -854,7 +826,6 @@ export default function App() {
                 >
                     {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
                 </button>
-                {/* 管理员登录/退出按钮 (圆形, 使用 User 图标) */}
                 {!isAdmin && (
                     <button 
                         onClick={() => setShowLogin(true)} 
@@ -876,7 +847,6 @@ export default function App() {
             </div>
         </header>
         
-        {/* 搜索区域 (使用稳定的外部组件 SearchLayout) */}
         <SearchLayout 
             isAdmin={isAdmin}
             currentPage={currentPage}
@@ -884,7 +854,6 @@ export default function App() {
             setSearchTerm={setSearchTerm}
         />
         
-        {/* 核心内容渲染 */}
         {isAdmin ? (
             <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : (
