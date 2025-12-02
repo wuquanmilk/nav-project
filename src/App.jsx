@@ -27,22 +27,23 @@ import {
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已根据“国内硬编码，国际动态获取”原则优化) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
         category: '常用开发',
         order: 0,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
+            // ⭐️ 硬编码：核心全球网站 ⭐️
             { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区', icon: 'https://huggingface.co/favicon.ico' },
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'https://github.com/fluidicon.png' },
-            { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台', icon: 'https://www.cloudflare.com/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            // 动态获取：国际网站
+            { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台', icon: '' },
             { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: '' },
-            { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案', icon: 'https://supabase.com/favicon.ico' },
-            { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务', icon: 'https://firebase.google.cn/images/favicons/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            // 动态获取：国际网站
+            { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案', icon: '' },
+            // 动态获取：国际网站
+            { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务', icon: '' },
             { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: '' },
         ],
     },
@@ -51,10 +52,11 @@ const DEFAULT_NAV_DATA = [
         category: 'AI大模型',
         order: 1,
         links: [
-             // ⭐️ 硬编码图标 ⭐️
+             // ⭐️ 硬编码：核心全球网站 + 国内 AI 平台 ⭐️
             { name: 'chatgpt', url: 'https://chatgpt.com/', description: 'OpenAI 对话模型', icon: 'https://chatgpt.com/favicon.ico' },
             { name: 'gemini', url: 'https://gemini.google.com/app', description: 'Google AI 应用', icon: 'https://gemini.google.com/favicon.ico' },
-            { name: 'deepseek', url: 'https://www.deepseek.com/', description: '深度求索 AI 平台', icon: 'https://www.deepseek.com/favicon.ico' },
+            // 动态获取：国际网站
+            { name: 'deepseek', url: 'https://www.deepseek.com/', description: '深度求索 AI 平台', icon: '' },
             { name: '阿里千问', url: 'https://chat.qwen.ai/', description: '阿里通义千问', icon: 'https://chat.qwen.ai/favicon.ico' },
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用', icon: 'https://yuanbao.tencent.com/favicon.ico' },
             { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI', icon: 'https://www.doubao.com/favicon.ico' },
@@ -67,21 +69,20 @@ const DEFAULT_NAV_DATA = [
         category: '影视娱乐',
         order: 2,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
+            // ⭐️ 硬编码：核心全球网站 + 国内平台 ⭐️
             { name: '哔哩哔哩', url: 'https://bilibili.com', description: 'B 站视频分享社区', icon: 'https://www.bilibili.com/favicon.ico' },
             { name: 'youtube', url: 'https://youtube.com', description: '全球最大视频平台', icon: 'https://www.youtube.com/s/desktop/4f17f4b8/img/favicon_96x96.png' },
             { name: '爱奇艺', url: 'https://www.iqiyi.com', description: '国内视频播放平台', icon: 'https://www.iqiyi.com/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
             { name: '在线音乐', url: 'https://music.eooce.com/', description: '免费在线音乐播放', icon: '' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
             { name: '视频下载', url: 'https://tubedown.cn/', description: '通用视频下载工具', icon: '' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
             { name: '星空音乐下载', url: 'https://www.vh.hk/', description: '音乐下载工具', icon: '' },
-            { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区', icon: 'https://www.instagram.com/static/images/ico/favicon.ico/31604a141b77.ico' },
+            // 动态获取：国际网站
+            { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区', icon: '' },
             { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台', icon: 'https://www.kuaishou.com/favicon.ico' },
             { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台', icon: 'https://www.douyin.com/favicon.ico' },
-            { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台', icon: 'https://www.tiktok.com/favicon.ico' },
-            { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用', icon: 'https://www.snapchat.com/favicon.ico' },
+            // 动态获取：国际网站
+            { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台', icon: '' },
+            { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用', icon: '' },
         ],
     },
     {
@@ -89,13 +90,11 @@ const DEFAULT_NAV_DATA = [
         category: 'IP检测 地址生成',
         order: 3,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
-            { name: 'browserscan', url: 'https://www.browserscan.net/zh', description: '浏览器指纹与安全检测', icon: 'https://www.browserscan.net/favicon.ico' },
-            { name: 'ping0', url: 'https://ping0.cc/', description: '网络延迟与连通性监测', icon: 'https://ping0.cc/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            // 动态获取：大部分工具站使用动态获取
+            { name: 'browserscan', url: 'https://www.browserscan.net/zh', description: '浏览器指纹与安全检测', icon: '' },
+            { name: 'ping0', url: 'https://ping0.cc/', description: '网络延迟与连通性监测', icon: '' },
             { name: '真实地址生成器', url: 'https://address.nnuu.nyc.mn/', description: '随机地址生成工具', icon: '' },
-            { name: 'Itdog', url: 'https://www.itdog.cn/tcping', description: '网络延迟和丢包检测', icon: 'https://www.itdog.cn/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'Itdog', url: 'https://www.itdog.cn/tcping', description: '网络延迟和丢包检测', icon: '' },
             { name: 'IP地址查询', url: 'https://ip.ssss.nyc.mn/', description: 'IP 地址归属地查询', icon: '' },
         ],
     },
@@ -104,10 +103,11 @@ const DEFAULT_NAV_DATA = [
         category: '搜索引擎',
         order: 4,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
+            // ⭐️ 硬编码：核心全球网站 + 国内平台 ⭐️
             { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎', icon: 'https://www.google.com/favicon.ico' },
             { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎', icon: 'https://www.baidu.com/favicon.ico' }, 
-            { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+            // 动态获取：国际网站
+            { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎', icon: '' },
         ],
     },
     {
@@ -115,14 +115,16 @@ const DEFAULT_NAV_DATA = [
         category: '云计算',
         order: 5,
         links: [
-             // ⭐️ 硬编码图标 ⭐️
-            { name: 'AWS', url: 'https://aws.amazon.com/', description: '亚马逊云服务', icon: 'https://a0.awsstatic.com/main/images/site/touch-icon-180x180.png' },
-            { name: 'Azure', url: 'https://azure.microsoft.com/', description: '微软云服务', icon: 'https://azure.microsoft.com/favicon.ico' },
+             // ⭐️ 硬编码：国内云计算平台 ⭐️
+            // 动态获取：国际网站
+            { name: 'AWS', url: 'https://aws.amazon.com/', description: '亚马逊云服务', icon: '' },
+            { name: 'Azure', url: 'https://azure.microsoft.com/', description: '微软云服务', icon: '' },
             { name: '阿里云', url: 'https://www.aliyun.com/', description: '阿里巴巴云服务', icon: 'https://www.aliyun.com/favicon.ico' },
             { name: '腾讯云', url: 'https://cloud.tencent.com/', description: '腾讯云服务', icon: 'https://cloud.tencent.com/favicon.ico' },
             { name: '华为云', url: 'https://www.huaweicloud.com/', description: '华为云服务', icon: 'https://www.huaweicloud.com/favicon.ico' },
-            { name: 'Oracle Cloud', url: 'https://www.oracle.com/cloud/', description: '甲骨文云服务', icon: 'https://www.oracle.com/asset/ctx/design/images/favicon.ico' },
-            { name: 'IBM Cloud', url: 'https://www.ibm.com/cloud', description: 'IBM 云服务', icon: 'https://www.ibm.com/favicon.ico' },
+            // 动态获取：国际网站
+            { name: 'Oracle Cloud', url: 'https://www.oracle.com/cloud/', description: '甲骨文云服务', icon: '' },
+            { name: 'IBM Cloud', url: 'https://www.ibm.com/cloud', description: 'IBM 云服务', icon: '' },
         ],
     },
     {
@@ -130,25 +132,22 @@ const DEFAULT_NAV_DATA = [
         category: '工具箱',
         order: 6,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
-            { name: '在线工具网', url: 'https://tool.lu/', description: '程序员综合在线工具', icon: 'https://tool.lu/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            // 动态获取：大部分工具站使用动态获取
+            { name: '在线工具网', url: 'https://tool.lu/', description: '程序员综合在线工具', icon: '' },
             { name: 'Py混淆', url: 'https://freecodingtools.org/tools/obfuscator/python', description: 'Python 代码混淆工具', icon: '' },
-            { name: '二维码生成', url: 'https://cli.im/', description: '在线二维码制作', icon: 'https://cli.im/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: '二维码生成', url: 'https://cli.im/', description: '在线二维码制作', icon: '' },
             { name: 'Argo Tunnel json获取', url: 'https://fscarmen.cloudflare.now.cc/', description: 'Cloudflare Argo Tunnel 配置工具', icon: '' },
-            { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换', icon: 'https://www.qqxiuzi.cn/favicon.ico' },
-            { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除', icon: 'https://remove.photos/favicon.ico' },
-            // 自定义域名，保留空白使用 DDG 动态图标服务
+            { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换', icon: '' },
+            { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除', icon: '' },
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务', icon: '' },
-            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/favicon.ico' },
-            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/favicon.ico' },
-            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: 'https://convertio.co/favicon.ico' },
-            { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: 'https://d1tools.com/favicon.ico' },
-            { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: 'https://www.toolnb.com/favicon.ico' },
-            { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: 'https://www.json.cn/favicon.ico' },
-            { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找', icon: 'https://www.iamwawa.cn/favicon.ico' },
-            { name: '网站打包app', url: 'https://blackace.app/', description: '将网站打包成 App', icon: 'https://blackace.app/favicon.ico' },
+            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: '' },
+            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: '' },
+            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: '' },
+            { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: '' },
+            { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: '' },
+            { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: '' },
+            { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找', icon: '' },
+            { name: '网站打包app', url: 'https://blackace.app/', description: '将网站打包成 App', icon: '' },
         ],
     },
     {
@@ -156,9 +155,9 @@ const DEFAULT_NAV_DATA = [
         category: 'IP代理',
         order: 7,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
-            { name: '在线代理', url: 'https://www.proxyshare.com/zh/proxysite', description: '免费在线代理服务', icon: 'https://www.proxyshare.com/favicon.ico' },
-            { name: '免费网络代理', url: 'https://www.lumiproxy.com/zh-hans/online-proxy/proxysite/', description: '免费代理服务', icon: 'https://www.lumiproxy.com/favicon.ico' },
+            // 动态获取：大部分工具站使用动态获取
+            { name: '在线代理', url: 'https://www.proxyshare.com/zh/proxysite', description: '免费在线代理服务', icon: '' },
+            { name: '免费网络代理', url: 'https://www.lumiproxy.com/zh-hans/online-proxy/proxysite/', description: '免费代理服务', icon: '' },
         ],
     },
     {
@@ -166,10 +165,11 @@ const DEFAULT_NAV_DATA = [
         category: '电商平台',
         order: 8,
         links: [
-             // ⭐️ 硬编码图标 ⭐️
+             // ⭐️ 硬编码：国内电商平台 ⭐️
             { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站', icon: 'https://www.taobao.com/favicon.ico' },
             { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商', icon: 'https://www.jd.com/favicon.ico' },
-            { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台', icon: 'https://www.amazon.cn/favicon.ico' },
+            // 动态获取：国际网站
+            { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台', icon: '' },
         ],
     },
 ];
@@ -179,6 +179,7 @@ const DebugBar = () => null;
 
 // =========================================================================
 // ⬇️ 图标映射和处理逻辑 ⬇️
+// (LinkIcon组件已内置硬编码优先、动态抓取回退、符号图标保底的逻辑，无需修改)
 // =========================================================================
 
 // 🔹 图标名称到 Lucide 组件的映射
@@ -623,11 +624,9 @@ const DisclaimerPage = () => (
 
 // 🔹 外部搜索引擎配置 (硬编码图标)
 const externalEngines = [
-  // 修正后的百度图标地址
+  // 保持核心搜索引擎硬编码以确保搜索栏稳定
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
-  // 修正后的谷歌图标地址
   { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com/favicon.ico' }, 
-  // 修正后的必应图标地址
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
 
