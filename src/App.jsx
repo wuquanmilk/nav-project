@@ -24,7 +24,7 @@ import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } 
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已添加 icon 属性进行图标优化) 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已修正 icon 字段为正确的域名或 URL) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
@@ -34,10 +34,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
-            // 优化图标：直接使用主域名 favicon
-            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'https://claw.cloud/favicon.ico' },
-            // 优化图标：直接使用主域名 favicon
-            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'https://digitalplat.org/favicon.ico' },
+            // 🚀 优化图标：使用主域名 claw.cloud 作为图标来源
+            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'https://claw.cloud/' },
+            // 🚀 优化图标：使用主域名 digitalplat.org 作为图标来源
+            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'https://digitalplat.org/' },
             { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案' },
             { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务' },
         ],
@@ -54,8 +54,8 @@ const DEFAULT_NAV_DATA = [
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
             { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
             { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
-            // 优化图标：直接使用子域名 favicon
-            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/favicon.ico' },
+            // 🚀 优化图标：确保使用 tongyi.aliyun.com 作为图标来源
+            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/' },
         ],
     },
     {
@@ -124,10 +124,10 @@ const DEFAULT_NAV_DATA = [
             { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换' },
             { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除' },
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务' },
-            // 优化图标
-            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/favicon.ico' },
-            // 优化图标
-            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/favicon.ico' },
+            // 🚀 优化图标：使用 www.flexclip.com 作为图标来源
+            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/' },
+            // 🚀 优化图标：使用 obfuscator.io 作为图标来源
+            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/' },
             { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换' },
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆' },
@@ -163,19 +163,19 @@ const DebugBar = () => null;
 
 // 🔹 链接卡片
 const LinkCard = ({ link }) => {
-  // 🚀 修复点：修改 faviconUrl 逻辑
+  // 🚀 核心修复点：始终通过 Google S2 服务获取图标，但优先使用 link.icon 作为正确的 URL 来源。
   const faviconUrl = useMemo(() => {
-    // 1. 如果 link.icon 属性已设置，直接使用它作为 URL (用于手动修正图标)
-    if (link.icon && link.icon.startsWith('http')) {
-        return link.icon;
-    }
-    
-    // 2. 否则，通过 Google S2 服务获取图标
     try {
-      const urlObj = new URL(link.url);
+      // 1. 如果 link.icon 存在，使用它作为图标的 URL 来源。
+      // 2. 否则，使用 link.url 作为图标的 URL 来源。
+      // 这样可以确保 Google S2 使用正确的根域名或子域名来查找图标。
+      const sourceUrl = link.icon || link.url;
+      const urlObj = new URL(sourceUrl);
+      
+      // 始终通过 Google S2 代理服务获取，解决跨域或直接获取失败的问题
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     } catch {
-      // 3. URL 无效时，使用占位符
+      // URL 无效时，使用占位符
       return 'https://placehold.co/40x40/ccc/000?text=L';
     }
   }, [link.icon, link.url]);
@@ -204,7 +204,7 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共主页
+// 🔹 公共主页 (保持不变)
 const PublicNav = ({ navData, searchTerm }) => {
     if (navData.length === 0 && searchTerm) {
         return (
@@ -234,14 +234,14 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (管理面板内部使用，保持不变)
+// 🔹 链接表单 (管理面板内部使用)
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
     newLinks[index][field] = value;
     setLinks(newLinks);
   };
-  const addLink = () => setLinks([...links, { name: '', url: '', description: '', icon: '' }]); // 🚀 链接表单新增 icon 字段
+  const addLink = () => setLinks([...links, { name: '', url: '', description: '', icon: '' }]); 
   const removeLink = (index) => setLinks(links.filter((_, i) => i !== index));
 
   return (
@@ -251,7 +251,7 @@ const LinkForm = ({ links, setLinks }) => {
           <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
-          <input placeholder="图标(可选)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> {/* 🚀 新增 icon 输入框 */}
+          <input placeholder="图标源(可选URL/域名)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> {/* 🚀 允许输入 URL 或域名作为图标来源 */}
           <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
         </div>
       ))}
@@ -284,7 +284,6 @@ const LoginModal = ({ onClose, onLogin, error }) => {
 
 // 🔹 管理面板 (保持不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
-  // 🚀 新增 icon 字段默认值
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -366,7 +365,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
                 </div>
               </div>
               <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
-                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span> {l.icon && <span className="text-xs text-green-500">(自定义图标)</span>}</li>)}
+                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span> {l.icon && <span className="text-xs text-green-500">(自定义图标源)</span>}</li>)}
               </ul>
             </>
           )}
@@ -546,11 +545,10 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// 🚀 修复后的 SearchLayout 组件 (使用稳定的单一布局，解决焦点丢失问题)
+// 🔹 SearchLayout 组件 (保持不变)
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || currentPage !== 'home') return null;
 
-    // 统一使用 "搜索框在上，按钮在下" 的稳定结构，避免因 Firebase 状态变化而引起的 DOM 结构切换。
     return (
         <div className="mb-8 max-w-2xl mx-auto">
             {/* 站内搜索框 */}
