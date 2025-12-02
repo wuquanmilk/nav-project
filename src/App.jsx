@@ -17,11 +17,11 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标
-import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search } from 'lucide-react'; 
+// 导入需要的图标，已新增 User 图标
+import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
-const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
+const ADMIN_USER_ID = '6UiUdmPna4RJ2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
 // 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (用于 Firebase 加载失败时的显示) 🔥🔥🔥
@@ -161,7 +161,6 @@ const LinkCard = ({ link }) => {
   const faviconUrl = useMemo(() => {
     try {
       const urlObj = new URL(link.icon || link.url);
-      // 原始 V1 接口
       return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     } catch {
       return 'https://placehold.co/40x40/ccc/000?text=L';
@@ -459,7 +458,7 @@ export default function App() {
   const [db, setDb] = useState(null);
   const [userId, setUserId] = useState(null);
   
-  const [navData, setNavData] = useState(DEFAULT_NAV_DATA);
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); // 使用 DEFAULT_NAV_DATA 兜底
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -529,7 +528,6 @@ export default function App() {
     } catch(e){ setLoginError(e.message); }
   };
   
-  // 根据搜索词过滤导航数据
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
       return navData; 
@@ -564,44 +562,48 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
-        {/* 原始 Header 布局 (未居中) */}
-        <header className="flex justify-between items-center mb-12">
-          <h1 
-              className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600"
-              onClick={() => setCurrentPage('home')}
-          >
-              第一象限 极速导航网
-          </h1>
-          <div className="flex gap-4">
-            <button 
-                onClick={()=>setIsDark(!isDark)} 
-                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
-                title="切换主题"
+        {/* 🔥 修复 Header: 标题居中，按钮垂直堆叠的圆形图标 */}
+        <header className="mb-12 relative">
+            <h1 
+                className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
+                onClick={() => setCurrentPage('home')}
             >
-                {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
-            </button>
-            {!isAdmin && 
-              <button 
-                  onClick={()=>setShowLogin(true)} 
-                  className="text-blue-500 font-bold border px-3 py-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700 dark:text-blue-400 dark:border-gray-600"
-                  title="管理员登录"
-              >
-                  管理员登录
-              </button>
-            }
-            {isAdmin && 
-              <button 
-                  onClick={()=>signOut(auth)} 
-                  className="text-red-500 font-bold border border-red-500 px-3 py-1 rounded hover:bg-red-50 dark:hover:bg-gray-700 dark:border-red-400 dark:text-red-400"
-                  title="退出管理"
-              >
-                  退出管理
-              </button>
-            }
-          </div>
+                极速导航网
+            </h1>
+            
+            {/* 按钮区域: 绝对定位到右上角, 垂直堆叠 */}
+            <div className="flex flex-col gap-2 absolute top-0 right-0">
+                {/* 切换主题按钮 (圆形) */}
+                <button 
+                    onClick={()=>setIsDark(!isDark)} 
+                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    title="切换主题"
+                >
+                    {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
+                </button>
+                {/* 管理员登录/退出按钮 (圆形, 使用 User 图标) */}
+                {!isAdmin && (
+                    <button 
+                        onClick={() => setShowLogin(true)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="管理员登录"
+                    >
+                        <User className="w-5 h-5"/> 
+                    </button>
+                )}
+                {isAdmin && (
+                    <button 
+                        onClick={() => signOut(auth)} 
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-red-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                        title="退出管理"
+                    >
+                        <User className="w-5 h-5"/> 
+                    </button>
+                )}
+            </div>
         </header>
         
-        {/* 新增站内搜索框 */}
+        {/* 站内搜索框 */}
         {!isAdmin && currentPage === 'home' && (
             <div className="mb-8 relative max-w-2xl mx-auto">
                 <input 
