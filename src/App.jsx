@@ -157,8 +157,7 @@ const DEFAULT_NAV_DATA = [
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
-
-// 🔹 辅助组件：处理图标的加载和降级 (新增/优化)
+// 🔹 辅助组件：处理图标的加载和降级 (优化后的 V2 图标逻辑)
 const LinkIcon = ({ link }) => {
     // 使用 useState 追踪图标加载是否出错
     const [hasError, setHasError] = useState(false);
@@ -206,7 +205,6 @@ const LinkIcon = ({ link }) => {
 
 // 🔹 链接卡片 (使用 LinkIcon 辅助组件 - 优化)
 const LinkCard = ({ link }) => {
-  // 简化 LinkCard 逻辑，聚焦于布局和点击事件
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
@@ -279,7 +277,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 (保持不变)
+// 🔹 登录弹窗 
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -376,29 +374,6 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     </div>
   );
 };
-
-// 🔹 登录弹窗 (保持不变)
-const LoginModal = ({ onClose, onLogin, error }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
-          <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 
 // 🔹 页脚组件
 const Footer = ({ setCurrentPage }) => {
@@ -572,7 +547,7 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// 🚀 修复后的 SearchLayout 组件 (使用稳定的单一布局)
+// 🚀 SearchLayout 组件 (使用稳定的单一布局)
 const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || currentPage !== 'home') return null;
 
@@ -652,6 +627,7 @@ export default function App() {
     (error) => {
         console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
+        // 确保 navData 即使在连接失败时也至少有默认数据
         setNavData(DEFAULT_NAV_DATA);
     });
     return unsub;
