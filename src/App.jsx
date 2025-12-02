@@ -104,9 +104,11 @@ const DEFAULT_NAV_DATA = [
         category: '搜索引擎',
         order: 4,
         links: [
-            // ⭐️ 硬编码图标 ⭐️
-            { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎', icon: 'https://www.google.com/favicon.ico' },
+            // 百度：使用官方 Favicon URL
             { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎', icon: 'https://www.baidu.com/favicon.ico' }, 
+            // ⭐️ 修复谷歌导航栏图标 ⭐️
+            { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' },
+            // 必应：使用官方 Favicon URL
             { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
         ],
     },
@@ -625,8 +627,8 @@ const DisclaimerPage = () => (
 const externalEngines = [
   // 百度：使用官方 Favicon URL
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
-  // 谷歌：使用 Base64 编码图标（根据您的反馈，此方案最稳定）
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGggZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1YzAtMS41Ny0uMTUtMy4wOS0uMzgtNC41NUgyNHY5LjAyaDEyLjk0Yy0wLjU4IDIuOTYtMi4yNiA1LjQ4LTQuNzggNy4xOGw3LjczNmM0LjUxLTQuMTggNy4wOS0xMC4zNiA3LjA5LTE3LjY1eiIvPjxwYXRoIGZpbGw9IiNGQkJDMDUiIGQ9Ik0xMC41MyAyOC41OWMtMC40OC0xLjQ1LS43Ni0yLjk5LS43Ni00LjU5czAuMjctMy4xNC43Ni00LjU5bC03Ljk4LTYuMTlDLjkyIDE2LjQ2IDAgMjAuMTIgMCAyNGMwIDMuODguOTIgNy41NCAyLjU2IDEwLjc4bDcuOTctNi4xOXoiLz48cGF0aCBmaWxsPSIjMzRBODUzIiBkPSJNMjQgNDhjNi40OCAwIDExLjkzLTIuMTMgMTUuODktNS44MWwtNy43My02Yy0yLjE1IDEuNDUtNC45MiAyLjMtOC4xNiAyLjMtNi4yNiAwLTExLjU3LTQuMjItMTMuNDctOS45MWwtNy.5OCA2LjE5QzYuNTEgNDIuNjIgMTQuNjIgNDggMjQgNDh6Ii8+PC9zdmc+'} , 
+  // ⭐️ 修复谷歌搜索框图标：改用 DuckDuckGo 代理服务加载 ⭐️
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
   // 必应：使用官方 Favicon URL
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
@@ -666,7 +668,6 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
 
 // 🔹 子组件：处理单个外部搜索按钮的图标
 const ExternalSearchButton = ({ engine, searchTerm }) => {
-    // 因为现在我们配置了 Base64 或直接 URL，所以这个逻辑是稳定的
     const [hasError, setHasError] = useState(false);
     
     // 直接使用 engine.icon 作为源，无论是 Base64 还是 URL 都能兼容
