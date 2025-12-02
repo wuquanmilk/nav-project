@@ -27,15 +27,16 @@ import {
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
         category: '常用开发',
         order: 0,
         links: [
-            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
-            { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
+            // ⭐️ 硬编码图标 ⭐️
+            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区', icon: 'https://huggingface.co/favicon.ico' },
+            { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'https://github.com/fluidicon.png' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
             { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录' },
             { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台' },
@@ -48,12 +49,13 @@ const DEFAULT_NAV_DATA = [
         category: 'AI大模型',
         order: 1,
         links: [
-            { name: 'chatgpt', url: 'https://chatgpt.com/', description: 'OpenAI 对话模型' },
+             // ⭐️ 硬编码图标 ⭐️
+            { name: 'chatgpt', url: 'https://chatgpt.com/', description: 'OpenAI 对话模型', icon: 'https://chatgpt.com/favicon.ico' },
             { name: 'gemini', url: 'https://gemini.google.com/app', description: 'Google AI 应用' },
             { name: 'deepseek', url: 'https://www.deepseek.com/', description: '深度求索 AI 平台' },
-            { name: '阿里千问', url: 'https://chat.qwen.ai/', description: '阿里通义千问' },
+            { name: '阿里千问', url: 'https://chat.qwen.ai/', description: '阿里通义千问', icon: 'https://chat.qwen.ai/favicon.ico' },
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
-            { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
+            { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI', icon: 'https://www.doubao.com/favicon.ico' },
             { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
             { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务' },
         ],
@@ -63,14 +65,15 @@ const DEFAULT_NAV_DATA = [
         category: '影视娱乐',
         order: 2,
         links: [
-            { name: '哔哩哔哩', url: 'https://bilibili.com', description: 'B 站视频分享社区' },
-            { name: 'youtube', url: 'https://youtube.com', description: '全球最大视频平台' },
-            { name: '爱奇艺', url: 'https://www.iqiyi.com', description: '国内视频播放平台' },
+            // ⭐️ 硬编码图标 ⭐️
+            { name: '哔哩哔哩', url: 'https://bilibili.com', description: 'B 站视频分享社区', icon: 'https://www.bilibili.com/favicon.ico' },
+            { name: 'youtube', url: 'https://youtube.com', description: '全球最大视频平台', icon: 'https://www.youtube.com/s/desktop/4f17f4b8/img/favicon_96x96.png' },
+            { name: '爱奇艺', url: 'https://www.iqiyi.com', description: '国内视频播放平台', icon: 'https://www.iqiyi.com/favicon.ico' },
             { name: '在线音乐', url: 'https://music.eooce.com/', description: '免费在线音乐播放' },
             { name: '视频下载', url: 'https://tubedown.cn/', description: '通用视频下载工具' },
             { name: '星空音乐下载', url: 'https://www.vh.hk/', description: '音乐下载工具' },
             { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区' },
-            { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台' },
+            { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台', icon: 'https://www.kuaishou.com/favicon.ico' },
             { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台' },
             { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台' },
             { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用' },
@@ -94,7 +97,8 @@ const DEFAULT_NAV_DATA = [
         order: 4,
         links: [
             { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎' },
-            { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎' },
+            // ⭐️ 修正百度图标 ⭐️
+            { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎', icon: 'https://www.baidu.com/favicon.ico' }, 
             { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎' },
         ],
     },
@@ -103,9 +107,10 @@ const DEFAULT_NAV_DATA = [
         category: '云计算',
         order: 5,
         links: [
+             // ⭐️ 硬编码图标 ⭐️
             { name: 'AWS', url: 'https://aws.amazon.com/', description: '亚马逊云服务' },
             { name: 'Azure', url: 'https://azure.microsoft.com/', description: '微软云服务' },
-            { name: '阿里云', url: 'https://www.aliyun.com/', description: '阿里巴巴云服务' },
+            { name: '阿里云', url: 'https://www.aliyun.com/', description: '阿里巴巴云服务', icon: 'https://img.alicdn.com/tfs/TB1_rX4NcfpK1kS-c3hXXccSFXa-32-32.png' },
             { name: '腾讯云', url: 'https://cloud.tencent.com/', description: '腾讯云服务' },
             { name: '华为云', url: 'https://www.huaweicloud.com/', description: '华为云服务' },
             { name: 'Oracle Cloud', url: 'https://www.oracle.com/cloud/', description: '甲骨文云服务' },
@@ -148,8 +153,9 @@ const DEFAULT_NAV_DATA = [
         category: '电商平台',
         order: 8,
         links: [
-            { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站' },
-            { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商' },
+             // ⭐️ 硬编码图标 ⭐️
+            { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站', icon: 'https://www.taobao.com/favicon.ico' },
+            { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商', icon: 'https://www.jd.com/favicon.ico' },
             { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台' },
         ],
     },
@@ -254,19 +260,24 @@ const getLucideIcon = (linkName) => {
 };
 
 
-// 🔹 辅助组件：处理图标的加载和回退 (切换到 DuckDuckGo Favicon 服务)
+// 🔹 辅助组件：处理图标的加载和回退 (硬编码优先 + DuckDuckGo 服务)
 const LinkIcon = ({ link }) => {
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
         setHasError(false);
-    }, [link.url]);
+    }, [link.url, link.icon]);
 
     const imageUrl = useMemo(() => {
+        // 1. 优先使用硬编码的 icon 字段 (用户手动输入或 DEFAULT_NAV_DATA 中的值)
+        if (link.icon) {
+            return link.icon;
+        }
+
+        // 2. 如果没有硬编码，使用 DuckDuckGo 的 Favicon 服务
         try {
-            const urlToParse = link.icon || link.url;
+            const urlToParse = link.url;
             const urlObj = new URL(urlToParse);
-            // ⭐️ 核心修改：使用 DuckDuckGo 的 Favicon 服务，全球访问性较好 ⭐️
             return `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
         } catch {
             return ''; 
@@ -284,6 +295,7 @@ const LinkIcon = ({ link }) => {
                     src={imageUrl} 
                     alt={link.name} 
                     className="w-6 h-6 object-contain"
+                    // 如果图片加载失败 (无论是硬编码还是动态服务)，设置错误状态，回退到 Lucide 符号
                     onError={() => setHasError(true)} 
                     loading="lazy"
                 />
@@ -345,24 +357,28 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (保持不变)
+// 🔹 链接表单 (新增 Icon URL 输入框)
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
     newLinks[index][field] = value;
     setLinks(newLinks);
   };
-  const addLink = () => setLinks([...links, { name: '', url: '', description: '' }]);
+  // 新增 icon 字段的默认值
+  const addLink = () => setLinks([...links, { name: '', url: '', description: '', icon: '' }]); 
   const removeLink = (index) => setLinks(links.filter((_, i) => i !== index));
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 text-sm"> 
       {links.map((l, idx) => (
-        <div key={idx} className="flex space-x-2">
-          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
-          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
-          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
-          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
+        <div key={idx} className="flex flex-wrap items-center gap-2 border p-2 rounded dark:border-gray-600">
+          <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-20 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/>
+          <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/>
+          {/* ⭐️ 新增图标 URL 输入框 ⭐️ */}
+          <input placeholder="图标 URL (可选)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded flex-1 min-w-[150px] dark:bg-gray-700 dark:border-gray-600"/>
+          
+          <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 flex-shrink-0">删除</button>
         </div>
       ))}
       <button onClick={addLink} className="bg-blue-500 text-white px-3 py-1 rounded mt-1 hover:bg-blue-600">新增链接</button>
@@ -401,12 +417,25 @@ const AdminPanel = ({ db, navData, fetchData }) => {
 
   const handleAddCategory = async () => {
     if (!newCategory.category) return alert('请输入分类名称');
-    await addDoc(navCollection, newCategory);
+    // 确保 links 数组中的每个对象都有 icon 字段
+    const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
+    await addDoc(navCollection, {...newCategory, links: linksWithIcon});
     setNewCategory({ category: '', order: 0, links: [] });
     fetchData();
   };
-  const startEdit = (item) => { setEditId(item.id); setEditData({...item}); };
-  const saveEdit = async () => { await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), editData); setEditId(null); fetchData(); };
+  const startEdit = (item) => { 
+    // 确保 links 数组中的每个对象都有 icon 字段
+    const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
+    setEditId(item.id); 
+    setEditData({...item, links: linksWithIcon}); 
+  };
+  const saveEdit = async () => { 
+    // 确保 links 数组中的每个对象都有 icon 字段
+    const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
+    await updateDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, editId), {...editData, links: linksWithIcon}); 
+    setEditId(null); 
+    fetchData(); 
+  };
   const handleDelete = async (id) => { 
     if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
         await deleteDoc(doc(db, `artifacts/${APP_ID}/public/data/navData`, id)); 
@@ -579,13 +608,11 @@ const DisclaimerPage = () => (
 // ⬇️ 搜索按钮配置与逻辑 (硬编码图标，最可靠) ⬇️
 // =========================================================================
 
-// 🔹 外部搜索引擎配置 (改为高解析度、固定链接，不再依赖 Favicon API)
+// 🔹 外部搜索引擎配置 (硬编码图标)
 const externalEngines = [
-  // 使用百度自己的 logo 地址，确保国内加载
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/img/baidu_85beaf5496f291521eb75ba38eacbd7f.png' }, 
-  // 使用 Wikipedia 上的 Google logo SVG (非 Google 域名，可靠性高)
+  // ⭐️ 修正：使用标准的 favicon.ico 地址 ⭐️
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
   { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' }, 
-  // 使用 Bing 自己的高解析度 Favicon
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
 
@@ -626,9 +653,8 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
 const ExternalSearchButton = ({ engine, searchTerm }) => {
     const [hasError, setHasError] = useState(false);
     
-    // ⭐️ 核心修改：直接使用 engine.icon (硬编码的 URL) 作为图片源 ⭐️
-    // 当 URL 失败时，回退到 Lucide Search 图标。
-    const imageUrl = engine.icon;
+    // 直接使用硬编码的 URL，不再需要 useMemo/useEffect 监听变化，因为它是固定的
+    const imageUrl = engine.icon; 
 
     const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
 
@@ -643,7 +669,6 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
                 <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
             ) : (
                 <img 
-                    // 🚨 直接使用硬编码的 icon URL
                     src={imageUrl} 
                     alt={engine.name} 
                     className="w-6 h-6 rounded-full object-contain"
