@@ -17,7 +17,7 @@ import {
   updateDoc,
   getDocs
 } from 'firebase/firestore';
-// 导入需要的图标，已新增 User 图标
+// 导入需要的图标
 import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
@@ -451,6 +451,22 @@ const DisclaimerPage = () => (
 );
 
 
+// 🔹 外部搜索引擎配置
+const externalEngines = [
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
+];
+
+// 🔹 外部搜索处理函数
+const handleExternalSearch = (engineUrl, query) => {
+  if (query) {
+    // 编码查询字符串并新窗口打开
+    window.open(engineUrl + encodeURIComponent(query), '_blank');
+  }
+};
+
+
 // 🔹 主应用 (App 组件)
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
@@ -458,7 +474,7 @@ export default function App() {
   const [db, setDb] = useState(null);
   const [userId, setUserId] = useState(null);
   
-  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); // 使用 DEFAULT_NAV_DATA 兜底
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -562,7 +578,7 @@ export default function App() {
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         
-        {/* 🔥 修复 Header: 标题居中，按钮垂直堆叠的圆形图标 */}
+        {/* Header: 标题居中，按钮垂直堆叠的圆形图标 */}
         <header className="mb-12 relative">
             <h1 
                 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
@@ -603,26 +619,51 @@ export default function App() {
             </div>
         </header>
         
-        {/* 站内搜索框 */}
+        {/* 🔥 搜索区域容器：包含站内搜索和外部搜索，居中显示 */}
         {!isAdmin && currentPage === 'home' && (
-            <div className="mb-8 relative max-w-2xl mx-auto">
-                <input 
-                    type="text" 
-                    placeholder="搜索链接名称、描述或网址..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
-                {searchTerm && (
-                    <button 
-                        onClick={() => setSearchTerm('')} 
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
-                        title="清空搜索"
-                    >
-                        <X className="w-5 h-5"/>
-                    </button>
-                )}
+            <div className="mb-8 flex justify-center items-stretch gap-3">
+                {/* 站内搜索框 (占主要宽度) */}
+                <div className="relative max-w-xl flex-grow">
+                    <input 
+                        type="text" 
+                        placeholder="搜索链接名称、描述或网址..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+                        // 允许用户按 Enter 键执行站内搜索，但这里我们保持原样，只做输入框
+                    />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+                    {searchTerm && (
+                        <button 
+                            onClick={() => setSearchTerm('')} 
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                            title="清空站内搜索"
+                        >
+                            <X className="w-5 h-5"/>
+                        </button>
+                    )}
+                </div>
+
+                {/* 外部搜索按钮 (最小化) */}
+                <div className="flex items-center space-x-2">
+                    {externalEngines.map(engine => (
+                        <button
+                            key={engine.name}
+                            onClick={() => handleExternalSearch(engine.url, searchTerm)}
+                            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+                            // 禁用样式，但允许点击，即便没有关键词，用户也可以打开搜索引擎主页
+                            disabled={false} 
+                            className={`p-2 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg ${searchTerm ? 'hover:scale-105' : 'opacity-70'}`}
+                        >
+                            <img 
+                                // 使用 V1 Favicon 接口获取图标
+                                src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
+                                alt={engine.name} 
+                                className="w-5 h-5 rounded-full"
+                            />
+                        </button>
+                    ))}
+                </div>
             </div>
         )}
         
