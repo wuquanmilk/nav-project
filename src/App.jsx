@@ -28,7 +28,7 @@ const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
 // ⭐️ 谷歌图标 Base64 SVG 编码 (用于国际版稳定性修复，防止动态加载失败) ⭐️
-const GOOGLE_BASE64_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGggZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1Yz羞思T1.NTctLjE1LTMuMDktLjM4LTQuNTVIMjR2OS4wMmgxMi45NGMtMC41OCAyLjk2LTIuMjYgNS40OC00Ljc4IDcuMThsNy43MzYgNi4xOTY0LjUxLTQuMTggNy4wOS0xMC4zNiA3LjA5LTE3LjY1eiIvPjxwYXRoIGZpbGw9IiNGQkJDMDUiIGQ9Ik0xMC41MyAyOC41OWMtMC40OC0xLjQ1LS43Ni0yLjk5LS43Ni00LjU5czAuMjctMy4xNC43Ni00LjU5bC03Ljk4LTYuMTlDLjkyIDE2LjQ2IDAgMjAuMTIgMCAyNGMwIDMuODguOTIgNy41NCAyLjU2IDEwLjc4bDcuOTctNi4xOXoiLz48cGF0aCBmaWxsPSIjMzRBODUzIiIgZD0iTTEwLjUzIDE2LjI0QzcuMjggMTkuMDMgNC44NyAyMy4wMyA0Ljg3IDI0Ljk5Yy0wLjAwMSAzLgcyLS42NiA3LjQ2LTkuNTVsLTcuOTgtNi4xOUM2LjUyIDcuNjcgMTQuNjMgMy42NCAyNCAzLjY0YzIuOTkgMCA1Ljc4LjU1IDguNDQgMS41NGwtNS43OCAzLjI0Yy0xLjUzLS43MS0zLjIzLS45OS00Ljk3LS45OS01LjM2IDAtMTAuMzMgMi40Ni0xMy42NiA2LjE1eiIvPjwvc3ZnPg==';
+const GOOGLE_BASE64_ICON = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iI0VBNDMzNSIgZD0iTTI0IDQ4YzYuNDggMCAxMS45My0yLjQ4IDE1LjgzLTcuMDhMMzQuMjIgMzYuM2MtMi44MSAxLjg5LTYuMjIgMy05LjkzIDMtMTIuODggMC0yMy41LTEwLjQyLTIzLjUtMjMuNDggMC01LjM2IDEuNzYtMTAuMyA0Ljc0LTE0LjM1TDkuNjggMi45OEM0LjAyIDcuNzEgMCAxNS40MyAwIDI0LjUyIDAgMzcuNDggMTAuNzQgNDggMjQgNDh6Ii8+PHBhdGogZmlsbD0iIzQyODVGNCIgZD0iTTQ2Ljk4IDI0LjU1Yz羞思T1.NTctLjE1LTMuMDktLjM4LTQuNTVIMjR2OS4wMmgxMi45NGMtMC41OCAyLjk2LTIuMjYgNS40OC00Ljc4IDcuMThsNy43MzYgNi4xOTY0LjUxLTQuMTggNy4wOS0xMC4zNiA3LjA5LTE3LjY1eiIvPjxwYXRoZmlsbD0iI0ZCQkMwNSIgZD0iTTEwLjUzIDI4LjU5Yy0wLjQ4LTEuNDUtLjc2LTIuOTktLjc2LTQuNTlzMC4yNy0zLjE0Ljc2LTQuNTlsLTcuOTgtNi4xOUMuOTIgMTYuNDYgMCAyMC4xMiAwIDI0YzAgMy44OC45MiA3LjU0IDIuNTYgMTAuNzhsNy45Ny02LjE5eiIvPjxwYXRoIGZpbGw9IiMzNEE4NTMiIGQ9Ik0xMC41MyAxNi4yNEM3LjI4IDE5LjAzIDQuODcgMjMuMDMgNC44NyAyNC45OWMwLjAwMSAzgcyLS42NiA3LjQ2LTkuNTVsLTcuOTgtNi4xOUM2LjUyIDcuNjcgMTQuNjMgMy42NCAyNCAzLjY0YzIuOTkgMCA1Ljc4LjU1IDguNDQgMS41NGwtNS43OCAzLjI0Yy0xLjUzLS43MS0zLjIzLS45OS00Ljk3LS45OS01LjM2IDAtMTAuMzMgMi40Ni0xMy42NiA2LjE1eiIvPjwvc3ZnPg==';
 
 // =========================================================================
 // 核心切换开关：国内版 / 国际版
@@ -152,7 +152,7 @@ const FULL_NAV_DATA = [
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务', icon: '' },
             { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/cn/favicon.ico' },
             { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/favicon.ico' },
-            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: 'https://convertio.co/favicon.ico' },
+            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: 'https://convertio.co/zh/favicon.ico' },
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: 'https://d1tools.com/favicon.ico' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: 'https://www.toolnb.com/favicon.ico' },
             { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: 'https://www.json.cn/favicon.ico' },
@@ -266,7 +266,7 @@ const DOMESTIC_NAV_DATA = [
             { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务', icon: '' },
             { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'https://www.flexclip.com/cn/favicon.ico' },
             { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'https://obfuscator.io/favicon.ico' },
-            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: 'https://convertio.co/favicon.ico' },
+            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换', icon: 'https://convertio.co/zh/favicon.ico' },
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: 'https://d1tools.com/favicon.ico' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: 'https://www.toolnb.com/favicon.ico' },
             { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: 'https://www.json.cn/favicon.ico' },
@@ -692,8 +692,8 @@ const AdminPanel = ({ db, navData, fetchData }) => {
 };
 
 // 🔹 首页组件 (使用 APP_TITLE 和 EXTERNAL_ENGINES)
-const HomePage = ({ db, auth }) => {
-    // ... [Firebase configuration and logic omitted for brevity]
+// 🔥 修复点：移除 { db, auth } props，避免与组件内部的 const 声明冲突。
+const HomePage = () => { 
     const [theme, setTheme] = useState('light');
     const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
     const [searchTerm, setSearchTerm] = useState('');
@@ -703,22 +703,37 @@ const HomePage = ({ db, auth }) => {
     const [loginError, setLoginError] = useState('');
     const [currentPage, setCurrentPage] = useState('home'); 
 
-    // Firebase App 初始化 (假设已经存在)
+    // Firebase App 初始化 
     const firebaseConfig = {
       // 您的 Firebase 配置...
     };
     const app = useMemo(() => {
         try {
+            // 尝试初始化 Firebase
             return initializeApp(firebaseConfig);
         } catch (e) {
             console.error("Firebase already initialized or config error:", e);
             return null;
         }
     }, []);
+
+    // 正确的 db 和 auth 声明，使用本地 app 变量
     const db = app ? getFirestore(app) : null;
     const auth = app ? getAuth(app) : null;
 
-    // ... [useEffect hooks for Firebase, Auth, and Theme omitted for brevity]
+
+    useEffect(() => {
+        // 主题设置逻辑
+        const localTheme = localStorage.getItem('theme');
+        if (localTheme) {
+            setTheme(localTheme);
+            document.documentElement.classList.toggle('dark', localTheme === 'dark');
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark');
+            document.documentElement.classList.add('dark');
+        }
+    }, []);
+
     useEffect(() => {
         if (!auth) return;
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -731,14 +746,13 @@ const HomePage = ({ db, auth }) => {
 
     // Firestore 数据获取 (关键：Firebase 数据会覆盖硬编码的 DEFAULT_NAV_DATA)
     const fetchData = () => {
-        if (!db) return;
+        if (!db) {
+             setNavData(DEFAULT_NAV_DATA.sort((a, b) => a.order - b.order));
+             return () => {};
+        }
         const navCollection = collection(db, `artifacts/${APP_ID}/public/data/navData`);
         const unsubscribe = onSnapshot(navCollection, (snapshot) => {
             let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // 运行时数据筛选 (国内版开启时，仅显示国内数据)
-            // ⚠️ 注意：Firebase 数据源需要管理员确保只添加国内链接，
-            // 否则这里需要更复杂的运行时过滤逻辑来匹配 DEFAULT_NAV_DATA 的国内数据。
             
             // 排序并更新状态
             setNavData(data.sort((a, b) => a.order - b.order));
@@ -852,6 +866,7 @@ const HomePage = ({ db, auth }) => {
                 <SearchLayout searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
                 
                 {/* 核心内容渲染 */}
+                {/* 注意：AdminPanel 仍然需要 db 和 fetchData prop */}
                 {isAdmin ? (
                     <AdminPanel db={db} navData={navData} fetchData={fetchData} />
                 ) : (
