@@ -331,10 +331,11 @@ const LinkIcon = ({ link }) => {
 // =========================================================================
 
 
-// 🔹 链接卡片 (保持不变)
+// 🔹 链接卡片 (已修改暗色模式背景)
 const LinkCard = ({ link }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow duration-300">
+    // ⭐️ 修改点：将 dark:bg-gray-800 改为 dark:bg-gray-700，使卡片在暗色模式下更亮、更突出
+    <div className="bg-white dark:bg-gray-700 p-4 rounded-xl shadow-lg flex flex-col h-full border border-gray-100 dark:border-gray-600 hover:shadow-xl transition-shadow duration-300">
       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-4 flex-grow">
         
         <LinkIcon link={link} /> 
@@ -379,6 +380,7 @@ const PublicNav = ({ navData, searchTerm, isUserCustom }) => {
         <div className="space-y-8 min-h-[60vh]">
             {navData.map(cat => (
                 cat.links && cat.links.length > 0 && (
+                    // 类别容器保持 dark:bg-gray-800
                     <div key={cat.id || cat.category} className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm">
                         <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white border-l-4 border-blue-500 pl-3">{cat.category}</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
