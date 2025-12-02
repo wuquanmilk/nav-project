@@ -85,7 +85,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 关于本站页面组件
+// 🔹 关于本站页面组件 (已修改)
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -101,6 +101,14 @@ const AboutPage = () => (
             <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
             <p>
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
+                <br/> {/* 换行 */}
+                联系邮箱: 
+                <a 
+                    href="mailto:115382613@qq.com" 
+                    className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
+                >
+                    115382613@qq.com
+                </a>
             </p>
         </div>
     </div>
@@ -160,7 +168,7 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 登录弹窗 (修改图标)
+// 🔹 登录弹窗 (图标已更新为 User)
 const LoginModal = ({ onClose, onLogin, error }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -170,7 +178,6 @@ const LoginModal = ({ onClose, onLogin, error }) => {
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
         <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        {/* 🔥 图标替换为 User */}
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><User className="w-6 h-6 mr-3 text-blue-500"/>管理员登录</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
@@ -428,7 +435,7 @@ export default function App() {
               {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
             </button>
             
-            {/* 🔥 管理员登录入口 (人头像图标，中性颜色) */}
+            {/* 管理员登录入口 (人头像图标，中性颜色) */}
             {!isAdmin && (
                 <button 
                     onClick={() => setShowLogin(true)} 
@@ -439,7 +446,7 @@ export default function App() {
                 </button>
             )}
             
-            {/* 🔥 管理员退出入口 (人头像图标，红色表示退出) */}
+            {/* 管理员退出入口 (人头像图标，红色表示退出) */}
             {isAdmin && (
                 <button 
                     onClick={() => signOut(auth)} 
