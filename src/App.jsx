@@ -345,7 +345,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-// 🔹 页脚组件 (保持不变)
+// 🔹 页脚组件
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -386,7 +386,8 @@ const Footer = ({ setCurrentPage }) => {
               <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              <a href="mailto:contact@example.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
+              {/* 📧 已修改邮箱地址 (Footer) */}
+              <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
                 <Mail className="w-5 h-5" />
               </a>
             </div>
@@ -397,7 +398,7 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件 (保持不变)
+// 🔹 关于本站页面组件
 const AboutPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -415,11 +416,12 @@ const AboutPage = () => (
                 由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
                 <br/> 
                 联系邮箱: 
+                {/* 📧 已修改邮箱地址 (AboutPage) */}
                 <a 
                     href="mailto:115382613@qq.com" 
                     className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
                 >
-                    contact@example.com
+                    115382613@qq.com
                 </a>
             </p>
         </div>
@@ -585,14 +587,19 @@ export default function App() {
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
+      // 成功获取到数据，标记连接成功
+      setIsFirebaseConnected(true); 
+
       if (data.length > 0 || isAdmin) { 
           setNavData(data);
-          setIsFirebaseConnected(true); 
       }
       
-    }, (error) => {
-        console.warn("Firebase connection failed or blocked. Using default links.", error);
+    }, 
+    // 🚀 降级修复: Firebase 连接失败时使用内部 DEFAULT_NAV_DATA
+    (error) => {
+        console.warn("Firebase connection failed or blocked. Using internal DEFAULT_NAV_DATA as fallback.", error.message);
         setIsFirebaseConnected(false); 
+        setNavData(DEFAULT_NAV_DATA);
     });
     return unsub;
   },[db, isAdmin]); 
