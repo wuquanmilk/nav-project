@@ -24,171 +24,66 @@ import { ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User } 
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已修正 icon 字段为正确的 纯域名 或空值) 🔥🔥🔥
-// 链接后面的 icon 字段：
-// 1. 如果是空值，则使用 link.url 的域名进行 S2 查找（用于大部分正常网站）。
-// 2. 如果是纯域名 (如 'claw.cloud')，则使用该域名进行 S2 查找（用于子域名修正）。
-// 3. 如果是完整的图片 URL (如 'https://example.com/logo.png')，则直接使用该图片。
-const DEFAULT_NAV_DATA = [
-    {
-        id: 'cat-1',
-        category: '常用开发',
-        order: 0,
-        links: [
-            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区' },
-            { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台' },
-            { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台' },
-            // 修正：使用纯域名 claw.cloud 作为 S2 查找源
-            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: 'claw.cloud' },
-            // 修正：使用纯域名 digitalplat.org 作为 S2 查找源
-            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: 'digitalplat.org' },
-            { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案' },
-            { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务' },
-        ],
-    },
-    {
-        id: 'cat-2',
-        category: 'AI大模型',
-        order: 1,
-        links: [
-            { name: 'chatgpt', url: 'https://chatgpt.com/', description: 'OpenAI 对话模型' },
-            { name: 'gemini', url: 'https://gemini.google.com/app', description: 'Google AI 应用' },
-            { name: 'deepseek', url: 'https://www.deepseek.com/', description: '深度求索 AI 平台' },
-            { name: '阿里千问', url: 'https://chat.qwen.ai/', description: '阿里通义千问' },
-            { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用' },
-            { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI' },
-            { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具' },
-            // 修正：使用纯域名 tongyi.aliyun.com 作为 S2 查找源
-            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'tongyi.aliyun.com' },
-        ],
-    },
-    {
-        id: 'cat-3',
-        category: '影视娱乐',
-        order: 2,
-        links: [
-            { name: '哔哩哔哩', url: 'https://bilibili.com', description: 'B 站视频分享社区' },
-            { name: 'youtube', url: 'https://youtube.com', description: '全球最大视频平台' },
-            { name: '爱奇艺', url: 'https://www.iqiyi.com', description: '国内视频播放平台' },
-            { name: '在线音乐', url: 'https://music.eooce.com/', description: '免费在线音乐播放' },
-            { name: '视频下载', url: 'https://tubedown.cn/', description: '通用视频下载工具' },
-            { name: '星空音乐下载', url: 'https://www.vh.hk/', description: '音乐下载工具' },
-            { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区' },
-            { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台' },
-            { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台' },
-            { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台' },
-            { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用' },
-        ],
-    },
-    {
-        id: 'cat-4',
-        category: 'IP检测 地址生成',
-        order: 3,
-        links: [
-            { name: 'browserscan', url: 'https://www.browserscan.net/zh', description: '浏览器指纹与安全检测' },
-            { name: 'ping0', url: 'https://ping0.cc/', description: '网络延迟与连通性监测' },
-            { name: '真实地址生成器', url: 'https://address.nnuu.nyc.mn/', description: '随机地址生成工具' },
-            { name: 'Itdog', url: 'https://www.itdog.cn/tcping', description: '网络延迟和丢包检测' },
-            { name: 'IP地址查询', url: 'https://ip.ssss.nyc.mn/', description: 'IP 地址归属地查询' },
-        ],
-    },
-    {
-        id: 'cat-5',
-        category: '搜索引擎',
-        order: 4,
-        links: [
-            { name: '谷歌', url: 'https://google.com', description: '全球最大搜索引擎' },
-            { name: '百度', url: 'https://baidu.com', description: '中文搜索引擎' },
-            { name: '必应', url: 'https://bing.com', description: '微软旗下搜索引擎' },
-        ],
-    },
-    {
-        id: 'cat-6',
-        category: '云计算',
-        order: 5,
-        links: [
-            { name: 'AWS', url: 'https://aws.amazon.com/', description: '亚马逊云服务' },
-            { name: 'Azure', url: 'https://azure.microsoft.com/', description: '微软云服务' },
-            { name: '阿里云', url: 'https://www.aliyun.com/', description: '阿里巴巴云服务' },
-            { name: '腾讯云', url: 'https://cloud.tencent.com/', description: '腾讯云服务' },
-            { name: '华为云', url: 'https://www.huaweicloud.com/', description: '华为云服务' },
-            { name: 'Oracle Cloud', url: 'https://www.oracle.com/cloud/', description: '甲骨文云服务' },
-            { name: 'IBM Cloud', url: 'https://www.ibm.com/cloud', description: 'IBM 云服务' },
-        ],
-    },
-    {
-        id: 'cat-7',
-        category: '工具箱',
-        order: 6,
-        links: [
-            { name: '在线工具网', url: 'https://tool.lu/', description: '程序员综合在线工具' },
-            { name: 'Py混淆', url: 'https://freecodingtools.org/tools/obfuscator/python', description: 'Python 代码混淆工具' },
-            { name: '二维码生成', url: 'https://cli.im/', description: '在线二维码制作' },
-            { name: 'Argo Tunnel json获取', url: 'https://fscarmen.cloudflare.now.cc/', description: 'Cloudflare Argo Tunnel 配置工具' },
-            { name: 'base64转换', url: 'https://www.qqxiuzi.cn/bianma/base64.htm', description: 'Base64 编解码转换' },
-            { name: '一键抠图', url: 'https://remove.photos/zh-cn/', description: 'AI 图片背景移除' },
-            { name: '网址缩短', url: 'https://short.ssss.nyc.mn/', description: '链接缩短服务' },
-            // 修正：使用纯域名 www.flexclip.com 作为 S2 查找源
-            { name: 'flexclip', url: 'https://www.flexclip.com/cn/ai/', description: 'AI 视频制作与编辑', icon: 'www.flexclip.com' },
-            // 修正：使用纯域名 obfuscator.io 作为 S2 查找源
-            { name: 'Js混淆', url: 'https://obfuscator.io/', description: 'JavaScript 代码混淆器', icon: 'obfuscator.io' },
-            { name: '文件格式转换', url: 'https://convertio.co/zh/', description: '在线文件格式转换' },
-            { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合' },
-            { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆' },
-            { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验' },
-            { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找' },
-            { name: '网站打包app', url: 'https://blackace.app/', description: '将网站打包成 App' },
-        ],
-    },
-    {
-        id: 'cat-8',
-        category: 'IP代理',
-        order: 7,
-        links: [
-            { name: '在线代理', url: 'https://www.proxyshare.com/zh/proxysite', description: '免费在线代理服务' },
-            { name: '免费网络代理', url: 'https://www.lumiproxy.com/zh-hans/online-proxy/proxysite/', description: '免费代理服务' },
-        ],
-    },
-    {
-        id: 'cat-9',
-        category: '电商平台',
-        order: 8,
-        links: [
-            { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站' },
-            { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商' },
-            { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台' },
-        ],
-    },
-];
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 结束 🔥🔥🔥
+// 🔥🔥🔥 清空硬编码数据：使用一个空数组作为初始默认值 🔥🔥🔥
+const INITIAL_NAV_DATA = [];
+
+// Helper to check if a string looks like an image URL
+const isImageURL = (str) => {
+    return str && str.startsWith('http') && str.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i);
+};
+
+// Helper to extract hostname safely
+const getHostname = (url) => {
+    try {
+        // Ensure protocol exists for new URL()
+        const safeUrl = url.startsWith('http') ? url : `https://${url}`;
+        // 确保只返回域名部分，去除端口和路径
+        const hostname = new URL(safeUrl).hostname;
+        // 如果是 IP 地址，则直接返回
+        if (hostname.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
+            return hostname;
+        }
+        // 对于域名，返回主机名
+        return hostname;
+    } catch {
+        return null;
+    }
+};
 
 // 🔹 调试栏隐藏
 const DebugBar = () => null;
 
 // 🔹 链接卡片
 const LinkCard = ({ link }) => {
-  // 🚀 最终增强的图标 URL 解析逻辑 (解决 S2 干扰问题)
+  // 🚀 多阶段图标查找逻辑 (解决 S2 干扰和子域名问题)
   const faviconUrl = useMemo(() => {
-    // 1. 确定查找源：link.icon 优先于 link.url
-    const source = link.icon || link.url;
     
-    // 2. HARDCODE BYPASS: 检查 source 是否是一个完整的、以图片扩展名结尾的 URL
-    //    只有满足这个条件才绕开 S2，直接加载图片。
-    if (source && source.match(/\.(png|jpg|jpeg|ico|svg|gif)$/i) && source.startsWith('http')) {
-        return source;
+    const iconSource = link.icon; 
+    const urlSource = link.url;
+    
+    // 1. 优先级最高：如果 link.icon 是一个完整的图片 URL，直接使用它（管理员硬核修复）
+    if (isImageURL(iconSource)) {
+        return iconSource;
     }
 
-    // 3. S2 SERVICE (用户原来的核心逻辑): 否则，使用 Google S2 Favicon 服务。
-    try {
-      // 确保 URL 带有协议，以便 new URL() 成功解析
-      const safeSource = source.startsWith('http') ? source : `https://${source}`;
-      const urlObj = new URL(safeSource); 
-      // S2 logic: works for domain-only inputs (like 'claw.cloud') or full URLs
-      return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
-    } catch {
-      // Fallback for invalid sources
-      return 'https://placehold.co/40x40/ccc/000?text=L';
+    // 2. 尝试 S2 查找（使用链接 URL 的域名，适用于大部分站点）
+    const primaryHostname = getHostname(urlSource);
+    // 检查 link.icon 是否包含一个主域名，用于子域名修正
+    const fallbackHostname = getHostname(iconSource);
+
+    // 2a. 如果管理员在 icon 字段输入了主域名（如 claw.cloud），使用它进行 S2 查找
+    if (fallbackHostname) {
+        return `https://www.google.com/s2/favicons?domain=${fallbackHostname}&sz=64`;
     }
+    
+    // 2b. 否则，使用链接本身的主机名进行 S2 查找
+    if (primaryHostname) {
+        return `https://www.google.com/s2/favicons?domain=${primaryHostname}&sz=64`;
+    }
+
+    // 3. 最终回退
+    return 'https://placehold.co/40x40/ccc/000?text=L';
+
   }, [link.icon, link.url]);
 
   return (
@@ -230,6 +125,19 @@ const PublicNav = ({ navData, searchTerm }) => {
         );
     }
 
+    if (navData.length === 0) {
+        return (
+            <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+                <Globe className="w-12 h-12 mx-auto text-blue-500 mb-4" />
+                <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
+                    数据正在加载中...
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">如果长时间未显示，可能是网络连接受限，正在尝试加载本地备用数据。</p>
+            </div>
+        );
+    }
+
+
     return (
         <div className="space-y-8 min-h-[60vh]">
             {navData.map(cat => (
@@ -246,7 +154,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (管理面板内部使用)
+// 🔹 链接表单 (管理面板内部使用) - 保持不变
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -264,8 +172,8 @@ const LinkForm = ({ links, setLinks }) => {
           <input placeholder="名称" value={l.name} onChange={e => handleChange(idx, 'name', e.target.value)} className="border p-1 rounded w-24 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="链接" value={l.url} onChange={e => handleChange(idx, 'url', e.target.value)} className="border p-1 rounded w-48 dark:bg-gray-700 dark:border-gray-600"/>
           <input placeholder="描述" value={l.description} onChange={e => handleChange(idx, 'description', e.target.value)} className="border p-1 rounded flex-1 dark:bg-gray-700 dark:border-gray-600"/>
-          {/* 🚀 提示管理员：输入纯域名 (如claw.cloud) 或完整图片URL */}
-          <input placeholder="图标源(纯域名/完整图片URL)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> 
+          {/* 🚀 提示管理员：输入完整图片 URL (用于硬核修复) 或主域名 (用于子域名修正) */}
+          <input placeholder="图标源(完整图片URL/主域名)" value={l.icon} onChange={e => handleChange(idx, 'icon', e.target.value)} className="border p-1 rounded w-32 dark:bg-gray-700 dark:border-gray-600"/> 
           <button onClick={() => removeLink(idx)} className="bg-red-500 text-white px-2 rounded hover:bg-red-600">删除</button>
         </div>
       ))}
@@ -391,21 +299,21 @@ const AdminPanel = ({ db, navData, fetchData }) => {
 
 // 🔹 外部搜索引擎配置 (保持不变)
 const externalEngines = [
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
-  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
+    { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com' },
+    { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com' },
+    { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com' },
 ];
 
 // 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
-  if (query) {
-    // 编码查询字符串并新窗口打开
-    window.open(engineUrl + encodeURIComponent(query), '_blank');
-  } else {
-    // 如果没有关键词，直接打开搜索引擎主页
-    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
-    window.open(baseDomain, '_blank');
-  }
+    if (query) {
+        window.open(engineUrl + encodeURIComponent(query), '_blank');
+    } else {
+        const baseDomain = getHostname(engineUrl.split('?')[0]);
+        if (baseDomain) {
+            window.open(`https://${baseDomain}`, '_blank');
+        }
+    }
 };
 
 // 🔹 SearchInput 组件 (保持不变)
@@ -415,7 +323,6 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
             type="text" 
             placeholder="搜索链接名称、描述或网址..." 
             value={searchTerm}
-            // 确保 onChange 正确更新状态
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
         />
@@ -443,8 +350,7 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
                 className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105`}
             >
                 <img 
-                    // S2 服务获取搜索引擎图标
-                    src={`https://www.google.com/s2/favicons?domain=${new URL(engine.icon).hostname}&sz=32`} 
+                    src={`https://www.google.com/s2/favicons?domain=${getHostname(engine.icon)}&sz=32`} 
                     alt={engine.name} 
                     className="w-6 h-6 rounded-full"
                 />
@@ -579,6 +485,26 @@ const Footer = ({ setCurrentPage }) => {
 };
 
 
+// 🔹 异步获取备用数据函数
+const fetchFallbackData = async (setNavData) => {
+    console.log("Attempting to fetch fallback data from /fallback-data.json...");
+    try {
+        // 直接从 public 目录加载 JSON 文件
+        const response = await fetch('/fallback-data.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const fallbackData = await response.json();
+        // 备用数据也需要排序
+        fallbackData.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setNavData(fallbackData);
+        console.log("Successfully loaded data from fallback-data.json");
+    } catch (error) {
+        console.error("Failed to load fallback data. Site will be empty.", error);
+        setNavData([]); // Set to empty array if both fail
+    }
+};
+
 // 🔹 主应用 (App 组件)
 export default function App() {
   const [firebaseApp, setFirebaseApp] = useState(null);
@@ -586,7 +512,7 @@ export default function App() {
   const [db, setDb] = useState(null);
   const [userId, setUserId] = useState(null);
   
-  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
+  const [navData, setNavData] = useState(INITIAL_NAV_DATA); 
   const [isDark, setIsDark] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -622,6 +548,8 @@ export default function App() {
   useEffect(()=>{
     if(!db) return;
     const navCol = collection(db, `artifacts/${APP_ID}/public/data/navData`);
+    
+    // 🔔 订阅 Firebase 实时更新
     const unsub = onSnapshot(navCol, snapshot=>{
       const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
       data.sort((a,b)=>(a.order||0)-(b.order||0));
@@ -632,8 +560,10 @@ export default function App() {
       }
       
     }, (error) => {
-        console.warn("Firebase connection failed or blocked. Using default links.", error);
-        setIsFirebaseConnected(false); 
+        console.warn("Firebase connection failed or blocked. Using fallback strategy.", error);
+        setIsFirebaseConnected(false);
+        // 🚀 降级策略：Firebase 失败时，尝试加载静态 JSON 文件
+        fetchFallbackData(setNavData);
     });
     return unsub;
   },[db, isAdmin]); 
@@ -647,7 +577,9 @@ export default function App() {
         data.sort((a,b)=>(a.order||0)-(b.order||0));
         setNavData(data);
     } catch (error) {
-        console.error("Admin fetch failed:", error);
+        console.error("Admin fetch failed, falling back to JSON (if available):", error);
+        // 管理员登录时，如果 Firebase 失败，也尝试加载备用数据
+        fetchFallbackData(setNavData); 
     }
   };
 
