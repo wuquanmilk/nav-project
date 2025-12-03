@@ -637,17 +637,18 @@ const Footer = ({ setCurrentPage }) => {
               </a>
             ))}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* ⭐️ 更改：将外部链接图标改为 Globe (主页)，点击返回主页 ⭐️ */}
+              {/* ⭐️ 修改：页脚第二个图标的链接地址、图标和标题 ⭐️ */}
               <a 
-                  href="#" 
-                  onClick={(e) => {e.preventDefault(); setCurrentPage('home');}} 
-                  className="text-gray-400 hover:text-blue-500 transition-colors" 
-                  title="返回主页"
+                href="https://adcwwvux.eu-central-1.clawcloudrun.com/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-400 hover:text-blue-500 transition-colors" 
+                title="外部链接"
               >
-                <Globe className="w-5 h-5" />
+                <ExternalLink className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -692,28 +693,17 @@ const DisclaimerPage = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
         <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 链接内容与准确性</h3>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
             <p>
-                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。本站收录的任何网站，并不代表本站赞同其观点或保证其内容的合法性、安全性。
+                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
             </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接风险与责任</h3>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
             <p>
-                本站提供的所有外部网站链接仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险，包括但不限于数据丢失、电脑病毒感染、欺诈交易等。
+                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
             </p>
-            
-            {/* ⭐️ 修改：更新第 3 条，明确说明图标显示异常的情况 ⭐️ */}
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 图标来源、显示异常及风险</h3>
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
             <p>
-                本站的链接图标（Icon）主要通过获取目标网站的 Favicon 或使用 DuckDuckGo 等第三方服务自动获取。
-                <br/>
-                **图标显示异常**：由于网络限制、目标网站更改或服务器问题，部分图标可能无法正常加载，此时系统会自动显示一个通用的回退图标（如地球仪或扳手等），这不代表链接本身有问题，本站对此类图标显示异常不承担责任。
-                <br/>
-                **版权与侵权风险**：由于获取过程为自动化处理，或因网站图标非故意更改而产生的版权、商标等侵权风险，本站不承担任何责任。如有版权方认为本站使用的图标侵犯了您的权益，请立即联系我们，我们将及时删除或替换。
-            </p>
-
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">4. 法律法规遵守与用户行为</h3>
-            <p>
-                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规、危害网络安全、损害他人合法权益的行为，均与本站无关，本站不承担任何法律责任。
+                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
             </p>
             <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
                 使用本网站即表示您已阅读、理解并同意本声明的所有内容。
