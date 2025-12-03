@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { initializeApp, getApp } from 'firebase/app'; // ⭐️ FIX: 确保 getApp 已导入
+import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInAnonymously,
@@ -20,13 +20,11 @@ import {
   updateDoc,
   getDocs,
   query,
-  // ⭐️ 新增：setDoc 用于创建初始用户数据
-  setDoc,
 } from 'firebase/firestore';
 // 导入需要的图标
 import { 
   ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User, UserPlus, Lock, CheckCircle, AlertTriangle,
-  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, Home, Settings, Edit2
+  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, Home
 } from 'lucide-react'; 
 
 // 🔹 配置你的管理员 UID
@@ -35,9 +33,7 @@ const APP_ID = 'default-app-id';
 
 // 🔹 Firebase 集合路径常量
 const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
-// ⭐️ 核心：用户私人 navData 集合的获取函数
-const getUserNavCollection = (uid) => collection(getFirestore(getApp()), `users/${uid}/navData`);
-const getUserNavPath = (uid) => `users/${uid}/navData`;
+const getUserNavPath = (uid) => `users/${uid}/data/navData`;
 
 
 // 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
@@ -316,7 +312,7 @@ const LinkCard = ({ link }) => {
   );
 };
 
-// 🔹 公共/用户导航页
+// 🔹 导航页
 const PublicNav = ({ navData, searchTerm }) => {
     if (navData.length === 0 && searchTerm) {
         return (
@@ -337,7 +333,7 @@ const PublicNav = ({ navData, searchTerm }) => {
                 <p className="text-xl font-medium text-gray-600 dark:text-gray-300">
                     当前导航数据为空。
                 </p>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">如果您是注册用户，请前往 **用户中心** 导入默认数据或添加自定义链接。</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">如果您是管理员，请前往管理员面板添加链接。</p>
             </div>
         );
     }
@@ -358,7 +354,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (新增 Icon URL 输入框)
+// 🔹 链接表单
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -385,67 +381,43 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-// 🔹 通用的导航编辑面板 (AdminPanel 和 UserNavPanel 共享逻辑)
-const NavEditPanel = ({ db, uid, navData, fetchData, path, title, isUserPanel = false, handleImportDefaults }) => {
+// 🔹 管理面板
+const AdminPanel = ({ db, navData, fetchData }) => {
     const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
     const [editId, setEditId] = useState(null);
     const [editData, setEditData] = useState({});
-    const navCollection = collection(db, path); 
+    const navCollection = collection(db, PUBLIC_NAV_PATH); 
 
     const handleAddCategory = async () => {
         if (!newCategory.category) return alert('请输入分类名称');
-        // 确保 links 数组中的每个链接都有 icon 字段
         const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
-        // 确保 Firestore 路径正确 (path 已经是 users/{uid}/navData 或 artifacts/.../navData)
         await addDoc(navCollection, {...newCategory, links: linksWithIcon});
         setNewCategory({ category: '', order: 0, links: [] });
-        fetchData(uid);
+        fetchData();
     };
     const startEdit = (item) => { 
         const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
         setEditId(item.id); 
-        // 复制一份数据用于编辑，确保 Firestore id 存在
         setEditData({...item, links: linksWithIcon}); 
     };
     const saveEdit = async () => { 
         if (!editId) return;
         const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-        // 使用 doc() 指定文档 ID 进行更新
-        await updateDoc(doc(db, path, editId), {...editData, links: linksWithIcon}); 
+        await updateDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}); 
         setEditId(null); 
-        fetchData(uid); 
+        fetchData(); 
     };
     const handleDelete = async (id) => { 
         if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
-            await deleteDoc(doc(db, path, id)); 
-            fetchData(uid);
+            await deleteDoc(doc(db, PUBLIC_NAV_PATH, id)); 
+            fetchData();
         }
     };
-    
-    // 导入按钮只在用户面板中显示，并且当前数据为空时
-    const showImportButton = isUserPanel && navData.length === 0 && handleImportDefaults;
 
     return (
         <div className="mt-6 p-4 border rounded-2xl bg-gray-50 dark:bg-gray-800 shadow-xl">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white flex items-center">
-                <Edit2 className="w-6 h-6 mr-3 text-blue-500"/>
-                {title}
-            </h3>
+            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板</h3>
             
-            {showImportButton && (
-                <div className="p-4 mb-4 bg-yellow-100 dark:bg-yellow-800 rounded-lg shadow flex justify-between items-center">
-                    <p className="font-medium text-yellow-800 dark:text-yellow-200">
-                        您的私人导航数据为空。请一键导入默认数据开始自定义。
-                    </p>
-                    <button 
-                        onClick={handleImportDefaults} 
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                        导入默认导航
-                    </button>
-                </div>
-            )}
-
             <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
                 <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
                 <div className="flex flex-col gap-3">
@@ -459,7 +431,7 @@ const NavEditPanel = ({ db, uid, navData, fetchData, path, title, isUserPanel = 
                 </div>
             </div>
             
-            <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">{isUserPanel ? '我的自定义分类' : '公共分类'}</h4>
+            <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有分类</h4>
             {navData.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400">暂无数据。</p>
             ) : (
@@ -496,49 +468,6 @@ const NavEditPanel = ({ db, uid, navData, fetchData, path, title, isUserPanel = 
                 ))
             )}
         </div>
-    );
-};
-
-// 🔹 管理面板 (使用通用 NavEditPanel)
-const AdminPanel = (props) => (
-    <NavEditPanel 
-        {...props} 
-        uid={props.userId}
-        path={PUBLIC_NAV_PATH} 
-        title="管理员面板 (编辑公共数据)" 
-    />
-);
-
-// 🔹 用户导航编辑面板 (新增组件，使用通用 NavEditPanel)
-const UserNavPanel = (props) => {
-    // ⭐️ 导入默认数据逻辑
-    const handleImportDefaults = async () => {
-        if (!window.confirm("确认导入默认导航数据到您的私人面板吗？这不会覆盖您已有的自定义链接。")) return;
-
-        const navCollectionRef = getUserNavCollection(props.userId);
-        try {
-             // 批量添加默认分类
-            for (const category of DEFAULT_NAV_DATA) {
-                // 使用 addDoc 让 Firestore 自动生成ID
-                await addDoc(navCollectionRef, category);
-            }
-            alert('默认导航数据导入成功！');
-            props.fetchData(props.userId); // 重新加载数据
-        } catch (error) {
-            console.error("Error importing default data: ", error);
-            alert('导入失败，请检查网络和权限设置。');
-        }
-    };
-
-    return (
-        <NavEditPanel 
-            {...props} 
-            uid={props.userId}
-            path={getUserNavPath(props.userId)} 
-            title="我的自定义导航面板 (编辑私人数据)" 
-            isUserPanel={true}
-            handleImportDefaults={handleImportDefaults}
-        />
     );
 };
 
@@ -652,7 +581,7 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
     );
 };
 
-// 🔹 普通用户中心 (整合面板入口)
+// 🔹 普通用户中心
 const UserCenter = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
     return (
         <div className="mt-6 p-6 border rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-w-xl mx-auto min-h-[60vh]">
@@ -669,16 +598,14 @@ const UserCenter = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
                 <div className="pt-4 border-t dark:border-gray-700 space-y-3">
                     <p className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">功能面板</p>
                     
-                    {/* ⭐️ 新增：导航面板入口 ⭐️ */}
                     <button 
-                        onClick={() => setCurrentPage('user-nav')} 
+                        onClick={() => setCurrentPage('home')} 
                         className="flex items-center space-x-2 w-full px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors shadow-md"
                     >
-                        <Settings className="w-5 h-5"/>
-                        <span className="font-medium">自定义导航面板</span>
+                        <Home className="w-5 h-5"/>
+                        <span className="font-medium">返回首页</span>
                     </button>
 
-                    {/* 安全设置入口 */}
                     <button 
                         onClick={() => setShowChangePassword(true)} 
                         className="flex items-center space-x-2 w-full px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors shadow-md"
@@ -869,9 +796,8 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
         ))}
     </div>
 ));
-const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm }) => {
-    // 只有在首页且不是管理员或在用户自定义面板时不显示搜索
-    if (isAdmin || isUser || currentPage !== 'home') return null; 
+const SearchLayout = React.memo(({ isAdmin, currentPage, searchTerm, setSearchTerm }) => {
+    if (isAdmin || currentPage !== 'home') return null; 
     return (
         <div className="mb-8 max-w-2xl mx-auto">
             <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -884,8 +810,11 @@ const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, set
 });
 
 
-// 🔹 悬浮操作按钮组件 (fixed 定位在右下角)
-const FloatActions = ({ isDark, setIsDark, userIsAnonymous, handleLogout, setCurrentPage, isAdmin, userEmail, setShowRegister, setShowLogin, setLoginError }) => {
+// 🔹 悬浮操作按钮组件 (新增并使用 fixed 定位在右下角)
+const FloatActions = ({ isDark, setIsDark, userId, handleLogout, setCurrentPage, isAdmin, userEmail, setShowRegister, setShowLogin, setLoginError }) => {
+    // 根据 userId 判断用户是否已登录（非匿名）
+    const isUserLoggedIn = userId && userId !== 'anonymous';
+    
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
             {/* 1. 主题切换按钮 */}
@@ -898,8 +827,8 @@ const FloatActions = ({ isDark, setIsDark, userIsAnonymous, handleLogout, setCur
             </button>
             
             {/* 2. 登录/注册/退出 按钮组 */}
-            {userIsAnonymous ? (
-                // 未登录状态 (匿名用户)：显示注册和登录按钮
+            {!isUserLoggedIn ? (
+                // 未登录状态：显示注册和登录按钮
                 <>
                     <button 
                         onClick={() => { setShowRegister(true); setLoginError(''); }} 
@@ -917,16 +846,18 @@ const FloatActions = ({ isDark, setIsDark, userIsAnonymous, handleLogout, setCur
                     </button>
                 </>
             ) : (
-                // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
+                // 已登录状态：显示个人中心和退出按钮
                 <>
+                    {/* 管理员/用户中心入口 */}
                     <button
-                        onClick={() => setCurrentPage('user')} 
+                        onClick={() => setCurrentPage(isAdmin ? 'admin' : 'user')} 
                         className={`p-3 rounded-full shadow-xl text-white transition-all 
                                    ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                         title={isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`}
                     >
                         <User className="w-6 h-6"/> 
                     </button>
+                    {/* 退出按钮 */}
                     <button 
                         onClick={handleLogout} 
                         className="p-3 rounded-full shadow-xl bg-red-500 text-white hover:bg-red-600 transition-all"
@@ -950,13 +881,9 @@ export default function App() {
   // 认证状态
   const [userId, setUserId] = useState(null);
   const [userEmail, setUserEmail] = useState(''); 
-  const [userIsAnonymous, setUserIsAnonymous] = useState(true); 
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA);
   
-  // 数据和UI状态
-  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); // 当前显示的数据 (根据优先级选择)
-  const [publicNavData, setPublicNavData] = useState([]); // ⭐️ 新增：专门存公共数据
-  const [userNavData, setUserNavData] = useState([]); // ⭐️ 新增：专门存用户私人数据
-  
+  // UI状态
   const [isDark, setIsDark] = useState(false);
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
@@ -984,7 +911,6 @@ export default function App() {
       appId: "1:169263636408:web:ee3608652b2872a539b94d",
     };
     const app = initializeApp(firebaseConfig);
-    // ⭐️ 修复后的调用，依赖于顶部的 getApp 导入
     const _auth = getAuth(app); 
     const _db = getFirestore(app);
     setFirebaseApp(app); setAuth(_auth); setDb(_db);
@@ -993,13 +919,11 @@ export default function App() {
       if(user) {
         setUserId(user.uid);
         setUserEmail(user.email || '匿名用户');
-        setUserIsAnonymous(user.isAnonymous);
         setCurrentPage('home'); 
       } else { 
         signInAnonymously(_auth).catch(console.error); 
         setUserId('anonymous');
         setUserEmail('');
-        setUserIsAnonymous(true);
         setCurrentPage('home'); 
       }
     });
@@ -1009,9 +933,8 @@ export default function App() {
   // 辅助判断
   const isAdmin = userId === ADMIN_USER_ID;
   const isUser = userId && userId !== 'anonymous' && !isAdmin; 
-
   
-  // ⭐️ 核心数据获取逻辑 - 获取公共数据 (所有用户共享)
+
   useEffect(()=>{
     if(!db) return;
     const navCol = collection(db, PUBLIC_NAV_PATH); 
@@ -1021,75 +944,32 @@ export default function App() {
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
       setIsFirebaseConnected(true); 
-      setPublicNavData(data);
+      setNavData(data);
       
     }, (error) => {
         console.warn("Firebase公共数据连接失败或被阻止。", error.message);
         setIsFirebaseConnected(false); 
-        setPublicNavData(DEFAULT_NAV_DATA); // 使用硬编码数据作为公共数据回退
+        setNavData(DEFAULT_NAV_DATA); // 使用硬编码数据作为公共数据回退
     });
     return unsub;
   },[db]); 
   
-  // ⭐️ 核心数据获取逻辑 - 获取用户私人数据 (仅注册用户)
-  useEffect(() => {
-    if (!db || !isUser) {
-        setUserNavData([]);
-        return;
-    }
-
-    const userNavCol = getUserNavCollection(userId); 
-
-    const unsub = onSnapshot(userNavCol, snapshot => {
-        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        data.sort((a, b) => (a.order || 0) - (b.order || 0));
-        setUserNavData(data);
-    }, (error) => {
-        console.warn(`用户 ${userId} 的私人数据加载失败:`, error.message);
-        setUserNavData([]);
-    });
-
-    return unsub;
-  }, [db, isUser, userId]);
-  
-  
-  // ⭐️ 核心：动态设置当前显示的 navData (优先级控制)
-  useEffect(() => {
-    if (isUser) {
-        // 普通用户优先显示私人数据，如果私人数据为空，则显示公共数据
-        setNavData(userNavData.length > 0 ? userNavData : publicNavData);
-    } else if (isAdmin) {
-        // 管理员只显示公共数据 (方便管理)
-        setNavData(publicNavData);
-    } else {
-        // 匿名用户只显示公共数据
-        setNavData(publicNavData);
-    }
-  }, [isUser, isAdmin, publicNavData, userNavData]);
-
-
-  // ⭐️ 增强：管理员/用户专用的数据获取（用于 AdminPanel/UserNavPanel 的编辑功能）
-  const fetchData = async (uid)=>{
-    if(!db || !uid) return;
-    const path = uid === ADMIN_USER_ID ? PUBLIC_NAV_PATH : getUserNavPath(uid);
-    const navCol = collection(db, path);
+  // 管理员专用的数据获取（用于 AdminPanel 的编辑功能）
+  const fetchData = async ()=>{
+    if(!db) return;
+    const navCol = collection(db, PUBLIC_NAV_PATH); 
     try {
         const snapshot = await getDocs(navCol);
         const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
         data.sort((a,b)=>(a.order||0)-(b.order||0));
-        
-        if (uid === ADMIN_USER_ID) {
-            setPublicNavData(data);
-        } else {
-            setUserNavData(data);
-        }
+        setNavData(data);
     } catch (error) {
         console.error("Fetch data failed:", error);
     }
   };
 
 
-  // ⭐️ 增强：注册逻辑 (注册成功后自动登录，并触发数据初始化)
+  // 注册逻辑
   const handleRegister = async (email, password, customError) => {
     if (customError) {
         setRegisterError(customError);
@@ -1097,24 +977,15 @@ export default function App() {
     }
     setRegisterError('');
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        // 注册成功后，在 users/{uid}/ 路径下添加一个标记文档 (可选的初始化步骤)
-        const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { 
-            email: user.email, 
-            createdAt: new Date().toISOString() 
-        }, { merge: true });
-        
+        await createUserWithEmailAndPassword(auth, email, password);
         setShowRegister(false);
-        alert('注册成功！已自动登录。您现在可以自定义您的导航面板。'); 
+        alert('注册成功！已自动登录。'); 
     } catch(e) { 
         setRegisterError(e.message); 
     }
   };
   
-  // ⭐️ 增强：登录逻辑 (保持不变)
+  // 登录逻辑
   const handleLogin = async (email,password)=>{
     setLoginError('');
     try {
@@ -1125,7 +996,7 @@ export default function App() {
     }
   };
 
-  // ⭐️ 忘记密码/修改密码/退出登录 (保持不变)
+  // 忘记密码/修改密码/退出登录
   const handleForgotPassword = async (email) => {
       if (!email) {
           alert("请输入您的注册邮箱进行密码重置。");
@@ -1165,7 +1036,6 @@ export default function App() {
   const handleLogout = async () => {
     await signOut(auth);
     setUserId('anonymous');
-    setNavData(publicNavData); // 退出后切换回公共数据
     setUserEmail('');
   };
 
@@ -1174,7 +1044,6 @@ export default function App() {
     if (!searchTerm) {
       return navData; 
     }
-    // ... (搜索逻辑保持不变，但操作对象已改为当前的 navData)
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
     return navData
@@ -1213,11 +1082,11 @@ export default function App() {
         />
       )}
       
-      {/* 🚀 浮动操作按钮区域：fixed 定位在右下角 🚀 */}
+      {/* ⭐️ 悬浮操作按钮区域：fixed 定位在右下角 ⭐️ */}
       <FloatActions 
           isDark={isDark}
           setIsDark={setIsDark}
-          userIsAnonymous={userIsAnonymous}
+          userId={userId}
           handleLogout={handleLogout}
           setCurrentPage={setCurrentPage}
           isAdmin={isAdmin}
@@ -1226,7 +1095,6 @@ export default function App() {
           setShowLogin={setShowLogin}
           setLoginError={setLoginError}
       />
-      {/* 🚀 浮动操作按钮区域 结束 🚀 */}
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         
@@ -1239,7 +1107,7 @@ export default function App() {
             </h1>
             
             {/* 首页/中心页切换按钮 (仅用户或管理员可见，并保留在左上角) */}
-            {(!userIsAnonymous && currentPage !== 'home') && (
+            {(!isAdmin && isUser && currentPage !== 'home') && (
                 <button 
                     onClick={() => setCurrentPage('home')}
                     className="absolute left-0 top-0 p-3 rounded-full shadow-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
@@ -1249,50 +1117,37 @@ export default function App() {
                 </button>
             )}
 
+            {/* ⭐️ 旧的按钮组已移除 ⭐️ */}
+
         </header>
         
         <SearchLayout 
             isAdmin={isAdmin}
-            isUser={isUser}
             currentPage={currentPage}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
         />
         
-        {/* ⭐️ 核心路由和面板逻辑 ⭐️ */}
+        {/* 核心路由和面板逻辑 */}
         {isAdmin ? (
-            // 管理员只访问管理面板
-            <AdminPanel db={db} navData={publicNavData} fetchData={fetchData} userId={userId} />
+            <AdminPanel db={db} navData={navData} fetchData={fetchData} />
         ) : isUser ? (
-            // 普通用户路由
             currentPage === 'home' ? (
-                // 默认显示私人数据 (如果私人数据为空，则回退到公共数据)
                 <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
             ) : currentPage === 'user' ? (
-                // 用户中心
                 <UserCenter 
                     userEmail={userEmail} 
                     setShowChangePassword={setShowChangePassword}
                     setCurrentPage={setCurrentPage}
-                />
-            ) : currentPage === 'user-nav' ? (
-                // ⭐️ 用户自定义导航面板
-                <UserNavPanel 
-                    db={db} 
-                    navData={userNavData} 
-                    fetchData={fetchData} 
-                    userId={userId}
                 />
             ) : currentPage === 'about' ? (
                 <AboutPage />
             ) : currentPage === 'disclaimer' ? (
                 <DisclaimerPage />
             ) : (
-                // 默认回退到首页
                 <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
             )
         ) : (
-            // 匿名用户路由
             currentPage === 'home' ? (
                 <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
             ) : currentPage === 'about' ? (
