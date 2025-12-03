@@ -105,7 +105,7 @@ const DEFAULT_NAV_DATA = [
             { name: '腾讯元宝', url: 'https://yuanbao.tencent.com/chat/naQivTmsDa', description: '腾讯混元大模型应用', icon: 'https://yuanbao.tencent.com/favicon.ico' },
             { name: '豆包', url: 'https://www.doubao.com/chat/', description: '字节跳动 AI', icon: 'https://www.doubao.com/favicon.ico' },
             { name: '即梦', url: 'https://jimeng.jianying.com/', description: '剪映 AI 创作工具', icon: 'https://jimeng.jianying.com/favicon.ico' },
-            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/favicon.ico' },
+            { name: '通义万相', url: 'https://tongyi.aliyun.com/wan/', description: '阿里文生图服务', icon: 'https://tongyi.aliyun.com/wan/favicon.ico' },
         ],
     },
     {
@@ -978,8 +978,9 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
 ));
 
 // 🚀 SearchLayout 组件 (保持不变)
-const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm }) => {
-    if (isAdmin || isUser || currentPage !== 'home') return null; // 登录用户或在非主页时不显示搜索
+const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm, isEditing }) => {
+    // ⭐️ 修改：如果用户在编辑模式，则不显示搜索框
+    if (isAdmin || isUser || currentPage !== 'home' || isEditing) return null; 
 
     return (
         <div className="mb-8 max-w-2xl mx-auto">
@@ -992,10 +993,24 @@ const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, set
     );
 });
 
-// 🔹 右下角浮动按钮组件 (保持不变)
-const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage }) => {
+// 🔹 右下角浮动按钮组件 (新增 isEditing 和 setIsEditing 状态)
+const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => {
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
+            
+            {/* 3. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) ⭐️ 新增 */}
+            {(isAdmin || !userIsAnonymous) && currentPage === 'home' && (
+                <button 
+                    onClick={() => setIsEditing(!isEditing)} 
+                    className={`p-3 rounded-full shadow-xl text-white transition-all 
+                                ${isEditing ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                    title={isEditing ? "退出编辑模式 (切换到浏览主页)" : "进入编辑模式"}
+                >
+                    {/* 处于编辑模式显示 X，否则显示扳手 */}
+                    {isEditing ? <X className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>}
+                </button>
+            )}
+
             {/* 1. 主题切换按钮 */}
             <button 
                 onClick={()=>setIsDark(!isDark)} 
@@ -1028,7 +1043,7 @@ const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmai
               // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
               <>
                 <button
-                    onClick={() => setCurrentPage('user')} 
+                    onClick={() => { setCurrentPage('user'); setIsEditing(false); }} // 切换到用户中心时自动退出编辑模式
                     className={`p-3 rounded-full shadow-xl text-white transition-all 
                                ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
                     title={isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`}
@@ -1066,6 +1081,8 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+  // ⭐️ 核心新增状态：控制编辑/浏览模式
+  const [isEditing, setIsEditing] = useState(false); 
   
   // 弹窗状态
   const [showLogin, setShowLogin] = useState(false);
@@ -1099,6 +1116,7 @@ export default function App() {
         setUserEmail(user.email || '匿名用户');
         setUserIsAnonymous(user.isAnonymous);
         setCurrentPage('home'); // 登录后返回主页
+        setIsEditing(false); // ⭐️ 登录后默认进入浏览模式
       } else { 
         // 如果没有用户，尝试匿名登录
         signInAnonymously(_auth).catch(console.error); 
@@ -1106,6 +1124,7 @@ export default function App() {
         setUserEmail('');
         setUserIsAnonymous(true);
         setCurrentPage('home'); // 退出后返回主页
+        setIsEditing(false); // 退出后也是浏览模式
       }
     });
     return unsub;
@@ -1248,6 +1267,7 @@ export default function App() {
     await signOut(auth);
     setUserId('anonymous');
     setUserEmail('');
+    setIsEditing(false); // 退出后也确保退出编辑模式
   };
 
   const filteredNavData = useMemo(() => {
@@ -1278,6 +1298,54 @@ export default function App() {
   }, [navData, searchTerm]);
 
 
+  // 🚀 核心渲染逻辑：根据 isEditing 状态决定显示编辑面板还是导航浏览页面 
+  let content;
+
+  if (currentPage === 'home') {
+    if ((isAdmin || isUser) && isEditing) {
+        // Logged in and in Edit Mode: Show the appropriate Editor
+        if (isAdmin) {
+            content = (
+                <ErrorBoundary>
+                    <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+                </ErrorBoundary>
+            );
+        } else { // isUser
+            content = (
+                <ErrorBoundary>
+                    <UserNavPanel 
+                        db={db} 
+                        userId={userId} 
+                        navData={navData} 
+                        fetchData={fetchData} 
+                    />
+                </ErrorBoundary>
+            );
+        }
+    } else {
+        // Anonymous, OR Logged in and in View Mode
+        // PublicNav will show the correct data (public or user's private) based on the navData state fetched by useEffect
+        content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+    }
+  } else if (currentPage === 'user' && isUser) {
+      // User Profile page
+      content = (
+          <ErrorBoundary>
+              <UserPanel 
+                  userEmail={userEmail} 
+                  setShowChangePassword={setShowChangePassword}
+              />
+          </ErrorBoundary>
+      );
+  } else if (currentPage === 'about') {
+      content = <AboutPage />;
+  } else if (currentPage === 'disclaimer') {
+      content = <DisclaimerPage />;
+  } else {
+      // Default fallback to PublicNav
+      content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+  }
+
   return (
     <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
       <DebugBar />
@@ -1293,7 +1361,7 @@ export default function App() {
         />
       )}
       
-      {/* 浮动按钮组件 */}
+      {/* 浮动按钮组件 - 传入新的 isEditing 状态 */}
       <FloatingButtons 
         isDark={isDark} 
         setIsDark={setIsDark}
@@ -1304,6 +1372,9 @@ export default function App() {
         setShowRegister={setShowRegister}
         setShowLogin={setShowLogin}
         setCurrentPage={setCurrentPage}
+        currentPage={currentPage} // ⭐️ NEW
+        isEditing={isEditing} // ⭐️ NEW
+        setIsEditing={setIsEditing} // ⭐️ NEW
       />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
@@ -1317,54 +1388,17 @@ export default function App() {
             </h1>
         </header>
         
+        {/* 搜索栏现在只在非编辑/浏览模式下显示 */}
         <SearchLayout 
             isAdmin={isAdmin}
             isUser={isUser}
             currentPage={currentPage}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            isEditing={isEditing}
         />
         
-        {/*
-        ================================================
-        >>> 核心渲染逻辑：根据用户状态和页面决定渲染哪个面板/导航 <<<
-        ================================================
-        */}
-        {currentPage === 'home' && isAdmin ? (
-            // 1. 管理员在主页：编辑公共数据
-            <ErrorBoundary>
-                <AdminPanel db={db} navData={navData} fetchData={fetchData} />
-            </ErrorBoundary>
-        ) : currentPage === 'home' && isUser ? (
-            // 2. 普通用户在主页：编辑自己的私有数据 ⭐️ 核心修改点
-            <ErrorBoundary>
-                <UserNavPanel 
-                    db={db} 
-                    userId={userId} 
-                    navData={navData} 
-                    fetchData={fetchData} 
-                />
-            </ErrorBoundary>
-        ) : isUser && currentPage === 'user' ? (
-            // 3. 用户访问个人中心
-             <ErrorBoundary>
-                <UserPanel 
-                    userEmail={userEmail} 
-                    setShowChangePassword={setShowChangePassword}
-                />
-            </ErrorBoundary>
-        ) : (
-            // 4. 其他页面 (关于/免责) 或匿名用户在主页
-            currentPage === 'home' ? (
-                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
-            ) : currentPage === 'about' ? (
-                <AboutPage />
-            ) : currentPage === 'disclaimer' ? (
-                <DisclaimerPage />
-            ) : (
-                <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
-            )
-        )}
+        {content} {/* 使用新的 content 变量进行渲染 */}
       </div>
       
       <Footer setCurrentPage={setCurrentPage} />
