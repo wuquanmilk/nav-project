@@ -906,7 +906,7 @@ const DisclaimerPage = () => (
 // 🔹 外部搜索引擎配置
 const externalEngines = [
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com/favicon.ico' }, // <--- 已硬编码为 Google 官方图标
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
 
