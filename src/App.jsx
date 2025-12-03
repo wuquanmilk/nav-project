@@ -71,18 +71,6 @@ class ErrorBoundary extends React.Component {
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// ⭐️ 新增：站点启动日期和运行天数计算逻辑 ⭐️
-const SITE_START_DATE = new Date('2024-01-01'); // 极速导航网的起始运行日期，可按需修改
-
-const getRunningDays = () => {
-    const now = new Date();
-    // Math.abs 确保正数，ceil 确保至少 1 天
-    const diffTime = Math.abs(now.getTime() - SITE_START_DATE.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-};
-// ⭐️ 结束新增 ⭐️
-
 // 🔹 Firebase 集合路径常量
 const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
 const getUserNavPath = (uid) => `users/${uid}/navData`; // ⭐️ 用户的私有数据路径
@@ -542,116 +530,110 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
     );
 };
 
+
 // 🔹 管理面板 (编辑公共数据)
 const AdminPanel = ({ db, navData, fetchData }) => {
-    const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
-    const [editId, setEditId] = useState(null);
-    const [editData, setEditData] = useState({});
+  const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
+  const [editId, setEditId] = useState(null);
+  const [editData, setEditData] = useState({});
+  const navCollection = collection(db, PUBLIC_NAV_PATH); 
 
-    const navCollection = collection(db, PUBLIC_NAV_PATH);
-
-    const handleAddCategory = async () => {
-        // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+  const handleAddCategory = async () => {
+    // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+    try {
+        if (!newCategory.category) return alert('请输入分类名称');
+        const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
+        await addDoc(navCollection, {...newCategory, links: linksWithIcon});
+        setNewCategory({ category: '', order: 0, links: [] });
+        fetchData();
+    } catch (error) {
+        alert("新增公共分类失败：" + error.message);
+        console.error("Error adding admin category:", error);
+    }
+  };
+  const startEdit = (item) => { 
+    const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
+    setEditId(item.id); 
+    setEditData({...item, links: linksWithIcon}); 
+  };
+  const saveEdit = async () => { 
+    // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+    try {
+        if (!editData.category) return alert('分类名称不能为空');
+        const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
+        await updateDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}); 
+        setEditId(null); 
+        fetchData(); 
+    } catch (error) {
+        alert("保存公共分类失败：" + error.message);
+        console.error("Error saving admin category:", error);
+    }
+  };
+  const handleDelete = async (id) => { 
+    // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+    if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
         try {
-            if (!newCategory.category) return alert('请输入分类名称');
-            const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
-            await addDoc(navCollection, {...newCategory, links: linksWithIcon});
-            setNewCategory({ category: '', order: 0, links: [] });
+            await deleteDoc(doc(db, PUBLIC_NAV_PATH, id)); 
             fetchData();
         } catch (error) {
-            alert("新增公共分类失败：" + error.message);
-            console.error("Error adding admin category:", error);
+            alert("删除公共分类失败：" + error.message);
+            console.error("Error deleting admin category:", error);
         }
-    };
+    }
+  };
 
-    const startEdit = (item) => {
-        const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
-        setEditId(item.id);
-        setEditData({...item, links: linksWithIcon});
-    };
-
-    const saveEdit = async () => {
-        // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
-        try {
-            if (!editData.category) return alert('分类名称不能为空');
-            const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-            await updateDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon});
-            setEditId(null);
-            fetchData();
-        } catch (error) {
-            alert("保存公共分类失败：" + error.message);
-            console.error("Error saving admin category:", error);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
-        if (window.confirm('确定要删除此分类吗？删除后无法恢复！')) {
-            try {
-                await deleteDoc(doc(db, PUBLIC_NAV_PATH, id));
-                fetchData();
-            } catch (error) {
-                alert("删除公共分类失败：" + error.message);
-                console.error("Error deleting admin category:", error);
-            }
-        }
-    };
-
-
-    return (
-        <div className="space-y-8 p-4 border rounded bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员公共导航面板 (公共数据)</h3>
-            
-            {/* 新增分类部分 */}
-            <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
-                <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增公共分类</h4>
-                <div className="flex flex-col gap-3">
-                    <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
-                    <div className="flex items-center space-x-2">
-                        <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                        <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
-                    </div>
-                    <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
-                    <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增公共分类</button>
+  return (
+    <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
+      <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (编辑公共数据)</h3>
+      <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
+          <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
+          <div className="flex flex-col gap-3">
+              <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
+              <div className="flex items-center space-x-2">
+                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                  <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
+              </div>
+              <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
+              <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
+          </div>
+      </div>
+      
+      <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有公共分类</h4>
+      {navData.map(item=>(
+        <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
+          {editId === item.id ? (
+            <>
+              <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+              <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                  <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+              </div>
+              <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
+              <div className="flex space-x-2 mt-3">
+                <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
+                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
+                <div className="flex space-x-2">
+                  <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
+                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
                 </div>
-            </div>
-
-            {/* 现有分类列表 */}
-            <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有导航分类</h4>
-            {navData.map(item=>(
-                <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
-                    {editId === item.id ? ( // 编辑状态
-                        <>
-                            <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
-                            <div className="flex items-center space-x-2 mb-2">
-                                <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                                <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
-                            </div>
-                            <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
-                            <div className="flex space-x-2 mt-3">
-                                <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
-                                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="flex justify-between items-center mb-2">
-                                <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
-                                <div className="flex space-x-2">
-                                    <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
-                                    <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
-                                </div>
-                            </div>
-                            <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
-                                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
-                            </ul>
-                        </>
-                    )}
-                </div>
-            ))}
+              </div>
+              <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
+              </ul>
+            </>
+          )}
         </div>
-    );
+      ))}
+    </div>
+  );
 };
+
 
 // 🔹 用户的自定义导航面板 (UserNavPanel) ⭐️ 新增组件
 const UserNavPanel = ({ db, userId, navData, fetchData }) => {
@@ -659,58 +641,61 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
     const [editId, setEditId] = useState(null);
     const [editData, setEditData] = useState({});
     
-    // 检查 navData 是否包含用户自定义数据（即不完全是默认数据）
-    const hasCustomData = navData.some(item => !DEFAULT_NAV_DATA.some(defaultItem => defaultItem.id === item.id));
-
     // ⭐️ 关键：使用用户私有路径
-    const navCollection = collection(db, getUserNavPath(userId));
+    const navCollection = collection(db, getUserNavPath(userId)); 
 
     const handleAddCategory = async () => {
-        try {
-            if (!newCategory.category) return alert('请输入分类名称');
-            const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
-            await addDoc(navCollection, {...newCategory, links: linksWithIcon});
-            setNewCategory({ category: '', order: 0, links: [] });
-            fetchData();
-        } catch (error) {
-            alert("新增自定义分类失败：" + error.message);
-            console.error("Error adding user category:", error);
-        }
+      // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+      try {
+        if (!newCategory.category) return alert('请输入分类名称');
+        const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
+        await addDoc(navCollection, {...newCategory, links: linksWithIcon});
+        setNewCategory({ category: '', order: 0, links: [] });
+        fetchData(); // 重新加载数据
+      } catch (error) {
+        alert("新增分类失败：" + error.message);
+        console.error("Error adding user category:", error);
+      }
     };
 
-    const startEdit = (item) => {
-        const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
-        setEditId(item.id);
-        setEditData({...item, links: linksWithIcon});
+    const startEdit = (item) => { 
+      const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
+      setEditId(item.id); 
+      setEditData({...item, links: linksWithIcon}); 
     };
 
-    const saveEdit = async () => {
-        try {
-            if (!editData.category) return alert('分类名称不能为空');
-            const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-            await updateDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon});
-            setEditId(null);
-            fetchData();
-        } catch (error) {
-            alert("保存自定义分类失败：" + error.message);
-            console.error("Error saving user category:", error);
-        }
+    const saveEdit = async () => { 
+      // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+      try {
+        if (!editData.category) return alert('分类名称不能为空');
+        const linksWithIcon = editData.links.map(link => ({...link, icon: editData.icon || '' }));
+        await updateDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon}); 
+        setEditId(null); 
+        fetchData();
+      } catch (error) {
+        alert("保存编辑失败：" + error.message);
+        console.error("Error saving user category:", error);
+      }
+    };
+    
+    const handleDelete = async (id) => { 
+      // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
+      if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
+          try {
+              await deleteDoc(doc(db, getUserNavPath(userId), id)); 
+              fetchData();
+          } catch (error) {
+              alert("删除失败：" + error.message);
+              console.error("Error deleting user category:", error);
+          }
+      }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('确定要删除此自定义分类吗？删除后无法恢复！')) {
-            try {
-                await deleteDoc(doc(db, getUserNavPath(userId), id));
-                fetchData();
-            } catch (error) {
-                alert("删除自定义分类失败：" + error.message);
-                console.error("Error deleting user category:", error);
-            }
-        }
-    };
+    // 假设默认数据ID以'cat-'开头，以此判断是否有用户添加的自定义数据
+    const hasCustomData = navData.length > 0 && navData.some(d => d.id && !d.id.startsWith('cat-'));
 
     return (
-        <div className="space-y-8 p-4 border rounded bg-gray-50 dark:bg-gray-800">
+        <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">我的自定义导航面板 (仅您可见)</h3>
             
             {/* 提示用户当前显示的是默认数据 */}
@@ -733,186 +718,232 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
                     <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
                 </div>
             </div>
-
+            
             {/* 现有分类列表 */}
             <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有导航分类</h4>
             {navData.map(item=>(
-                <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
-                    {editId === item.id ? ( // 编辑状态
-                        <>
-                            <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
-                            <div className="flex items-center space-x-2 mb-2">
-                                <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                                <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
-                            </div>
-                            <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
-                            <div className="flex space-x-2 mt-3">
-                                <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
-                                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="flex justify-between items-center mb-2">
-                                <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
-                                <div className="flex space-x-2">
-                                    <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
-                                    <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
-                                </div>
-                            </div>
-                            <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
-                                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
-                            </ul>
-                        </>
-                    )}
-                </div>
+              <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
+                {editId === item.id ? (
+                  // 编辑状态
+                  <>
+                    <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+                    <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                        <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+                    </div>
+                    <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
+                    <div className="flex space-x-2 mt-3">
+                      <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
+                      <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
+                    </div>
+                  </>
+                ) : (
+                  // 展示状态
+                  <>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
+                      <div className="flex space-x-2">
+                        <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
+                        <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
+                      </div>
+                    </div>
+                    <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+                      {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
+                    </ul>
+                  </>
+                )}
+              </div>
             ))}
         </div>
     );
 };
 
-// 🔹 用户的个人资料面板 (UserPanel) ⭐️ 新增组件
-const UserPanel = ({ userEmail, setShowChangePassword }) => {
+
+// 🔹 普通用户面板 (UserPanel) ⭐️ 传递 setCurrentPage
+const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl max-w-xl mx-auto space-y-4 min-h-[60vh]">
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-white border-b pb-3 mb-4">用户中心</h3>
+        <div className="mt-6 p-6 border rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-w-xl mx-auto min-h-[60vh]">
+            <h3 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center">
+                <User className="w-6 h-6 mr-3 text-blue-500"/>我的账户
+            </h3>
             
-            <div className="flex items-center space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl">
-                <User className="w-8 h-8 text-blue-500"/>
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">当前登录邮箱</p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{userEmail}</p>
+            <div className="space-y-4">
+                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">当前登录邮箱:</p>
+                    <p className="text-lg font-medium text-gray-900 dark:text-white break-all">{userEmail}</p>
+                </div>
+
+                <div className="pt-4 border-t dark:border-gray-700">
+                    <p className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">安全设置</p>
+                    <button 
+                        onClick={() => setShowChangePassword(true)} 
+                        className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                    >
+                        <Lock className="w-5 h-5"/>
+                        <span>修改密码</span>
+                    </button>
+                    {/* ⭐️ 新增：返回主页按钮 (备用导航) */}
+                    <button
+                        onClick={() => setCurrentPage('home')}
+                        className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors mt-3"
+                    >
+                        <Globe className="w-5 h-5"/>
+                        <span>返回导航主页</span>
+                    </button>
                 </div>
             </div>
-
-            <button onClick={() => setShowChangePassword(true)} className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors">
-                <Lock className="w-5 h-5"/>
-                <span>修改密码</span>
-            </button>
             
-            <p className="text-sm text-gray-500 dark:text-gray-400 pt-4">
-                在这里您可以管理您的个人信息和安全设置。您也可以通过切换到编辑模式来管理您的**自定义导航**。
+        </div>
+    );
+};
+
+
+// 🔹 页脚组件 (保持不变)
+const Footer = ({ setCurrentPage }) => {
+  const currentYear = new Date().getFullYear();
+  
+  const footerLinks = [
+    { name: '关于本站', action: () => setCurrentPage('about') },
+    { name: '免责声明', action: () => setCurrentPage('disclaimer') },
+  ];
+
+  // ⭐️ 样式修改：移除 dark 类，保持背景色不变
+  return (
+    <footer className="mt-20 py-8 border-t border-gray-200 bg-white bg-opacity-50 backdrop-blur-sm">
+      <div className="container mx-auto px-4 text-center">
+        <div className="flex flex-col items-center space-y-4"> 
+          
+          <div className="text-center">
+            <h3 
+              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
+              onClick={() => setCurrentPage('home')}
+            >
+              第一象限
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              © {currentYear} 极速导航网. 保留所有权利.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6">
+            {footerLinks.map((link, idx) => (
+              <a 
+                key={idx}
+                href="#"
+                onClick={(e) => { e.preventDefault(); link.action(); }}
+                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+              >
+                {link.name}
+              </a>
+            ))}
+            {/* ⭐️ 样式修改：移除 dark 类 */}
+            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
+                <Github className="w-5 h-5" />
+              </a>
+              <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
+                <Mail className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// 🔹 关于本站页面组件 (保持不变)
+const AboutPage = () => (
+    // ⭐️ 样式修改：移除 dark 类
+    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
+        <div className="space-y-4 text-gray-700">
+            <h3 className="text-xl font-semibold text-blue-600">【站点功能】</h3>
+            <p>
+                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600">【创设初衷：拒绝广告】</h3>
+            <p>
+                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
+            </p>
+            <h3 className="text-xl font-semibold text-blue-600">【作者】</h3>
+            <p>
+                由 <span className="font-bold text-purple-600">第一象限</span> 独立设计与开发。
+                <br/> 
+                联系邮箱: 
+                <a 
+                    href="mailto:115382613@qq.com" 
+                    className="text-blue-500 hover:underline ml-1"
+                >
+                    115382613@qq.com
+                </a>
             </p>
         </div>
-    );
-};
+    </div>
+);
 
-// 🔹 侧边浮动按钮 (FloatingButtons) ⭐️ 新增组件
-const FloatingButtons = ({ 
-    userIsAnonymous, 
-    isAdmin, 
-    userEmail, 
-    handleLogout, 
-    setShowRegister, 
-    setShowLogin, 
-    setCurrentPage, 
-    currentPage, 
-    isEditing, 
-    setIsEditing,
-}) => {
-    
-    // 决定是否显示编辑/保存按钮
-    const showEditButton = !userIsAnonymous && (currentPage === 'home' || currentPage === 'user');
-    
-    // 检查是否在用户编辑模式
-    const isInEditMode = (isAdmin || !userIsAnonymous) && isEditing;
-    
-    return (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end space-y-3">
-            
-            {/* 1. 编辑/保存/退出编辑 按钮 */}
-            {showEditButton && (
-                isInEditMode ? (
-                    // 处于编辑模式：显示退出编辑
-                    <button onClick={() => setIsEditing(false)} className="p-3 rounded-full shadow-xl bg-gray-500 text-white hover:bg-gray-600 transition-all" title="退出编辑模式">
-                        <X className="w-6 h-6"/>
-                    </button>
-                ) : (
-                    // 处于查看模式：显示进入编辑
-                    <button onClick={() => { setIsEditing(true); setCurrentPage('home'); }} className="p-3 rounded-full shadow-xl bg-purple-500 text-white hover:bg-purple-600 transition-all" title="进入编辑模式">
-                        <Wrench className="w-6 h-6"/>
-                    </button>
-                )
-            )}
-            
-            {/* 2. 登录/注册/退出 按钮 */}
-            {userIsAnonymous ? ( // 未登录状态 (匿名用户)：显示注册和登录按钮
-                <>
-                    <button onClick={() => { setShowRegister(true); setShowLogin(false); }} className="p-3 rounded-full shadow-xl bg-green-500 text-white hover:bg-green-600 transition-all" title="用户注册" >
-                        <UserPlus className="w-6 h-6"/>
-                    </button>
-                    <button onClick={() => { setShowLogin(true); setShowRegister(false); }} className="p-3 rounded-full shadow-xl bg-blue-500 text-white hover:bg-blue-600 transition-all" title="用户/管理员登录" >
-                        <User className="w-6 h-6"/>
-                    </button>
-                </>
-            ) : ( // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
-                <>
-                    <button // 核心修改：如果当前在用户资料页，点击则返回主页
-                        onClick={() => {
-                            if (currentPage === 'user') {
-                                setCurrentPage('home'); // 如果在用户页，返回主页
-                            } else {
-                                setCurrentPage('user'); // 否则，进入用户页
-                                setIsEditing(false); // 并退出编辑模式
-                            }
-                        }}
-                        className={`p-3 rounded-full shadow-xl text-white transition-all ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        title={currentPage === 'user' ? `返回导航主页` : (isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`)}
-                    >
-                        <User className="w-6 h-6"/>
-                    </button>
-                    <button onClick={handleLogout} className="p-3 rounded-full shadow-xl bg-red-500 text-white hover:bg-red-600 transition-all" title="退出登录" >
-                        <LogIn className="w-6 h-6 rotate-180"/>
-                    </button>
-                </>
-            )}
+
+// 🔹 免责声明页面组件 (保持不变)
+const DisclaimerPage = () => (
+    // ⭐️ 样式修改：移除 dark 类
+    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2>
+        <div className="space-y-4 text-sm text-gray-700">
+            <h3 className="text-lg font-semibold text-blue-600">1. 内容准确性</h3>
+            <p>
+                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600">2. 外部链接责任</h3>
+            <p>
+                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600">3. 法律法规遵守</h3>
+            <p>
+                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
+            </p>
+            <p className="pt-4 italic text-xs text-gray-500">
+                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
+            </p>
         </div>
-    );
-};
+    </div>
+);
 
-// 🔹 搜索布局组件 (SearchLayout) ⭐️ 新增组件
-const SearchLayout = ({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm, isEditing }) => {
-    
-    // 只有在非编辑模式和主页时才显示搜索栏
-    if (isEditing || currentPage !== 'home') return null; 
 
-    const externalEngines = useMemo(() => ([
-        { name: 'Google', url: 'https://www.google.com/search?q=', icon: 'https://www.google.com/favicon.ico' },
-        { name: 'Baidu', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' },
-        { name: 'Bing', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/favicon.ico' },
-        // ... 您可以添加更多搜索引擎
-    ]), []);
-
-    return (
-        <div className="mb-12">
-            <div className="max-w-4xl mx-auto">
-                <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm}/>
-            </div>
-
-            {/* 外部搜索按钮，仅在非编辑模式下显示 */}
-            <ExternalSearchButtons className="flex justify-center space-x-3 mt-6" searchTerm={searchTerm} externalEngines={externalEngines} />
-        </div>
-    );
-};
+// 🔹 外部搜索引擎配置 (保持不变)
+const externalEngines = [
+  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
+  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
+  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
+];
 
 // 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
-    if (query) {
-        window.open(engineUrl + encodeURIComponent(query), '_blank');
-    } else {
-        const baseDomain = new URL(engineUrl.split('?')[0]).origin;
-        window.open(baseDomain, '_blank');
-    }
+  if (query) {
+    window.open(engineUrl + encodeURIComponent(query), '_blank');
+  } else {
+    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
+    window.open(baseDomain, '_blank');
+  }
 };
 
 // 🔹 搜索输入框组件 (保持不变)
 const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     <div className="relative">
         {/* ⭐️ 样式修改：移除 dark 类 */}
-        <input type="text" placeholder="搜索链接名称、描述或网址..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 bg-gray-700 text-white transition-all shadow-md" />
+        <input 
+            type="text" 
+            placeholder="搜索链接名称、描述或网址..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 bg-gray-700 text-white transition-all shadow-md"
+        />
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500"/>
         {searchTerm && (
-            <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700" title="清空站内搜索" >
+            <button 
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700"
+                title="清空站内搜索"
+            >
                 <X className="w-5 h-5"/>
             </button>
         )}
@@ -922,322 +953,471 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
 // 🔹 子组件：处理单个外部搜索按钮的图标 (保持不变)
 const ExternalSearchButton = ({ engine, searchTerm }) => {
     const [hasError, setHasError] = useState(false);
-    const imageUrl = engine.icon;
+    const imageUrl = engine.icon; 
     const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
 
     return (
         // ⭐️ 样式修改：移除 dark 类
-        <button onClick={handleSearch} title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`} className={`p-2.5 rounded-full border border-gray-300 transition-shadow bg-white hover:shadow-lg hover:scale-105 flex items-center justify-center`} >
+        <button
+            onClick={handleSearch}
+            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
+            className={`p-2.5 rounded-full border border-gray-300 transition-shadow bg-white hover:shadow-lg hover:scale-105 flex items-center justify-center`}
+        >
             {hasError || !imageUrl ? (
                 <Search className="w-6 h-6 text-gray-500" />
             ) : (
-                <img src={imageUrl} alt={engine.name} className="w-6 h-6 rounded-full object-contain" onError={() => setHasError(true)} loading="lazy" />
+                <img 
+                    src={imageUrl} 
+                    alt={engine.name} 
+                    className="w-6 h-6 rounded-full object-contain"
+                    onError={() => setHasError(true)} 
+                    loading="lazy"
+                />
             )}
         </button>
     );
 };
 
 // 🔹 外部搜索按钮组件 (保持不变)
-const ExternalSearchButtons = React.memo(({ className, searchTerm, externalEngines }) => (
+const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
         {externalEngines.map(engine => (
-            <ExternalSearchButton key={engine.name} engine={engine} searchTerm={searchTerm}/>
+            <ExternalSearchButton 
+                key={engine.name} 
+                engine={engine} 
+                searchTerm={searchTerm} 
+            />
         ))}
     </div>
 ));
 
-// 🔹 页脚组件 (已修改：增加运行天数)
-const Footer = ({ setCurrentPage }) => {
-    const currentYear = new Date().getFullYear();
-    const footerLinks = [
-        { name: '关于本站', action: () => setCurrentPage('about') },
-        { name: '免责声明', action: () => setCurrentPage('disclaimer') },
-    ];
+// 🚀 SearchLayout 组件 (保持不变)
+const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm, isEditing }) => {
+    // ⭐️ 修改：如果用户在编辑模式，则不显示搜索框
+    if (isAdmin || isUser || currentPage !== 'home' || isEditing) return null; 
 
-    // ⭐️ 样式修改：移除 dark 类，保持背景色不变
     return (
-        <footer className="mt-20 py-8 border-t border-gray-200 bg-white bg-opacity-50 backdrop-blur-sm">
-            <div className="container mx-auto px-4 text-center">
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="text-center">
-                        <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" onClick={() => setCurrentPage('home')} >
-                        </h3>
-                        {/* ⭐️ 核心修改：增加网站运行天数显示 ⭐️ */}
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1"> 
-                            © {currentYear} 极速导航网. 保留所有权利. | 已稳定运行 {getRunningDays()} 天。
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-6">
-                        {footerLinks.map((link, idx) => (
-                            <a 
-                                key={idx} 
-                                href="#" 
-                                onClick={(e) => { 
-                                    e.preventDefault(); 
-                                    link.action();
-                                }} 
-                                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer" 
-                            >
-                                {link.name}
-                            </a>
-                        ))}
-                        <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-                            <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
-                                <Github className="w-5 h-5" />
-                            </a>
-                            {/* ⭐️ 恢复：将图标改回外部链接图标 ExternalLink，并使用一个默认的外部网址 ⭐️ */}
-                            <a href="https://adcwwvux.eu-central-1.clawcloudrun.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="外部链接/登录" >
-                                <ExternalLink className="w-5 h-5" />
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </footer>
+        <div className="mb-8 max-w-2xl mx-auto">
+            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+            <ExternalSearchButtons 
+                className="flex justify-center space-x-4 mt-4" 
+                searchTerm={searchTerm} 
+            />
+        </div>
+    );
+});
+
+// 🔹 右下角浮动按钮组件 
+// ⭐️ 核心修改：移除 isDark/setIsDark 属性和所有主题切换逻辑 ⭐️
+const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => {
+    return (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
+            
+            {/* 1. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) */}
+            {(isAdmin || !userIsAnonymous) && currentPage === 'home' && (
+                <button 
+                    onClick={() => setIsEditing(!isEditing)} 
+                    className={`p-3 rounded-full shadow-xl text-white transition-all 
+                                ${isEditing ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                    title={isEditing ? "退出编辑模式 (切换到浏览主页)" : "进入编辑模式"}
+                >
+                    {/* 处于编辑模式显示 X，否则显示扳手 */}
+                    {isEditing ? <X className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>}
+                </button>
+            )}
+
+            {/* ⭐️ 移除：主题切换按钮 (原代码块 1) ⭐️ */}
+            
+            {/* 2. 登录/注册/退出 按钮 */}
+            {userIsAnonymous ? (
+              // 未登录状态 (匿名用户)：显示注册和登录按钮
+              <>
+                <button 
+                    onClick={() => { setShowRegister(true); setShowLogin(false); }} 
+                    className="p-3 rounded-full shadow-xl bg-green-500 text-white hover:bg-green-600 transition-all"
+                    title="用户注册"
+                >
+                    <UserPlus className="w-6 h-6"/> 
+                </button>
+                <button 
+                    onClick={() => { setShowLogin(true); setShowRegister(false); }} 
+                    className="p-3 rounded-full shadow-xl bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                    title="用户/管理员登录"
+                >
+                    <User className="w-6 h-6"/> 
+                </button>
+              </>
+            ) : (
+              // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
+              <>
+                <button
+                    // 核心修改：如果当前在用户资料页，点击则返回主页
+                    onClick={() => { 
+                        if (currentPage === 'user') {
+                            setCurrentPage('home'); // 如果在用户页，返回主页
+                        } else {
+                            setCurrentPage('user'); // 否则，进入用户页
+                            setIsEditing(false);    // 并退出编辑模式
+                        }
+                    }} 
+                    className={`p-3 rounded-full shadow-xl text-white transition-all 
+                               ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    title={currentPage === 'user' ? `返回导航主页` : (isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`)}
+                >
+                    <User className="w-6 h-6"/> 
+                </button>
+                <button 
+                    onClick={handleLogout} 
+                    className="p-3 rounded-full shadow-xl bg-red-500 text-white hover:bg-red-600 transition-all"
+                    title="退出登录"
+                >
+                    <LogIn className="w-6 h-6 rotate-180"/> 
+                </button>
+              </>
+            )}
+        </div>
     );
 };
-
-// 🔹 关于本站页面组件 (保持不变)
-const AboutPage = () => (
-    // ⭐️ 样式修改：移除 dark 类
-    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于极速导航网</h2>
-        <p className="text-gray-700 dark:text-gray-300">
-            极速导航网致力于提供一个简洁、高效、快速的网址导航服务。我们聚合了常用的开发工具、AI 模型、影视娱乐、云计算等多个领域的优质链接，旨在帮助用户一站式地找到所需资源。
-        </p>
-        <h3 className="text-2xl font-semibold text-gray-900 pt-4">核心优势</h3>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 ml-4">
-            <li><strong className="font-medium">极速加载:</strong> 采用现代 Web 技术栈，追求极致的加载速度和响应体验。</li>
-            <li><strong className="font-medium">自定义功能:</strong> 注册用户可以拥有私有的自定义导航面板，完全控制和管理自己的链接，实现个性化导航。</li>
-            <li><strong className="font-medium">简洁美观:</strong> 界面设计简洁，无冗余信息，专注于导航本身。</li>
-            <li><strong className="font-medium">跨平台支持:</strong> 适应各种设备和屏幕尺寸。</li>
-        </ul>
-        <h3 className="text-2xl font-semibold text-gray-900 pt-4">技术栈</h3>
-        <p className="text-gray-700 dark:text-gray-300">
-            本站基于 React + Tailwind CSS 构建前端界面，利用 Firebase (Authentication & Firestore) 提供后端服务，实现用户认证、数据持久化和实时同步。
-        </p>
-    </div>
-);
-
-// 🔹 免责声明页面组件 (保持不变)
-const DisclaimerPage = () => (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
-        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
-            <p>
-                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
-            <p>
-                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
-            <p>
-                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
-            </p>
-            
-            {/* ⭐️ 新增：图标/版权声明 ⭐️ */}
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">4. 图标/版权声明</h3>
-            <p>
-                本网站部分图标来源于互联网公开资源或通过第三方服务获取（如 DuckDuckGo）。如果其中任何图标涉嫌侵犯您的知识产权或版权，请及时联系我们进行删除。
-                联系邮箱：<a href="mailto:115382613@qq.com" className="text-blue-500 hover:underline">115382613@qq.com</a>。
-            </p>
-            {/* ⭐️ 结束新增 ⭐️ */}
-            
-            <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
-                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
-            </p>
-        </div>
-    </div>
-);
 
 
 // 🔹 主应用 (App 组件)
 export default function App() {
-    const [firebaseApp, setFirebaseApp] = useState(null);
-    const [auth, setAuth] = useState(null);
-    const [db, setDb] = useState(null);
+  const [firebaseApp, setFirebaseApp] = useState(null);
+  const [auth, setAuth] = useState(null);
+  const [db, setDb] = useState(null);
+  
+  // 认证状态
+  const [userId, setUserId] = useState(null);
+  const [userEmail, setUserEmail] = useState(''); 
+  const [userIsAnonymous, setUserIsAnonymous] = useState(true); 
+  
+  // 数据和UI状态
+  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
+  // ⭐️ 移除：不再需要 isDark 状态
+  const [currentPage, setCurrentPage] = useState('home'); 
+  const [searchTerm, setSearchTerm] = useState(''); 
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+  // ⭐️ 核心新增状态：控制编辑/浏览模式
+  const [isEditing, setIsEditing] = useState(false); 
+  
+  // 弹窗状态
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false); 
+  
+  // 错误和成功信息
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const [changePasswordError, setChangePasswordError] = useState(''); 
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState(''); 
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState(''); 
 
-    // 认证状态
-    const [userId, setUserId] = useState(null);
-    const [userEmail, setUserEmail] = useState('');
-    const [userIsAnonymous, setUserIsAnonymous] = useState(true);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const isUser = !userIsAnonymous && !isAdmin; // ⭐️ 新增：普通注册用户的状态
-
-    // 数据和UI状态
-    const [navData, setNavData] = useState(DEFAULT_NAV_DATA);
-    // ⭐️ 移除：不再需要 isDark 状态
-    const [currentPage, setCurrentPage] = useState('home');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isEditing, setIsEditing] = useState(false); // ⭐️ 新增：编辑模式状态
-
-    // Modal 状态
-    const [showLogin, setShowLogin] = useState(false);
-    const [loginError, setLoginError] = useState('');
-    const [showRegister, setShowRegister] = useState(false);
-    const [registerError, setRegisterError] = useState('');
-    const [showChangePassword, setShowChangePassword] = useState(false); // ⭐️ 新增：修改密码弹窗状态
-    const [changePasswordError, setChangePasswordError] = useState('');
-    const [changePasswordSuccess, setChangePasswordSuccess] = useState('');
-
-
-    // 1. 初始化 Firebase (仅运行一次)
-    useEffect(() => {
-        // ... (Firebase 初始化逻辑保持不变)
-    }, []);
-
-    // 2. 监听 Auth 状态变化 (保持不变)
-    useEffect(() => {
-        // ... (onAuthStateChanged 逻辑保持不变)
-    }, [auth]);
-
-    // 3. 实时同步导航数据 (已增强：区分公共/私人数据)
-    useEffect(()=>{
-        // ... (数据同步逻辑保持不变)
-    },[db, userId, isAdmin, isUser]); 
-
-    // 增强：通用的数据重新获取函数 (现在可以用于用户和管理员)
-    const fetchData = async ()=>{
-        // ... (fetchData 逻辑保持不变)
+  useEffect(()=>{
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
+      authDomain: "wangzhandaohang.firebaseapp.com",
+      projectId: "wangzhandaohang",
+      storageBucket: "wangzhandaohang.firebasestorage.app",
+      messagingSenderId: "169263636408",
+      appId: "1:169263636408:web:ee3608652b2872a539b94d",
     };
-    
-    // 增强：注册逻辑
-    const handleRegister = async (email, password, customError) => {
-        // ... (handleRegister 逻辑保持不变)
-    };
-    
-    // 增强：登录逻辑
-    const handleLogin = async (email, password) => {
-        // ... (handleLogin 逻辑保持不变)
-    };
+    const app = initializeApp(firebaseConfig);
+    const _auth = getAuth(app);
+    const _db = getFirestore(app);
+    setFirebaseApp(app); setAuth(_auth); setDb(_db);
 
-    // 增强：退出登录逻辑
-    const handleLogout = async () => {
-        // ... (handleLogout 逻辑保持不变)
-    };
+    const unsub = onAuthStateChanged(_auth, user=>{
+      if(user) {
+        setUserId(user.uid);
+        setUserEmail(user.email || '匿名用户');
+        setUserIsAnonymous(user.isAnonymous);
+        setCurrentPage('home'); // 登录后返回主页
+        setIsEditing(false); // ⭐️ 登录后默认进入浏览模式
+      } else { 
+        // 如果没有用户，尝试匿名登录
+        signInAnonymously(_auth).catch(console.error); 
+        setUserId('anonymous');
+        setUserEmail('');
+        setUserIsAnonymous(true);
+        setCurrentPage('home'); // 退出后返回主页
+        setIsEditing(false); // 退出后也是浏览模式
+      }
+    });
+    return unsub;
+  },[]);
 
-    // 增强：忘记密码/重置密码邮件
-    const handleForgotPassword = async (email) => {
-        // ... (handleForgotPassword 逻辑保持不变)
-    };
+  // 辅助判断
+  const isAdmin = userId === ADMIN_USER_ID;
+  const isUser = userId && userId !== 'anonymous' && !isAdmin; 
 
-    // 增强：修改密码逻辑
-    const handleChangePassword = async (newPassword, validationError) => {
-        // ... (handleChangePassword 逻辑保持不变)
-    };
-
-
-    // 4. 过滤逻辑 (保持不变)
-    const filteredNavData = useMemo(() => {
-        // ... (过滤逻辑保持不变)
-    }, [navData, searchTerm]);
-
-    // 🚀 核心渲染逻辑：根据 isEditing 状态决定显示编辑面板还是导航浏览页面
-    let content;
-    if (currentPage === 'home') {
-        if ((isAdmin || isUser) && isEditing) {
-            // Logged in and in Edit Mode: Show the appropriate Editor
-            if (isAdmin) {
-                content = (
-                    <ErrorBoundary>
-                        <AdminPanel db={db} navData={navData} fetchData={fetchData} />
-                    </ErrorBoundary>
-                );
-            } else { // isUser
-                content = (
-                    <ErrorBoundary>
-                        <UserNavPanel db={db} userId={userId} navData={navData} fetchData={fetchData} />
-                    </ErrorBoundary>
-                );
-            }
-        } else {
-            // Anonymous, OR Logged in and in View Mode
-            // PublicNav will show the correct data (public or user's private) based on the navData state fetched by useEffect
-            content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+  // 核心数据获取逻辑：根据用户身份获取对应的数据
+  useEffect(()=>{
+    if(!db || !userId) {
+        // 匿名用户或未连接，使用公共路径或默认数据
+        if (!db) {
+            setNavData(DEFAULT_NAV_DATA);
         }
-    } else if (currentPage === 'user' && (isUser || isAdmin)) {
-        // Logged in and viewing User Panel
-        content = (
-            <UserPanel 
-                userEmail={userEmail} 
-                setShowChangePassword={setShowChangePassword}
-            />
-        );
-    } else if (currentPage === 'about') {
-        content = <AboutPage />;
-    } else if (currentPage === 'disclaimer') {
-        content = <DisclaimerPage />;
-    } else {
-        content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+        return;
+    }
+    
+    // 决定数据路径：注册用户/管理员使用私有路径，匿名用户使用公共路径
+    const targetPath = (isUser || isAdmin) && userId !== 'anonymous' 
+        ? getUserNavPath(userId) 
+        : PUBLIC_NAV_PATH;       
+        
+    const navCol = collection(db, targetPath); 
+    
+    const unsub = onSnapshot(navCol, snapshot=>{
+      const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+      data.sort((a,b)=>(a.order||0)-(b.order||0));
+      
+      setIsFirebaseConnected(true); 
+      // 关键修改：如果用户/管理员的私有数据为空，显示默认数据
+      if (data.length === 0 && (isUser || isAdmin)) {
+          setNavData(DEFAULT_NAV_DATA); 
+      } else if (data.length > 0) { 
+          setNavData(data);
+      } else if (!isFirebaseConnected) {
+          // 如果连接失败，最后使用默认硬编码数据
+          setNavData(DEFAULT_NAV_DATA);
+      }
+      
+    }, 
+    (error) => {
+        console.warn(`Firebase fetch failed for ${isUser ? 'user' : 'public'} data. Using internal fallback.`, error.message);
+        setIsFirebaseConnected(false); 
+        setNavData(DEFAULT_NAV_DATA);
+    });
+    return unsub;
+},[db, userId, isAdmin, isUser]); 
+
+  // 增强：通用的数据重新获取函数 (现在可以用于用户和管理员)
+  const fetchData = async ()=>{
+    if(!db || !userId) return;
+    // 决定数据路径：管理员是公共，用户是私有
+    const targetPath = isAdmin ? PUBLIC_NAV_PATH : getUserNavPath(userId);
+    const navCol = collection(db, targetPath);
+    try {
+        const snapshot = await getDocs(navCol);
+        const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
+        data.sort((a,b)=>(a.order||0)-(b.order||0));
+        setNavData(data);
+    } catch (error) {
+        console.error("Data fetch failed:", error);
+    }
+  };
+
+  // 增强：注册逻辑
+  const handleRegister = async (email, password, customError) => {
+    if (customError) {
+        setRegisterError(customError);
+        return;
+    }
+    setRegisterError('');
+    try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        setShowRegister(false);
+        alert('注册成功！已自动登录。'); 
+    } catch(e) { 
+        setRegisterError(e.message); 
+    }
+  };
+  
+  // 增强：登录逻辑
+  const handleLogin = async (email,password)=>{
+    setLoginError('');
+    try {
+      await signInWithEmailAndPassword(auth,email,password);
+      setShowLogin(false); 
+    } catch(e){ 
+      setLoginError(e.message); 
+    }
+  };
+
+  // 新增：忘记密码逻辑
+  const handleForgotPassword = async (email) => {
+      if (!email) {
+          alert("请输入您的注册邮箱进行密码重置。");
+          return;
+      }
+      try {
+          // 发送密码重置邮件
+          await sendPasswordResetEmail(auth, email);
+          alert(`密码重置链接已发送到邮箱: ${email}。请检查您的收件箱和垃圾邮件。`);
+          setShowLogin(false);
+      } catch (e) {
+          alert(`重置邮件发送失败: ${e.message}`);
+      }
+  };
+  
+  // 新增：修改密码逻辑
+  const handleChangePassword = async (newPassword, customError) => {
+      setChangePasswordError('');
+      setChangePasswordSuccess('');
+
+      if (customError) {
+          setChangePasswordError(customError);
+          return;
+      }
+      
+      const user = auth.currentUser;
+      if (!user) {
+          setChangePasswordError('用户未登录。');
+          return;
+      }
+
+      try {
+          await updatePassword(user, newPassword);
+          setChangePasswordSuccess('密码修改成功！您可能需要重新登录。');
+      } catch (e) {
+          if (e.code === 'auth/requires-recent-login') {
+            setChangePasswordError('出于安全考虑，请先退出并重新登录，然后再尝试修改密码。');
+          } else {
+            setChangePasswordError(e.message);
+          }
+      }
+  };
+
+  // 新增：退出登录
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUserId('anonymous');
+    setUserEmail('');
+    setIsEditing(false); // 退出后也确保退出编辑模式
+  };
+
+  const filteredNavData = useMemo(() => {
+    if (!searchTerm) {
+      return navData; 
     }
 
-    return (
-        <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors">
-            {/* 登录/注册/修改密码 弹窗 */}
-            {showLogin && <LoginModal onClose={() => { setShowLogin(false); setLoginError(''); }} onLogin={handleLogin} error={loginError} onForgotPassword={handleForgotPassword}/>}
-            {showRegister && <RegisterModal onClose={() => { setShowRegister(false); setRegisterError(''); }} onRegister={handleRegister} error={registerError}/>}
-            {showChangePassword && (
-                <ChangePasswordModal 
-                    onClose={() => { setShowChangePassword(false); setChangePasswordError(''); setChangePasswordSuccess('');}} 
-                    onChangePassword={handleChangePassword} 
-                    error={changePasswordError}
-                    success={changePasswordSuccess}
-                />
-            )}
-            
-            {/* 浮动按钮组件 - 移除主题切换相关的 Props */}
-            <FloatingButtons 
-                userIsAnonymous={userIsAnonymous}
-                isAdmin={isAdmin}
-                userEmail={userEmail}
-                handleLogout={handleLogout}
-                setShowRegister={setShowRegister}
-                setShowLogin={setShowLogin}
-                setCurrentPage={setCurrentPage}
-                currentPage={currentPage}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-            />
-            
-            <div className="container mx-auto px-4 py-8 flex-grow">
-                
-                <header className="mb-12 relative">
-                    <h1 
-                        className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
-                        onClick={() => setCurrentPage('home')}
-                    >
-                        极速导航网
-                    </h1>
-                </header>
-                
-                {/* 搜索栏现在只在非编辑/浏览模式下显示 */}
-                <SearchLayout 
-                    isAdmin={isAdmin}
-                    isUser={isUser}
-                    currentPage={currentPage}
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    isEditing={isEditing}
-                />
-                
-                {content}
-                
-            </div>
-            
-            <Footer setCurrentPage={setCurrentPage} />
-            
-            {/* Debug 栏，仅在开发模式下显示 */}
-            <DebugBar 
-                isFirebaseConnected={isFirebaseConnected}
-                userId={userId}
-                userEmail={userEmail}
-                isAdmin={isAdmin}
-                isUser={isUser}
-                userIsAnonymous={userIsAnonymous}
-            />
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
-        </div>
-    );
+    return navData
+      .map(category => {
+        const filteredLinks = (category.links || []).filter(link => {
+          const name = link.name?.toLowerCase() || '';
+          const description = link.description?.toLowerCase() || '';
+          const url = link.url?.toLowerCase() || '';
+
+          return name.includes(lowerCaseSearchTerm) || 
+                 description.includes(lowerCaseSearchTerm) ||
+                 url.includes(lowerCaseSearchTerm);
+        });
+
+        return {
+          ...category,
+          links: filteredLinks,
+        };
+      })
+      .filter(category => category.links.length > 0);
+  }, [navData, searchTerm]);
+
+
+  // 🚀 核心渲染逻辑：根据 isEditing 状态决定显示编辑面板还是导航浏览页面 
+  let content;
+
+  if (currentPage === 'home') {
+    if ((isAdmin || isUser) && isEditing) {
+        // Logged in and in Edit Mode: Show the appropriate Editor
+        if (isAdmin) {
+            content = (
+                <ErrorBoundary>
+                    <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+                </ErrorBoundary>
+            );
+        } else { // isUser
+            content = (
+                <ErrorBoundary>
+                    <UserNavPanel 
+                        db={db} 
+                        userId={userId} 
+                        navData={navData} 
+                        fetchData={fetchData} 
+                    />
+                </ErrorBoundary>
+            );
+        }
+    } else {
+        // Anonymous, OR Logged in and in View Mode
+        // PublicNav will show the correct data (public or user's private) based on the navData state fetched by useEffect
+        content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+    }
+  } else if (currentPage === 'user' && (isUser || isAdmin)) { // 允许管理员也能进入用户资料页
+      // User Profile page
+      content = (
+          <ErrorBoundary>
+              <UserPanel 
+                  userEmail={userEmail} 
+                  setShowChangePassword={setShowChangePassword}
+                  setCurrentPage={setCurrentPage} // ⭐️ 传递 setCurrentPage
+              />
+          </ErrorBoundary>
+      );
+  } else if (currentPage === 'about') {
+      content = <AboutPage />;
+  } else if (currentPage === 'disclaimer') {
+      content = <DisclaimerPage />;
+  } else {
+      // Default fallback to PublicNav
+      content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+  }
+
+  return (
+    // ⭐️ 样式修改：移除根元素上的 isDark 状态相关类名，默认使用 light 模式的样式
+    <div className={`flex flex-col min-h-screen bg-gray-50 text-gray-900`}>
+      <DebugBar />
+      
+      {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} onForgotPassword={handleForgotPassword}/>}
+      {showRegister && <RegisterModal onClose={()=>setShowRegister(false)} onRegister={handleRegister} error={registerError} />}
+      {showChangePassword && (
+        <ChangePasswordModal 
+          onClose={() => {setShowChangePassword(false); setChangePasswordError(''); setChangePasswordSuccess('');}} 
+          onChangePassword={handleChangePassword} 
+          error={changePasswordError}
+          success={changePasswordSuccess}
+        />
+      )}
+      
+      {/* 浮动按钮组件 - 移除主题切换相关的 Props */}
+      <FloatingButtons 
+        userIsAnonymous={userIsAnonymous}
+        isAdmin={isAdmin}
+        userEmail={userEmail}
+        handleLogout={handleLogout}
+        setShowRegister={setShowRegister}
+        setShowLogin={setShowLogin}
+        setCurrentPage={setCurrentPage}
+        currentPage={currentPage}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+      />
+      
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        
+        <header className="mb-12 relative">
+            <h1 
+                className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer text-center"
+                onClick={() => setCurrentPage('home')}
+            >
+                极速导航网
+            </h1>
+        </header>
+        
+        {/* 搜索栏现在只在非编辑/浏览模式下显示 */}
+        <SearchLayout 
+            isAdmin={isAdmin}
+            isUser={isUser}
+            currentPage={currentPage}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isEditing={isEditing}
+        />
+        
+        {content} {/* 使用新的 content 变量进行渲染 */}
+      </div>
+      
+      <Footer setCurrentPage={setCurrentPage} />
+    </div>
+  )
 }
