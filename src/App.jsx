@@ -18,7 +18,7 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
-  setDoc, // ⭐️ 新增引入 setDoc
+  setDoc, // ⭐️ 引入 setDoc (用于解决 No document to update 错误)
   getDocs,
   query,
 } from 'firebase/firestore';
@@ -70,20 +70,17 @@ const APP_ID = 'default-app-id';
 const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
 const getUserNavPath = (uid) => `users/${uid}/navData`; 
 
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已删除指定链接) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
         category: '常用开发',
         order: 0,
         links: [
-            { name: 'HuggingFace', url: 'https://huggingface.co/', description: 'AI/ML 模型共享与协作社区', icon: 'https://huggingface.co/favicon.ico' },
+            // 已删除 HuggingFace, clawcloudrun, firebase, dpdns
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'https://github.com/fluidicon.png' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台', icon: 'https://www.cloudflare.com/favicon.ico' },
-            { name: 'clawcloudrun', url: 'https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU', description: 'Claw Cloud Run 登录', icon: '' },
             { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案', icon: 'https://supabase.com/favicon.ico' },
-            { name: 'firebase', url: 'https://firebase.google.cn/', description: 'Google 后端云服务', icon: 'https://firebase.google.cn/images/favicons/favicon.ico' },
-            { name: 'dpdns', url: 'https://dash.domain.digitalplat.org/auth/login?next=%2F', description: 'DPDNS 域名管理平台', icon: '' },
         ],
     },
     {
@@ -115,7 +112,7 @@ const DEFAULT_NAV_DATA = [
             { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区', icon: 'https://www.instagram.com/static/images/ico/favicon.ico/31604a141b77.ico' },
             { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台', icon: 'https://www.kuaishou.com/favicon.ico' },
             { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台', icon: 'https://www.douyin.com/favicon.ico' },
-            { name: 'TikTok', url: 'https://www.tiktok.com/', description: '国际版短视频平台', icon: 'https://www.tiktok.com/favicon.ico' },
+            // 已删除 TikTok
             { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用', icon: 'https://www.snapchat.com/favicon.ico' },
         ],
     },
@@ -173,8 +170,8 @@ const DEFAULT_NAV_DATA = [
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: 'https://d1tools.com/favicon.ico' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: 'https://www.toolnb.com/favicon.ico' },
             { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: 'https://www.json.cn/favicon.ico' },
+            // 已删除 网站打包app
             { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找', icon: 'https://www.iamwawa.cn/favicon.ico' },
-            { name: '网站打包app', url: 'https://blackace.app/', description: '将网站打包成 App', icon: 'https://blackace.app/favicon.ico' },
         ],
     },
     {
@@ -193,7 +190,7 @@ const DEFAULT_NAV_DATA = [
         links: [
             { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站', icon: 'https://www.taobao.com/favicon.ico' },
             { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商', icon: 'https://www.jd.com/favicon.ico' },
-            { name: '亚马逊', url: 'https://www.amazon.cn/', description: '国际电商平台', icon: 'https://www.amazon.cn/favicon.ico' },
+            // 已删除 亚马逊
         ],
     },
 ];
@@ -205,13 +202,10 @@ const DebugBar = () => null;
 // =========================================================================
 
 const ICON_MAP = {
-    'huggingface': Wand, 
+    // 已删除 huggingface, clawcloudrun, firebase, dpdns
     'github': Github,
     'cloudflare': Cloud,
-    'clawcloudrun': Code,
-    'dpdns': Network,
     'supabase': Database,
-    'firebase': Server, 
     'chatgpt': Bot,
     'gemini': Wand, 
     'deepseek': Bot,
@@ -229,7 +223,7 @@ const ICON_MAP = {
     'instagram': Camera,
     '快手': Camera,
     '抖音': Camera, 
-    'tiktok': Camera,
+    // 已删除 tiktok
     'snapchat': Camera,
     'browserscan': Network,
     'ping0': Network,
@@ -260,12 +254,12 @@ const ICON_MAP = {
     'php混淆加密': Wrench,
     'json工具': Wrench, 
     'emoji 表情大全': Wrench,
-    '网站打包app': Code,
+    // 已删除 网站打包app
     '在线代理': Network,
     '免费网络代理': Network,
     '淘宝网': ShoppingCart,
     '京东商城': ShoppingCart,
-    '亚马逊': ShoppingCart,
+    // 已删除 亚马逊
 };
 
 const DefaultFallbackIcon = Globe; 
@@ -534,7 +528,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-        // ⭐️ 核心修复：使用 setDoc + merge 来处理 "文档可能不存在" 的情况
+        // ⭐️ 修复：使用 setDoc + merge 来处理 "文档可能不存在" 的情况
         await setDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}, { merge: true }); 
         setEditId(null); 
         fetchData(); 
@@ -578,8 +572,8 @@ const AdminPanel = ({ db, navData, fetchData }) => {
             <>
               <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
               <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                  <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+                <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
               </div>
               <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
               <div className="flex space-x-2 mt-3">
@@ -638,7 +632,7 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
       try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: editData.icon || '' }));
-        // ⭐️ 核心修复：同样在用户面板使用 setDoc + merge
+        // ⭐️ 修复：同样在用户面板使用 setDoc + merge
         await setDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon}, { merge: true }); 
         setEditId(null); 
         fetchData();
@@ -1011,7 +1005,7 @@ const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, se
                                 ${isEditing ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
                     title={isEditing ? "退出编辑模式 (切换到浏览主页)" : "进入编辑模式"}
                 >
-                    {isEditing ? <X className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>}
+                    {isEditing ? <Wrench className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>}
                 </button>
             )}
 
