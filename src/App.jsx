@@ -7,7 +7,6 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  // 导入密码重置和修改密码函数
   sendPasswordResetEmail,
   updatePassword,
 } from 'firebase/auth';
@@ -25,12 +24,11 @@ import {
 // 导入需要的图标
 import { 
   ExternalLink, LogIn, X, Github, Mail, Globe, Search, User, UserPlus, Lock, CheckCircle, AlertTriangle,
-  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
+  Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code, Clock
 } from 'lucide-react'; 
-// ⭐️ 移除：不再需要 Moon 和 Sun 图标
 
 // =========================================================================
-// ⭐️ 稳健性增强 1: ErrorBoundary 组件 (集成到此文件) ⭐️
+// ⭐️ 稳健性增强 1: ErrorBoundary 组件
 // =========================================================================
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -62,10 +60,6 @@ class ErrorBoundary extends React.Component {
         return this.props.children;
     }
 }
-// =========================================================================
-// ⭐️ End ErrorBoundary ⭐️
-// =========================================================================
-
 
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
@@ -73,12 +67,10 @@ const APP_ID = 'default-app-id';
 
 // 🔹 Firebase 集合路径常量
 const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
-const getUserNavPath = (uid) => `users/${uid}/navData`; // ⭐️ 用户的私有数据路径
+const getUserNavPath = (uid) => `users/${uid}/navData`; 
 
-
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
-    // ... (您的默认导航数据保持不变)
     {
         id: 'cat-1',
         category: '常用开发',
@@ -205,14 +197,12 @@ const DEFAULT_NAV_DATA = [
     },
 ];
 
-// 🔹 调试栏隐藏
 const DebugBar = () => null;
 
 // =========================================================================
 // ⬇️ 图标映射和处理逻辑 ⬇️
 // =========================================================================
 
-// 🔹 图标名称到 Lucide 组件的映射
 const ICON_MAP = {
     'huggingface': Wand, 
     'github': Github,
@@ -277,7 +267,6 @@ const ICON_MAP = {
     '亚马逊': ShoppingCart,
 };
 
-// 🔹 辅助函数：根据链接名称获取 Lucide 组件 (用于回退)
 const DefaultFallbackIcon = Globe; 
 
 const getLucideIcon = (linkName) => {
@@ -286,7 +275,6 @@ const getLucideIcon = (linkName) => {
     return IconComponent || DefaultFallbackIcon;
 };
 
-// 🔹 辅助组件：处理图标的加载和回退 (硬编码优先 + DuckDuckGo 服务)
 const LinkIcon = ({ link }) => {
     const [hasError, setHasError] = useState(false);
 
@@ -326,11 +314,6 @@ const LinkIcon = ({ link }) => {
         </div>
     );
 };
-
-// =========================================================================
-// ⬆️ 图标映射和处理逻辑 ⬆️
-// =========================================================================
-
 
 // 🔹 链接卡片 
 const LinkCard = ({ link }) => {
@@ -382,7 +365,7 @@ const PublicNav = ({ navData, searchTerm }) => {
     );
 };
 
-// 🔹 链接表单 (新增 Icon URL 输入框)
+// 🔹 链接表单
 const LinkForm = ({ links, setLinks }) => {
   const handleChange = (index, field, value) => {
     const newLinks = [...links];
@@ -409,7 +392,6 @@ const LinkForm = ({ links, setLinks }) => {
   )
 }
 
-
 // 🔹 密码修改弹窗
 const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => {
     const [newPassword, setNewPassword] = useState('');
@@ -417,22 +399,17 @@ const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // ⭐️ 稳健性增强 2: 逻辑中的 Try/Catch
         try {
             if (newPassword.length < 6) {
-                // throw 触发 Catch 逻辑，更统一的错误处理
                 throw new Error("密码长度不能少于 6 位。");
             }
             if (newPassword !== confirmPassword) {
-                // throw 触发 Catch 逻辑
                 throw new Error("两次输入的密码不一致。");
             }
-            // 成功验证，调用外部修改函数
             onChangePassword(newPassword);
             setNewPassword('');
             setConfirmPassword('');
         } catch (e) {
-             // 仅处理输入验证错误，Firebase 错误由外部 onChangePassword 处理
             onChangePassword(null, e.message); 
         }
     };
@@ -467,7 +444,7 @@ const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => {
     );
 };
 
-// 🔹 登录弹窗 (新增“忘记密码”链接)
+// 🔹 登录弹窗
 const LoginModal = ({ onClose, onLogin, error, onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -483,7 +460,6 @@ const LoginModal = ({ onClose, onLogin, error, onForgotPassword }) => {
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
           <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
-          {/* 忘记密码链接 */}
           <a href="#" onClick={(e) => { e.preventDefault(); onForgotPassword(email); }} className="text-sm text-blue-500 hover:underline text-center mt-2 block dark:text-blue-400">忘记密码？</a>
         </form>
       </div>
@@ -499,7 +475,6 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // ⭐️ 稳健性增强 2: 逻辑中的 Try/Catch
         try {
              if (password.length < 6) {
                 throw new Error("密码长度不能少于 6 位。");
@@ -507,9 +482,9 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
             if (password !== confirmPassword) {
                 throw new Error("两次输入的密码不一致。");
             }
-            onRegister(email, password); // 调用外部注册逻辑
+            onRegister(email, password); 
         } catch (e) {
-            onRegister(null, null, e.message); // 将本地错误传递给外部处理
+            onRegister(null, null, e.message); 
         }
     };
 
@@ -530,7 +505,6 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
     );
 };
 
-
 // 🔹 管理面板 (编辑公共数据)
 const AdminPanel = ({ db, navData, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
@@ -539,7 +513,6 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   const navCollection = collection(db, PUBLIC_NAV_PATH); 
 
   const handleAddCategory = async () => {
-    // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
     try {
         if (!newCategory.category) return alert('请输入分类名称');
         const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
@@ -557,7 +530,6 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     setEditData({...item, links: linksWithIcon}); 
   };
   const saveEdit = async () => { 
-    // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
     try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
@@ -570,7 +542,6 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     }
   };
   const handleDelete = async (id) => { 
-    // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
     if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
         try {
             await deleteDoc(doc(db, PUBLIC_NAV_PATH, id)); 
@@ -634,24 +605,21 @@ const AdminPanel = ({ db, navData, fetchData }) => {
   );
 };
 
-
-// 🔹 用户的自定义导航面板 (UserNavPanel) ⭐️ 新增组件
+// 🔹 用户的自定义导航面板
 const UserNavPanel = ({ db, userId, navData, fetchData }) => {
     const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
     const [editId, setEditId] = useState(null);
     const [editData, setEditData] = useState({});
     
-    // ⭐️ 关键：使用用户私有路径
     const navCollection = collection(db, getUserNavPath(userId)); 
 
     const handleAddCategory = async () => {
-      // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
       try {
         if (!newCategory.category) return alert('请输入分类名称');
         const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
         await addDoc(navCollection, {...newCategory, links: linksWithIcon});
         setNewCategory({ category: '', order: 0, links: [] });
-        fetchData(); // 重新加载数据
+        fetchData(); 
       } catch (error) {
         alert("新增分类失败：" + error.message);
         console.error("Error adding user category:", error);
@@ -665,7 +633,6 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
     };
 
     const saveEdit = async () => { 
-      // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
       try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: editData.icon || '' }));
@@ -679,7 +646,6 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
     };
     
     const handleDelete = async (id) => { 
-      // ⭐️ 稳健性增强：Try/Catch 保护数据库操作
       if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
           try {
               await deleteDoc(doc(db, getUserNavPath(userId), id)); 
@@ -691,21 +657,18 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
       }
     };
 
-    // 假设默认数据ID以'cat-'开头，以此判断是否有用户添加的自定义数据
     const hasCustomData = navData.length > 0 && navData.some(d => d.id && !d.id.startsWith('cat-'));
 
     return (
         <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">我的自定义导航面板 (仅您可见)</h3>
             
-            {/* 提示用户当前显示的是默认数据 */}
             {!hasCustomData && navData.length > 0 && (
                 <div className="p-4 mb-4 bg-yellow-100 text-yellow-800 rounded-lg dark:bg-yellow-800 dark:text-yellow-100">
                     您尚未添加任何自定义链接。当前显示的是系统默认链接。请在下方添加您的专属分类。
                 </div>
             )}
 
-            {/* 新增分类部分 */}
             <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
                 <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增自定义分类</h4>
                 <div className="flex flex-col gap-3">
@@ -719,12 +682,10 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
                 </div>
             </div>
             
-            {/* 现有分类列表 */}
             <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有导航分类</h4>
             {navData.map(item=>(
               <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
                 {editId === item.id ? (
-                  // 编辑状态
                   <>
                     <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
                     <div className="flex items-center space-x-2 mb-2">
@@ -738,7 +699,6 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
                     </div>
                   </>
                 ) : (
-                  // 展示状态
                   <>
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
@@ -758,8 +718,7 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
     );
 };
 
-
-// 🔹 普通用户面板 (UserPanel) ⭐️ 传递 setCurrentPage
+// 🔹 普通用户面板
 const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
     return (
         <div className="mt-6 p-6 border rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-w-xl mx-auto min-h-[60vh]">
@@ -782,7 +741,6 @@ const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
                         <Lock className="w-5 h-5"/>
                         <span>修改密码</span>
                     </button>
-                    {/* ⭐️ 新增：返回主页按钮 (备用导航) */}
                     <button
                         onClick={() => setCurrentPage('home')}
                         className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors mt-3"
@@ -797,8 +755,44 @@ const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
     );
 };
 
+// 🔹 辅助组件：网站运行时间计时器
+const SiteRuntime = () => {
+    const [timeStr, setTimeStr] = useState('加载中...');
 
-// 🔹 页脚组件 (保持不变)
+    useEffect(() => {
+        // ⭐️ 请在此修改建站日期 (格式: YYYY-MM-DD)
+        const START_DATE = '2024-01-01'; 
+        
+        const updateTime = () => {
+            const start = new Date(START_DATE);
+            const now = new Date();
+            const diff = now - start;
+
+            if (diff < 0) {
+                setTimeStr('筹备中...');
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            // 如果只需要显示天数：
+            setTimeStr(`${days} 天`);
+        };
+
+        updateTime(); // 立即执行一次
+        const timer = setInterval(updateTime, 1000 * 60); // 每分钟更新一次即可
+        return () => clearInterval(timer);
+    }, []);
+
+    return (
+        <span className="font-mono font-medium text-blue-600 ml-1">
+            {timeStr}
+        </span>
+    );
+};
+
+// 🔹 页脚组件 
+// ⭐️ 修改内容：更新图标链接，增加运行时间
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -807,7 +801,6 @@ const Footer = ({ setCurrentPage }) => {
     { name: '免责声明', action: () => setCurrentPage('disclaimer') },
   ];
 
-  // ⭐️ 样式修改：移除 dark 类，保持背景色不变
   return (
     <footer className="mt-20 py-8 border-t border-gray-200 bg-white bg-opacity-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 text-center">
@@ -823,6 +816,10 @@ const Footer = ({ setCurrentPage }) => {
             <p className="text-sm text-gray-500 mt-1">
               © {currentYear} 极速导航网. 保留所有权利.
             </p>
+            {/* ⭐️ 新增：稳定运行时间显示 */}
+            <p className="text-xs text-gray-400 mt-1 flex items-center justify-center">
+               <Clock className="w-3 h-3 mr-1"/> 本站已稳定运行 <SiteRuntime />
+            </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6">
@@ -836,13 +833,15 @@ const Footer = ({ setCurrentPage }) => {
                 {link.name}
               </a>
             ))}
-            {/* ⭐️ 样式修改：移除 dark 类 */}
+            
+            {/* ⭐️ 修改：更新了图标链接 */}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
+              <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
-                <Mail className="w-5 h-5" />
+              {/* ⭐️ 修改：将原本的 Mail 图标改为 Globe 图标，并更新链接 */}
+              <a href="https://adcwwvux.eu-central-1.clawcloudrun.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Claw Cloud Run">
+                <Globe className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -852,9 +851,8 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件 (保持不变)
+// 🔹 关于本站页面组件
 const AboutPage = () => (
-    // ⭐️ 样式修改：移除 dark 类
     <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
         <div className="space-y-4 text-gray-700">
@@ -883,9 +881,9 @@ const AboutPage = () => (
 );
 
 
-// 🔹 免责声明页面组件 (保持不变)
+// 🔹 免责声明页面组件 
+// ⭐️ 修改内容：增加了第4条关于图标和侵权的声明
 const DisclaimerPage = () => (
-    // ⭐️ 样式修改：移除 dark 类
     <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2>
         <div className="space-y-4 text-sm text-gray-700">
@@ -901,6 +899,11 @@ const DisclaimerPage = () => (
             <p>
                 用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
             </p>
+            {/* ⭐️ 新增：第4条声明 */}
+            <h3 className="text-lg font-semibold text-blue-600">4. 图标与版权声明</h3>
+            <p>
+                本站网址图标有些因为网络原因、技术缺陷，可能导致图标显示不准确。如果涉及侵权，请联系作者删除。作者邮箱：<span className="font-bold">115382613@qq.com</span>
+            </p>
             <p className="pt-4 italic text-xs text-gray-500">
                 使用本网站即表示您已阅读、理解并同意本声明的所有内容。
             </p>
@@ -908,15 +911,13 @@ const DisclaimerPage = () => (
     </div>
 );
 
-
-// 🔹 外部搜索引擎配置 (保持不变)
+// 🔹 外部搜索引擎配置
 const externalEngines = [
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
   { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
 
-// 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
   if (query) {
     window.open(engineUrl + encodeURIComponent(query), '_blank');
@@ -926,10 +927,8 @@ const handleExternalSearch = (engineUrl, query) => {
   }
 };
 
-// 🔹 搜索输入框组件 (保持不变)
 const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     <div className="relative">
-        {/* ⭐️ 样式修改：移除 dark 类 */}
         <input 
             type="text" 
             placeholder="搜索链接名称、描述或网址..." 
@@ -950,14 +949,12 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     </div>
 ));
 
-// 🔹 子组件：处理单个外部搜索按钮的图标 (保持不变)
 const ExternalSearchButton = ({ engine, searchTerm }) => {
     const [hasError, setHasError] = useState(false);
     const imageUrl = engine.icon; 
     const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
 
     return (
-        // ⭐️ 样式修改：移除 dark 类
         <button
             onClick={handleSearch}
             title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
@@ -978,7 +975,6 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
     );
 };
 
-// 🔹 外部搜索按钮组件 (保持不变)
 const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
         {externalEngines.map(engine => (
@@ -991,9 +987,7 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// 🚀 SearchLayout 组件 (保持不变)
 const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm, isEditing }) => {
-    // ⭐️ 修改：如果用户在编辑模式，则不显示搜索框
     if (isAdmin || isUser || currentPage !== 'home' || isEditing) return null; 
 
     return (
@@ -1008,12 +1002,10 @@ const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, set
 });
 
 // 🔹 右下角浮动按钮组件 
-// ⭐️ 核心修改：移除 isDark/setIsDark 属性和所有主题切换逻辑 ⭐️
 const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => {
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
             
-            {/* 1. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) */}
             {(isAdmin || !userIsAnonymous) && currentPage === 'home' && (
                 <button 
                     onClick={() => setIsEditing(!isEditing)} 
@@ -1021,16 +1013,11 @@ const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, se
                                 ${isEditing ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
                     title={isEditing ? "退出编辑模式 (切换到浏览主页)" : "进入编辑模式"}
                 >
-                    {/* 处于编辑模式显示 X，否则显示扳手 */}
                     {isEditing ? <X className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>}
                 </button>
             )}
 
-            {/* ⭐️ 移除：主题切换按钮 (原代码块 1) ⭐️ */}
-            
-            {/* 2. 登录/注册/退出 按钮 */}
             {userIsAnonymous ? (
-              // 未登录状态 (匿名用户)：显示注册和登录按钮
               <>
                 <button 
                     onClick={() => { setShowRegister(true); setShowLogin(false); }} 
@@ -1048,16 +1035,14 @@ const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, se
                 </button>
               </>
             ) : (
-              // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
               <>
                 <button
-                    // 核心修改：如果当前在用户资料页，点击则返回主页
                     onClick={() => { 
                         if (currentPage === 'user') {
-                            setCurrentPage('home'); // 如果在用户页，返回主页
+                            setCurrentPage('home'); 
                         } else {
-                            setCurrentPage('user'); // 否则，进入用户页
-                            setIsEditing(false);    // 并退出编辑模式
+                            setCurrentPage('user'); 
+                            setIsEditing(false);    
                         }
                     }} 
                     className={`p-3 rounded-full shadow-xl text-white transition-all 
@@ -1086,31 +1071,24 @@ export default function App() {
   const [auth, setAuth] = useState(null);
   const [db, setDb] = useState(null);
   
-  // 认证状态
   const [userId, setUserId] = useState(null);
   const [userEmail, setUserEmail] = useState(''); 
   const [userIsAnonymous, setUserIsAnonymous] = useState(true); 
   
-  // 数据和UI状态
   const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
-  // ⭐️ 移除：不再需要 isDark 状态
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
-  // ⭐️ 核心新增状态：控制编辑/浏览模式
   const [isEditing, setIsEditing] = useState(false); 
   
-  // 弹窗状态
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false); 
   
-  // 错误和成功信息
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
   const [changePasswordError, setChangePasswordError] = useState(''); 
   const [changePasswordSuccess, setChangePasswordSuccess] = useState(''); 
-  const [forgotPasswordMessage, setForgotPasswordMessage] = useState(''); 
 
   useEffect(()=>{
     const firebaseConfig = {
@@ -1131,36 +1109,31 @@ export default function App() {
         setUserId(user.uid);
         setUserEmail(user.email || '匿名用户');
         setUserIsAnonymous(user.isAnonymous);
-        setCurrentPage('home'); // 登录后返回主页
-        setIsEditing(false); // ⭐️ 登录后默认进入浏览模式
+        setCurrentPage('home'); 
+        setIsEditing(false); 
       } else { 
-        // 如果没有用户，尝试匿名登录
         signInAnonymously(_auth).catch(console.error); 
         setUserId('anonymous');
         setUserEmail('');
         setUserIsAnonymous(true);
-        setCurrentPage('home'); // 退出后返回主页
-        setIsEditing(false); // 退出后也是浏览模式
+        setCurrentPage('home'); 
+        setIsEditing(false); 
       }
     });
     return unsub;
   },[]);
 
-  // 辅助判断
   const isAdmin = userId === ADMIN_USER_ID;
   const isUser = userId && userId !== 'anonymous' && !isAdmin; 
 
-  // 核心数据获取逻辑：根据用户身份获取对应的数据
   useEffect(()=>{
     if(!db || !userId) {
-        // 匿名用户或未连接，使用公共路径或默认数据
         if (!db) {
             setNavData(DEFAULT_NAV_DATA);
         }
         return;
     }
     
-    // 决定数据路径：注册用户/管理员使用私有路径，匿名用户使用公共路径
     const targetPath = (isUser || isAdmin) && userId !== 'anonymous' 
         ? getUserNavPath(userId) 
         : PUBLIC_NAV_PATH;       
@@ -1172,13 +1145,11 @@ export default function App() {
       data.sort((a,b)=>(a.order||0)-(b.order||0));
       
       setIsFirebaseConnected(true); 
-      // 关键修改：如果用户/管理员的私有数据为空，显示默认数据
       if (data.length === 0 && (isUser || isAdmin)) {
           setNavData(DEFAULT_NAV_DATA); 
       } else if (data.length > 0) { 
           setNavData(data);
       } else if (!isFirebaseConnected) {
-          // 如果连接失败，最后使用默认硬编码数据
           setNavData(DEFAULT_NAV_DATA);
       }
       
@@ -1191,10 +1162,8 @@ export default function App() {
     return unsub;
 },[db, userId, isAdmin, isUser]); 
 
-  // 增强：通用的数据重新获取函数 (现在可以用于用户和管理员)
   const fetchData = async ()=>{
     if(!db || !userId) return;
-    // 决定数据路径：管理员是公共，用户是私有
     const targetPath = isAdmin ? PUBLIC_NAV_PATH : getUserNavPath(userId);
     const navCol = collection(db, targetPath);
     try {
@@ -1207,7 +1176,6 @@ export default function App() {
     }
   };
 
-  // 增强：注册逻辑
   const handleRegister = async (email, password, customError) => {
     if (customError) {
         setRegisterError(customError);
@@ -1223,7 +1191,6 @@ export default function App() {
     }
   };
   
-  // 增强：登录逻辑
   const handleLogin = async (email,password)=>{
     setLoginError('');
     try {
@@ -1234,14 +1201,12 @@ export default function App() {
     }
   };
 
-  // 新增：忘记密码逻辑
   const handleForgotPassword = async (email) => {
       if (!email) {
           alert("请输入您的注册邮箱进行密码重置。");
           return;
       }
       try {
-          // 发送密码重置邮件
           await sendPasswordResetEmail(auth, email);
           alert(`密码重置链接已发送到邮箱: ${email}。请检查您的收件箱和垃圾邮件。`);
           setShowLogin(false);
@@ -1250,7 +1215,6 @@ export default function App() {
       }
   };
   
-  // 新增：修改密码逻辑
   const handleChangePassword = async (newPassword, customError) => {
       setChangePasswordError('');
       setChangePasswordSuccess('');
@@ -1278,12 +1242,11 @@ export default function App() {
       }
   };
 
-  // 新增：退出登录
   const handleLogout = async () => {
     await signOut(auth);
     setUserId('anonymous');
     setUserEmail('');
-    setIsEditing(false); // 退出后也确保退出编辑模式
+    setIsEditing(false); 
   };
 
   const filteredNavData = useMemo(() => {
@@ -1314,19 +1277,17 @@ export default function App() {
   }, [navData, searchTerm]);
 
 
-  // 🚀 核心渲染逻辑：根据 isEditing 状态决定显示编辑面板还是导航浏览页面 
   let content;
 
   if (currentPage === 'home') {
     if ((isAdmin || isUser) && isEditing) {
-        // Logged in and in Edit Mode: Show the appropriate Editor
         if (isAdmin) {
             content = (
                 <ErrorBoundary>
                     <AdminPanel db={db} navData={navData} fetchData={fetchData} />
                 </ErrorBoundary>
             );
-        } else { // isUser
+        } else { 
             content = (
                 <ErrorBoundary>
                     <UserNavPanel 
@@ -1339,18 +1300,15 @@ export default function App() {
             );
         }
     } else {
-        // Anonymous, OR Logged in and in View Mode
-        // PublicNav will show the correct data (public or user's private) based on the navData state fetched by useEffect
         content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
     }
-  } else if (currentPage === 'user' && (isUser || isAdmin)) { // 允许管理员也能进入用户资料页
-      // User Profile page
+  } else if (currentPage === 'user' && (isUser || isAdmin)) { 
       content = (
           <ErrorBoundary>
               <UserPanel 
                   userEmail={userEmail} 
                   setShowChangePassword={setShowChangePassword}
-                  setCurrentPage={setCurrentPage} // ⭐️ 传递 setCurrentPage
+                  setCurrentPage={setCurrentPage} 
               />
           </ErrorBoundary>
       );
@@ -1359,12 +1317,10 @@ export default function App() {
   } else if (currentPage === 'disclaimer') {
       content = <DisclaimerPage />;
   } else {
-      // Default fallback to PublicNav
       content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
   }
 
   return (
-    // ⭐️ 样式修改：移除根元素上的 isDark 状态相关类名，默认使用 light 模式的样式
     <div className={`flex flex-col min-h-screen bg-gray-50 text-gray-900`}>
       <DebugBar />
       
@@ -1379,7 +1335,6 @@ export default function App() {
         />
       )}
       
-      {/* 浮动按钮组件 - 移除主题切换相关的 Props */}
       <FloatingButtons 
         userIsAnonymous={userIsAnonymous}
         isAdmin={isAdmin}
@@ -1404,7 +1359,6 @@ export default function App() {
             </h1>
         </header>
         
-        {/* 搜索栏现在只在非编辑/浏览模式下显示 */}
         <SearchLayout 
             isAdmin={isAdmin}
             isUser={isUser}
@@ -1414,7 +1368,7 @@ export default function App() {
             isEditing={isEditing}
         />
         
-        {content} {/* 使用新的 content 变量进行渲染 */}
+        {content} 
       </div>
       
       <Footer setCurrentPage={setCurrentPage} />
