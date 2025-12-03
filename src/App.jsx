@@ -841,7 +841,7 @@ const Footer = ({ setCurrentPage }) => {
               </a>
               {/* ⭐️ 恢复：将图标改回外部链接图标 ExternalLink，并使用一个默认的外部网址 ⭐️ */}
               <a 
-                  href="https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU" 
+                  href="https://adcwwvux.eu-central-1.clawcloudrun.com/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-blue-500 transition-colors" 
