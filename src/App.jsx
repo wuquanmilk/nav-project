@@ -32,6 +32,19 @@ import {
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
+// ⭐️ 新增：站点启动日期 (请根据实际情况修改此日期)
+const LAUNCH_DATE = new Date('2024-05-01');
+
+// 🔹 新增：计算站点运行天数
+const getRunningDays = () => {
+  const now = new Date();
+  // 计算毫秒差
+  const diffTime = now.getTime() - LAUNCH_DATE.getTime(); 
+  // 转换为天数，并向上取整确保至少显示 1 天
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 1; // 确保至少显示 1 天
+};
+
 // 🔹 新增：Firebase 集合路径常量
 const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
 // ⭐️ 修复路径：将路径段数改为 3，有效集合路径 (集合/文档/集合)
@@ -953,6 +966,9 @@ export default function App() {
     return unsub;
   },[]);
 
+  // ⭐️ 新增：计算运行天数
+  const runningDays = useMemo(() => getRunningDays(), []); 
+  
   // 辅助判断
   const isAdmin = userId === ADMIN_USER_ID;
   const isUser = userId && userId !== 'anonymous' && !isAdmin; // ⭐️ 新增：普通已登录用户
@@ -1143,6 +1159,10 @@ export default function App() {
             >
                 极速导航网
             </h1>
+            {/* ⭐️ 新增：显示运行天数 ⭐️ */}
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+                本站已稳定运行 <span className="font-semibold text-blue-500 dark:text-blue-400">{runningDays}</span> 天
+            </p>
             
             {/* ⭐️ 移除：原本顶部的按钮容器，现在所有按钮都移到 FloatingButtons 组件中 */}
         </header>
