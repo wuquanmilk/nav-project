@@ -818,9 +818,8 @@ const Footer = ({ setCurrentPage }) => {
               className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
               onClick={() => setCurrentPage('home')}
             >
-              第一象限
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
+              </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               © {currentYear} 极速导航网. 保留所有权利.
             </p>
           </div>
@@ -831,18 +830,24 @@ const Footer = ({ setCurrentPage }) => {
                 key={idx}
                 href="#"
                 onClick={(e) => { e.preventDefault(); link.action(); }}
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
               >
                 {link.name}
               </a>
             ))}
-            {/* ⭐️ 样式修改：移除 dark 类 */}
-            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
+            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
+              <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
-                <Mail className="w-5 h-5" />
+              {/* ⭐️ 恢复：将图标改回外部链接图标 ExternalLink，并使用一个默认的外部网址 ⭐️ */}
+              <a 
+                  href="https://us-east-1.run.claw.cloud/signin?link=FZHSTH7HEBTU" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-blue-500 transition-colors" 
+                  title="外部链接/登录"
+              >
+                <ExternalLink className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -902,7 +907,7 @@ const DisclaimerPage = () => (
                 用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
             </p>
             <p className="pt-4 italic text-xs text-gray-500">
-                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
+                使用本网站即表示您已阅读、理解并同意本声明的所有内容。如您认为有侵权，可联系作者：113382613@qq.com。本站仅用于知识分享和技术交流，非商业用途。
             </p>
         </div>
     </div>
