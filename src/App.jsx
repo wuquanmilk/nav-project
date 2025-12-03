@@ -18,6 +18,7 @@ import {
   addDoc,
   deleteDoc,
   updateDoc,
+  setDoc, // ⭐️ 新增引入 setDoc
   getDocs,
   query,
 } from 'firebase/firestore';
@@ -533,7 +534,8 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-        await updateDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}); 
+        // ⭐️ 核心修复：使用 setDoc + merge 来处理 "文档可能不存在" 的情况
+        await setDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}, { merge: true }); 
         setEditId(null); 
         fetchData(); 
     } catch (error) {
@@ -636,7 +638,8 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
       try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: editData.icon || '' }));
-        await updateDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon}); 
+        // ⭐️ 核心修复：同样在用户面板使用 setDoc + merge
+        await setDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon}, { merge: true }); 
         setEditId(null); 
         fetchData();
       } catch (error) {
@@ -792,7 +795,6 @@ const SiteRuntime = () => {
 };
 
 // 🔹 页脚组件 
-// ⭐️ 修改内容：更新图标链接，增加运行时间
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -834,12 +836,10 @@ const Footer = ({ setCurrentPage }) => {
               </a>
             ))}
             
-            {/* ⭐️ 修改：更新了图标链接 */}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
               <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
-              {/* ⭐️ 修改：将原本的 Mail 图标改为 Globe 图标，并更新链接 */}
               <a href="https://adcwwvux.eu-central-1.clawcloudrun.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Claw Cloud Run">
                 <Globe className="w-5 h-5" />
               </a>
@@ -882,7 +882,6 @@ const AboutPage = () => (
 
 
 // 🔹 免责声明页面组件 
-// ⭐️ 修改内容：增加了第4条关于图标和侵权的声明
 const DisclaimerPage = () => (
     <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2>
@@ -899,7 +898,6 @@ const DisclaimerPage = () => (
             <p>
                 用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
             </p>
-            {/* ⭐️ 新增：第4条声明 */}
             <h3 className="text-lg font-semibold text-blue-600">4. 图标与版权声明</h3>
             <p>
                 本站网址图标有些因为网络原因、技术缺陷，可能导致图标显示不准确。如果涉及侵权，请联系作者删除。作者邮箱：<span className="font-bold">115382613@qq.com</span>
