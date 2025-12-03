@@ -1126,9 +1126,11 @@ export default function App() {
         return;
     }
     
-    const targetPath = (isUser || isAdmin) && userId !== 'anonymous' 
-        ? getUserNavPath(userId) 
-        : PUBLIC_NAV_PATH;       
+    // ⭐️ 核心修复 1: 仅在用户/管理员的编辑模式下使用自定义路径
+    const isCustomPath = (isUser || isAdmin) && isEditing; 
+    const targetPath = isCustomPath 
+        ? getUserNavPath(userId) // 个人编辑路径
+        : PUBLIC_NAV_PATH;       // 公共浏览路径
         
     const navCol = collection(db, targetPath); 
     
@@ -1151,13 +1153,22 @@ export default function App() {
         setIsFirebaseConnected(false); 
         setNavData(DEFAULT_NAV_DATA);
     });
+    // ⭐️ 修复 1 补充: 依赖数组中添加 isEditing
     return unsub;
-},[db, userId, isAdmin, isUser]); 
+},[db, userId, isAdmin, isUser, isEditing]); 
 
   const fetchData = async ()=>{
     if(!db || !userId) return;
-    const targetPath = isAdmin ? PUBLIC_NAV_PATH : getUserNavPath(userId);
+    
+    // ⭐️ 核心修复 2: 确保 fetchData 在编辑模式下也遵循正确的路径逻辑
+    // fetchData 经常在 AdminPanel (isEditing=true) 中调用，需要判断当前应读取的路径
+    const isCustomPath = (isUser || isAdmin) && isEditing;
+    const targetPath = isCustomPath 
+        ? getUserNavPath(userId) 
+        : PUBLIC_NAV_PATH;
+        
     const navCol = collection(db, targetPath);
+    
     try {
         const snapshot = await getDocs(navCol);
         const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
