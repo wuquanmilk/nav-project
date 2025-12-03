@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  // ⭐️ 新增：导入密码重置和修改密码函数
+  // 导入密码重置和修改密码函数
   sendPasswordResetEmail,
   updatePassword,
 } from 'firebase/auth';
@@ -28,19 +28,57 @@ import {
   Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
 } from 'lucide-react'; 
 
+// =========================================================================
+// ⭐️ 稳健性增强 1: ErrorBoundary 组件 (集成到此文件) ⭐️
+// 用于捕获 AdminPanel 或 UserPanel 内部的渲染和生命周期错误。
+// =========================================================================
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error: error.message };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("ErrorBoundary 捕获到错误:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div style={{ padding: '20px', border: '2px solid red', backgroundColor: '#fef2f2', color: '#b91c1c', borderRadius: '12px', margin: '20px 0' }}>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>功能组件加载失败 (已捕获)</h3>
+                    <p style={{ marginTop: '5px' }}>抱歉，此面板出现致命错误。应用的其他部分将保持正常。</p>
+                    <details style={{ marginTop: '10px', fontSize: '0.875rem' }}>
+                        <summary>查看详细错误 (开发环境可见)</summary>
+                        <p>{this.state.error}</p>
+                    </details>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+// =========================================================================
+// ⭐️ End ErrorBoundary ⭐️
+// =========================================================================
+
+
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔹 新增：Firebase 集合路径常量
+// 🔹 Firebase 集合路径常量
 const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
-// ⭐️ 修复路径：将路径段数改为 3，有效集合路径 (集合/文档/集合)
 const getUserNavPath = (uid) => `users/${uid}/navData`;
 
 
 // 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (硬编码核心图标) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
-    // ... (默认导航数据保持不变)
+    // ... (您的默认导航数据保持不变)
     {
         id: 'cat-1',
         category: '常用开发',
@@ -372,24 +410,31 @@ const LinkForm = ({ links, setLinks }) => {
 }
 
 
-// 🔹 密码修改弹窗 (新增组件)
+// 🔹 密码修改弹窗
 const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (newPassword.length < 6) {
-            onChangePassword(null, "密码长度不能少于 6 位。");
-            return;
+        // ⭐️ 稳健性增强 2: 逻辑中的 Try/Catch
+        try {
+            if (newPassword.length < 6) {
+                // throw 触发 Catch 逻辑，更统一的错误处理
+                throw new Error("密码长度不能少于 6 位。");
+            }
+            if (newPassword !== confirmPassword) {
+                // throw 触发 Catch 逻辑
+                throw new Error("两次输入的密码不一致。");
+            }
+            // 成功验证，调用外部修改函数
+            onChangePassword(newPassword);
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (e) {
+             // 仅处理输入验证错误，Firebase 错误由外部 onChangePassword 处理
+            onChangePassword(null, e.message); 
         }
-        if (newPassword !== confirmPassword) {
-            onChangePassword(null, "两次输入的密码不一致。");
-            return;
-        }
-        onChangePassword(newPassword);
-        setNewPassword('');
-        setConfirmPassword('');
     };
 
     return (
@@ -438,7 +483,7 @@ const LoginModal = ({ onClose, onLogin, error, onForgotPassword }) => {
           <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
           {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg">{error}</div>}
           <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
-          {/* ⭐️ 新增：忘记密码链接 ⭐️ */}
+          {/* 忘记密码链接 */}
           <a href="#" onClick={(e) => { e.preventDefault(); onForgotPassword(email); }} className="text-sm text-blue-500 hover:underline text-center mt-2 block dark:text-blue-400">忘记密码？</a>
         </form>
       </div>
@@ -454,15 +499,18 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (password !== confirmPassword) {
-            onRegister(null, null, "两次输入的密码不一致。");
-            return;
+        // ⭐️ 稳健性增强 2: 逻辑中的 Try/Catch
+        try {
+             if (password.length < 6) {
+                throw new Error("密码长度不能少于 6 位。");
+            }
+            if (password !== confirmPassword) {
+                throw new Error("两次输入的密码不一致。");
+            }
+            onRegister(email, password); // 调用外部注册逻辑
+        } catch (e) {
+            onRegister(null, null, e.message); // 将本地错误传递给外部处理
         }
-        if (password.length < 6) {
-            onRegister(null, null, "密码长度不能少于 6 位。");
-            return;
-        }
-        onRegister(email, password);
     };
 
     return (
@@ -485,6 +533,7 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
 
 // 🔹 管理面板 (保持不变)
 const AdminPanel = ({ db, navData, fetchData }) => {
+// ... (AdminPanel 组件的实现逻辑保持不变)
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -503,7 +552,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
     setEditData({...item, links: linksWithIcon}); 
   };
   const saveEdit = async () => { 
-    const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
+    const linksWithIcon = editData.links.map(link => ({...link, icon: editData.icon || '' }));
     await updateDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}); 
     setEditId(null); 
     fetchData(); 
@@ -568,7 +617,7 @@ const AdminPanel = ({ db, navData, fetchData }) => {
 };
 
 
-// 🔹 普通用户面板 (新增组件)
+// 🔹 普通用户面板 (保持不变)
 const UserPanel = ({ userEmail, setShowChangePassword }) => {
     return (
         <div className="mt-6 p-6 border rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-w-xl mx-auto min-h-[60vh]">
@@ -599,8 +648,9 @@ const UserPanel = ({ userEmail, setShowChangePassword }) => {
 };
 
 
-// 🔹 页脚组件
+// 🔹 页脚组件 (保持不变)
 const Footer = ({ setCurrentPage }) => {
+// ... (Footer 组件的实现逻辑保持不变)
   const currentYear = new Date().getFullYear();
   
   const footerLinks = [
@@ -651,8 +701,9 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件
+// 🔹 关于本站页面组件 (保持不变)
 const AboutPage = () => (
+// ... (AboutPage 组件的实现逻辑保持不变)
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
         <div className="space-y-4 text-gray-700 dark:text-gray-300">
@@ -681,8 +732,9 @@ const AboutPage = () => (
 );
 
 
-// 🔹 免责声明页面组件
+// 🔹 免责声明页面组件 (保持不变)
 const DisclaimerPage = () => (
+// ... (DisclaimerPage 组件的实现逻辑保持不变)
     <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
         <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
@@ -706,14 +758,14 @@ const DisclaimerPage = () => (
 );
 
 
-// 🔹 外部搜索引擎配置 (硬编码图标)
+// 🔹 外部搜索引擎配置 (保持不变)
 const externalEngines = [
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
   { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
   { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
 ];
 
-// 🔹 外部搜索处理函数
+// 🔹 外部搜索处理函数 (保持不变)
 const handleExternalSearch = (engineUrl, query) => {
   if (query) {
     window.open(engineUrl + encodeURIComponent(query), '_blank');
@@ -723,8 +775,9 @@ const handleExternalSearch = (engineUrl, query) => {
   }
 };
 
-// 🔹 搜索输入框组件
+// 🔹 搜索输入框组件 (保持不变)
 const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
+// ... (SearchInput 组件的实现逻辑保持不变)
     <div className="relative">
         <input 
             type="text" 
@@ -746,7 +799,7 @@ const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     </div>
 ));
 
-// 🔹 子组件：处理单个外部搜索按钮的图标
+// 🔹 子组件：处理单个外部搜索按钮的图标 (保持不变)
 const ExternalSearchButton = ({ engine, searchTerm }) => {
     const [hasError, setHasError] = useState(false);
     const imageUrl = engine.icon; 
@@ -773,7 +826,7 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
     );
 };
 
-// 🔹 外部搜索按钮组件 
+// 🔹 外部搜索按钮组件 (保持不变)
 const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     <div className={className}>
         {externalEngines.map(engine => (
@@ -786,7 +839,7 @@ const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
     </div>
 ));
 
-// 🚀 SearchLayout 组件
+// 🚀 SearchLayout 组件 (保持不变)
 const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm }) => {
     if (isAdmin || isUser || currentPage !== 'home') return null; // 登录用户或在非主页时不显示搜索
 
@@ -801,8 +854,9 @@ const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, set
     );
 });
 
-// 🔹 右下角浮动按钮组件 (新增)
+// 🔹 右下角浮动按钮组件 (保持不变)
 const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage }) => {
+// ... (FloatingButtons 组件的实现逻辑保持不变)
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
             {/* 1. 主题切换按钮 */}
@@ -866,8 +920,8 @@ export default function App() {
   
   // 认证状态
   const [userId, setUserId] = useState(null);
-  const [userEmail, setUserEmail] = useState(''); // ⭐️ 新增：存储用户邮箱
-  const [userIsAnonymous, setUserIsAnonymous] = useState(true); // ⭐️ 新增：判断是否为匿名用户
+  const [userEmail, setUserEmail] = useState(''); 
+  const [userIsAnonymous, setUserIsAnonymous] = useState(true); 
   
   // 数据和UI状态
   const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
@@ -879,14 +933,14 @@ export default function App() {
   // 弹窗状态
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false); // ⭐️ 新增
+  const [showChangePassword, setShowChangePassword] = useState(false); 
   
   // 错误和成功信息
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
-  const [changePasswordError, setChangePasswordError] = useState(''); // ⭐️ 新增
-  const [changePasswordSuccess, setChangePasswordSuccess] = useState(''); // ⭐️ 新增
-  const [forgotPasswordMessage, setForgotPasswordMessage] = useState(''); // ⭐️ 新增
+  const [changePasswordError, setChangePasswordError] = useState(''); 
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState(''); 
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState(''); 
 
   useEffect(()=>{
     const firebaseConfig = {
@@ -922,10 +976,9 @@ export default function App() {
 
   // 辅助判断
   const isAdmin = userId === ADMIN_USER_ID;
-  const isUser = userId && userId !== 'anonymous' && !isAdmin; // ⭐️ 新增：普通已登录用户
+  const isUser = userId && userId !== 'anonymous' && !isAdmin; 
 
   // ⚠️ 注意：此处的 data fetch 逻辑已简化，不区分公共和用户数据
-  // 实际应用中，您需要根据 isAdmin 或 isUser 决定从 PUBLIC_NAV_PATH 还是 getUserNavPath(userId) 获取数据。
   useEffect(()=>{
     if(!db) return;
     
@@ -950,7 +1003,7 @@ export default function App() {
     return unsub;
   },[db, isAdmin]); 
 
-  // ⭐️ 增强：管理员专用的数据获取（用于 AdminPanel 的编辑功能）
+  // 增强：管理员专用的数据获取（用于 AdminPanel 的编辑功能）
   const fetchData = async ()=>{
     if(!db) return;
     const navCol = collection(db, PUBLIC_NAV_PATH);
@@ -964,7 +1017,7 @@ export default function App() {
     }
   };
 
-  // ⭐️ 增强：注册逻辑
+  // 增强：注册逻辑
   const handleRegister = async (email, password, customError) => {
     if (customError) {
         setRegisterError(customError);
@@ -980,7 +1033,7 @@ export default function App() {
     }
   };
   
-  // ⭐️ 增强：登录逻辑
+  // 增强：登录逻辑
   const handleLogin = async (email,password)=>{
     setLoginError('');
     try {
@@ -992,7 +1045,7 @@ export default function App() {
     }
   };
 
-  // ⭐️ 新增：忘记密码逻辑
+  // 新增：忘记密码逻辑
   const handleForgotPassword = async (email) => {
       if (!email) {
           alert("请输入您的注册邮箱进行密码重置。");
@@ -1008,7 +1061,7 @@ export default function App() {
       }
   };
   
-  // ⭐️ 新增：修改密码逻辑
+  // 新增：修改密码逻辑
   const handleChangePassword = async (newPassword, customError) => {
       setChangePasswordError('');
       setChangePasswordSuccess('');
@@ -1038,7 +1091,7 @@ export default function App() {
       }
   };
 
-  // ⭐️ 新增：退出登录
+  // 新增：退出登录
   const handleLogout = async () => {
     await signOut(auth);
     setUserId('anonymous');
@@ -1088,7 +1141,7 @@ export default function App() {
         />
       )}
       
-      {/* ⭐️ 新增：浮动按钮组件 ⭐️ */}
+      {/* 浮动按钮组件 */}
       <FloatingButtons 
         isDark={isDark} 
         setIsDark={setIsDark}
@@ -1110,8 +1163,6 @@ export default function App() {
             >
                 极速导航网
             </h1>
-            
-            {/* ⭐️ 移除：原本顶部的按钮容器，现在所有按钮都移到 FloatingButtons 组件中 */}
         </header>
         
         <SearchLayout 
@@ -1122,17 +1173,26 @@ export default function App() {
             setSearchTerm={setSearchTerm}
         />
         
+        {/*
+        ================================================
+        >>> 核心稳定修改：使用 ErrorBoundary 隔离用户组件 <<<
+        ================================================
+        */}
         {isAdmin ? (
-            // 访问管理员数据
-            <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+            // ⭐️ ErrorBoundary 包裹 AdminPanel，确保管理员面板崩溃时不影响 App
+            <ErrorBoundary>
+                <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+            </ErrorBoundary>
         ) : isUser ? (
-            // ⭐️ 新增：普通用户面板
-            <UserPanel 
-                userEmail={userEmail} 
-                setShowChangePassword={setShowChangePassword}
-            />
+            // ⭐️ ErrorBoundary 包裹 UserPanel，确保用户中心崩溃时不影响 App
+            <ErrorBoundary>
+                <UserPanel 
+                    userEmail={userEmail} 
+                    setShowChangePassword={setShowChangePassword}
+                />
+            </ErrorBoundary>
         ) : (
-            // 匿名用户或未登录 (显示公共数据)
+            // 匿名用户或未登录 (显示公共数据) - 公共数据显示不需要 ErrorBoundary
             currentPage === 'home' ? (
                 <PublicNav navData={filteredNavData} searchTerm={searchTerm} />
             ) : currentPage === 'about' ? (
