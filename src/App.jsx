@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  // ⭐️ 导入密码重置和修改密码函数
+  // 导入密码重置和修改密码函数
   sendPasswordResetEmail,
   updatePassword,
 } from 'firebase/auth';
@@ -30,7 +30,6 @@ import {
 
 // =========================================================================
 // ⭐️ 稳健性增强 1: ErrorBoundary 组件 (集成到此文件) ⭐️
-// 用于捕获 AdminPanel 或 UserPanel 内部的渲染和生命周期错误。
 // =========================================================================
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -759,8 +758,8 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
 };
 
 
-// 🔹 普通用户面板 (保持不变)
-const UserPanel = ({ userEmail, setShowChangePassword }) => {
+// 🔹 普通用户面板 (UserPanel) ⭐️ 传递 setCurrentPage
+const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
     return (
         <div className="mt-6 p-6 border rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-w-xl mx-auto min-h-[60vh]">
             <h3 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center">
@@ -781,6 +780,14 @@ const UserPanel = ({ userEmail, setShowChangePassword }) => {
                     >
                         <Lock className="w-5 h-5"/>
                         <span>修改密码</span>
+                    </button>
+                    {/* ⭐️ 新增：返回主页按钮 (备用导航) */}
+                    <button
+                        onClick={() => setCurrentPage('home')}
+                        className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors mt-3"
+                    >
+                        <Globe className="w-5 h-5"/>
+                        <span>返回导航主页</span>
                     </button>
                 </div>
             </div>
@@ -998,7 +1005,7 @@ const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmai
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
             
-            {/* 3. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) ⭐️ 新增 */}
+            {/* 3. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) */}
             {(isAdmin || !userIsAnonymous) && currentPage === 'home' && (
                 <button 
                     onClick={() => setIsEditing(!isEditing)} 
@@ -1043,10 +1050,18 @@ const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmai
               // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
               <>
                 <button
-                    onClick={() => { setCurrentPage('user'); setIsEditing(false); }} // 切换到用户中心时自动退出编辑模式
+                    // ⭐️ 核心修改：如果当前在用户资料页，点击则返回主页
+                    onClick={() => { 
+                        if (currentPage === 'user') {
+                            setCurrentPage('home'); // 如果在用户页，返回主页
+                        } else {
+                            setCurrentPage('user'); // 否则，进入用户页
+                            setIsEditing(false);    // 并退出编辑模式
+                        }
+                    }} 
                     className={`p-3 rounded-full shadow-xl text-white transition-all 
                                ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                    title={isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`}
+                    title={currentPage === 'user' ? `返回导航主页` : (isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`)}
                 >
                     <User className="w-6 h-6"/> 
                 </button>
@@ -1327,13 +1342,14 @@ export default function App() {
         // PublicNav will show the correct data (public or user's private) based on the navData state fetched by useEffect
         content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
     }
-  } else if (currentPage === 'user' && isUser) {
+  } else if (currentPage === 'user' && (isUser || isAdmin)) { // 允许管理员也能进入用户资料页
       // User Profile page
       content = (
           <ErrorBoundary>
               <UserPanel 
                   userEmail={userEmail} 
                   setShowChangePassword={setShowChangePassword}
+                  setCurrentPage={setCurrentPage} // ⭐️ 传递 setCurrentPage
               />
           </ErrorBoundary>
       );
