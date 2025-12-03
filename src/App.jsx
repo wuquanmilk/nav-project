@@ -1,27 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  signInAnonymously,
-  signOut,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  updatePassword,
-} from 'firebase/auth';
-import {
-  getFirestore,
-  collection,
-  onSnapshot,
-  doc,
-  addDoc,
-  deleteDoc,
-  updateDoc,
-  setDoc, // ⭐️ 引入 setDoc (用于解决 No document to update 错误)
-  getDocs,
-  query,
-} from 'firebase/firestore';
+// 🚫 移除所有 Firebase 的 import
+// import { initializeApp } from 'firebase/app';
+// import { getAuth, ... } from 'firebase/auth';
+// import { getFirestore, ... } from 'firebase/firestore'; 
+
 // 导入需要的图标
 import { 
   ExternalLink, LogIn, X, Github, Mail, Globe, Search, User, UserPlus, Lock, CheckCircle, AlertTriangle,
@@ -62,22 +44,57 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+// =========================================================================
+// ⭐️ 新增：API 配置和模拟存储 ⭐️
+// =========================================================================
+
+// ⚠️ 请将此替换为您实际部署的 API 后端地址 (用于解决国内访问问题) ⚠️
+const API_BASE_URL = 'https://your-api.com'; 
+
+const API_ENDPOINTS = {
+    // 导航数据 API
+    publicNav: `${API_BASE_URL}/api/nav/public`,
+    userNav: `${API_BASE_URL}/api/nav/user`,
+    // 认证 API
+    login: `${API_BASE_URL}/api/auth/login`,
+    register: `${API_BASE_URL}/api/auth/register`,
+    logout: `${API_BASE_URL}/api/auth/logout`,
+    updatePassword: `${API_BASE_URL}/api/auth/updatePassword`,
+    resetPassword: `${API_BASE_URL}/api/auth/resetPassword`,
+};
+
+// 辅助函数：用户状态和 Token 管理 (模拟 Firebase Auth 状态)
+const getStoredAuthState = () => {
+    const token = localStorage.getItem('authToken');
+    const uid = localStorage.getItem('userId');
+    const email = localStorage.getItem('userEmail');
+    const isAnonymous = !token; 
+    return { token, uid, email, isAnonymous };
+};
+
+const setStoredAuthState = ({ token, uid, email, isAnonymous = false }) => {
+    if (token) {
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userId', uid);
+        localStorage.setItem('userEmail', email);
+    } else {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userEmail');
+    }
+};
+
 // 🔹 配置你的管理员 UID
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2';
 const APP_ID = 'default-app-id';
 
-// 🔹 Firebase 集合路径常量
-const PUBLIC_NAV_PATH = `artifacts/${APP_ID}/public/data/navData`;
-const getUserNavPath = (uid) => `users/${uid}/navData`; 
-
-// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已删除指定链接) 🔥🔥🔥
+// 🔥🔥🔥 您的导航数据：DEFAULT_NAV_DATA (已确认顺序和内容) 🔥🔥🔥
 const DEFAULT_NAV_DATA = [
     {
         id: 'cat-1',
         category: '常用开发',
         order: 0,
         links: [
-            // 已删除 HuggingFace, clawcloudrun, firebase, dpdns
             { name: 'github', url: 'https://github.com/', description: '全球最大的代码托管平台', icon: 'https://github.com/fluidicon.png' },
             { name: 'cloudflare', url: 'https://dash.cloudflare.com/', description: 'CDN 与网络安全服务控制台', icon: 'https://www.cloudflare.com/favicon.ico' },
             { name: 'Supabase', url: 'https://supabase.com/', description: '开源 Firebase 替代方案', icon: 'https://supabase.com/favicon.ico' },
@@ -112,7 +129,6 @@ const DEFAULT_NAV_DATA = [
             { name: 'instagram', url: 'https://www.instagram.com/', description: '图片与短视频分享社区', icon: 'https://www.instagram.com/static/images/ico/favicon.ico/31604a141b77.ico' },
             { name: '快手', url: 'https://www.kuaishou.com/', description: '短视频分享平台', icon: 'https://www.kuaishou.com/favicon.ico' },
             { name: '抖音', url: 'https://www.douyin.com/', description: '国内短视频平台', icon: 'https://www.douyin.com/favicon.ico' },
-            // 已删除 TikTok
             { name: 'Snapchat', url: 'https://www.snapchat.com/', description: '阅后即焚社交应用', icon: 'https://www.snapchat.com/favicon.ico' },
         ],
     },
@@ -170,7 +186,6 @@ const DEFAULT_NAV_DATA = [
             { name: '第一工具网', url: 'https://d1tools.com/', description: '综合在线工具集合', icon: 'https://d1tools.com/favicon.ico' },
             { name: 'PHP混淆加密', url: 'https://www.toolnb.com/tools/phpcarbylamine.html', description: 'PHP 代码加密与混淆', icon: 'https://www.toolnb.com/favicon.ico' },
             { name: 'json工具', url: 'https://www.json.cn/', description: 'JSON 格式化与校验', icon: 'https://www.json.cn/favicon.ico' },
-            // 已删除 网站打包app
             { name: 'Emoji 表情大全', url: 'https://www.iamwawa.cn/emoji.html', description: 'Emoji 符号查找', icon: 'https://www.iamwawa.cn/favicon.ico' },
         ],
     },
@@ -190,19 +205,14 @@ const DEFAULT_NAV_DATA = [
         links: [
             { name: '淘宝网', url: 'https://taobao.com', description: '国内大型综合购物网站', icon: 'https://www.taobao.com/favicon.ico' },
             { name: '京东商城', url: 'https://jd.com', description: '国内知名自营电商', icon: 'https://www.jd.com/favicon.ico' },
-            // 已删除 亚马逊
         ],
     },
 ];
 
 const DebugBar = () => null;
 
-// =========================================================================
 // ⬇️ 图标映射和处理逻辑 ⬇️
-// =========================================================================
-
 const ICON_MAP = {
-    // 已删除 huggingface, clawcloudrun, firebase, dpdns
     'github': Github,
     'cloudflare': Cloud,
     'supabase': Database,
@@ -223,7 +233,6 @@ const ICON_MAP = {
     'instagram': Camera,
     '快手': Camera,
     '抖音': Camera, 
-    // 已删除 tiktok
     'snapchat': Camera,
     'browserscan': Network,
     'ping0': Network,
@@ -254,12 +263,10 @@ const ICON_MAP = {
     'php混淆加密': Wrench,
     'json工具': Wrench, 
     'emoji 表情大全': Wrench,
-    // 已删除 网站打包app
     '在线代理': Network,
     '免费网络代理': Network,
     '淘宝网': ShoppingCart,
     '京东商城': ShoppingCart,
-    // 已删除 亚马逊
 };
 
 const DefaultFallbackIcon = Globe; 
@@ -500,120 +507,150 @@ const RegisterModal = ({ onClose, onRegister, error }) => {
     );
 };
 
-// 🔹 管理面板 (编辑公共数据)
-const AdminPanel = ({ db, navData, fetchData }) => {
-  const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
-  const [editId, setEditId] = useState(null);
-  const [editData, setEditData] = useState({});
-  const navCollection = collection(db, PUBLIC_NAV_PATH); 
+// 辅助函数：带 Token 的 API 请求
+const apiFetch = async (url, method = 'GET', body = null) => {
+    const { token } = getStoredAuthState();
+    
+    const headers = {
+        'Content-Type': 'application/json',
+        // 携带认证 Token
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+    
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null,
+    });
 
-  const handleAddCategory = async () => {
-    try {
-        if (!newCategory.category) return alert('请输入分类名称');
-        const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
-        await addDoc(navCollection, {...newCategory, links: linksWithIcon});
-        setNewCategory({ category: '', order: 0, links: [] });
-        fetchData();
-    } catch (error) {
-        alert("新增公共分类失败：" + error.message);
-        console.error("Error adding admin category:", error);
-    }
-  };
-  const startEdit = (item) => { 
-    const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
-    setEditId(item.id); 
-    setEditData({...item, links: linksWithIcon}); 
-  };
-  const saveEdit = async () => { 
-    try {
-        if (!editData.category) return alert('分类名称不能为空');
-        const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
-        // ⭐️ 修复：使用 setDoc + merge 来处理 "文档可能不存在" 的情况
-        await setDoc(doc(db, PUBLIC_NAV_PATH, editId), {...editData, links: linksWithIcon}, { merge: true }); 
-        setEditId(null); 
-        fetchData(); 
-    } catch (error) {
-        alert("保存公共分类失败：" + error.message);
-        console.error("Error saving admin category:", error);
-    }
-  };
-  const handleDelete = async (id) => { 
-    if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
+    if (!response.ok) {
+        let errorData = {};
         try {
-            await deleteDoc(doc(db, PUBLIC_NAV_PATH, id)); 
-            fetchData();
-        } catch (error) {
-            alert("删除公共分类失败：" + error.message);
-            console.error("Error deleting admin category:", error);
-        }
+            errorData = await response.json();
+        } catch {}
+        throw new Error(errorData.message || `API 请求失败: ${response.status} ${response.statusText}`);
     }
-  };
+    
+    if (response.status === 204) {
+        return {};
+    }
 
-  return (
-    <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
-      <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (编辑公共数据)</h3>
-      <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
-          <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
-          <div className="flex flex-col gap-3">
-              <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
-              <div className="flex items-center space-x-2">
-                  <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                  <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
-              </div>
-              <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
-              <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
-          </div>
-      </div>
-      
-      <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有公共分类</h4>
-      {navData.map(item=>(
-        <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
-          {editId === item.id ? (
-            <>
-              <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
-              </div>
-              <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
-              <div className="flex space-x-2 mt-3">
-                <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
-                <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
-                <div className="flex space-x-2">
-                  <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
-                  <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
-                </div>
-              </div>
-              <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
-                {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
-              </ul>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+    return response.json();
 };
 
-// 🔹 用户的自定义导航面板
-const UserNavPanel = ({ db, userId, navData, fetchData }) => {
+// 🔹 管理面板 (编辑公共数据) - 使用 API 替换 Firestore
+const AdminPanel = ({ navData, fetchData }) => {
     const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
     const [editId, setEditId] = useState(null);
     const [editData, setEditData] = useState({});
-    
-    const navCollection = collection(db, getUserNavPath(userId)); 
+
+    const handleAddCategory = async () => {
+        try {
+            if (!newCategory.category) return alert('请输入分类名称');
+            const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
+            await apiFetch(API_ENDPOINTS.publicNav, 'POST', {...newCategory, links: linksWithIcon});
+            
+            setNewCategory({ category: '', order: 0, links: [] });
+            fetchData();
+        } catch (error) {
+            alert("新增公共分类失败：" + error.message);
+            console.error("Error adding admin category:", error);
+        }
+    };
+    const startEdit = (item) => { 
+      const linksWithIcon = item.links ? item.links.map(link => ({...link, icon: link.icon || '' })) : [];
+      setEditId(item.id); 
+      setEditData({...item, links: linksWithIcon}); 
+    };
+    const saveEdit = async () => { 
+        try {
+            if (!editData.category) return alert('分类名称不能为空');
+            const linksWithIcon = editData.links.map(link => ({...link, icon: link.icon || '' }));
+            await apiFetch(`${API_ENDPOINTS.publicNav}/${editId}`, 'PUT', {...editData, links: linksWithIcon}); 
+            
+            setEditId(null); 
+            fetchData(); 
+        } catch (error) {
+            alert("保存公共分类失败：" + error.message);
+            console.error("Error saving admin category:", error);
+        }
+    };
+    const handleDelete = async (id) => { 
+        if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
+            try {
+                await apiFetch(`${API_ENDPOINTS.publicNav}/${id}`, 'DELETE');
+                fetchData();
+            } catch (error) {
+                alert("删除公共分类失败：" + error.message);
+                console.error("Error deleting admin category:", error);
+            }
+        }
+    };
+
+    return (
+        <div className="mt-6 p-4 border rounded bg-gray-50 dark:bg-gray-800">
+          <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">管理员面板 (编辑公共数据)</h3>
+          <div className="p-4 mb-4 bg-white dark:bg-gray-700 rounded-lg shadow">
+              <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">新增分类</h4>
+              <div className="flex flex-col gap-3">
+                  <input placeholder="分类名" className="border p-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={newCategory.category} onChange={e => setNewCategory({...newCategory, category:e.target.value})}/>
+                  <div className="flex items-center space-x-2">
+                      <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                      <input type="number" placeholder="0" className="border p-2 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={newCategory.order} onChange={e => setNewCategory({...newCategory, order:Number(e.target.value)})}/>
+                  </div>
+                  <LinkForm links={newCategory.links} setLinks={(links)=>setNewCategory({...newCategory, links})}/>
+                  <button onClick={handleAddCategory} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 self-start">新增分类</button>
+              </div>
+          </div>
+          
+          <h4 className="font-semibold mb-2 text-gray-800 dark:text-white">现有公共分类</h4>
+          {navData.map(item=>(
+            <div key={item.id} className="border p-3 mb-3 rounded bg-white dark:bg-gray-700 shadow-sm">
+              {editId === item.id ? (
+                <>
+                  <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                    <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+                  </div>
+                  <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
+                  <div className="flex space-x-2 mt-3">
+                    <button onClick={saveEdit} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">保存</button>
+                    <button onClick={()=>setEditId(null)} className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">取消</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-bold text-gray-800 dark:text-gray-100">{item.category} (排序: {item.order})</h4>
+                    <div className="flex space-x-2">
+                      <button onClick={()=>startEdit(item)} className="bg-yellow-500 text-white text-sm px-3 py-1 rounded hover:bg-yellow-600">编辑</button>
+                      <button onClick={()=>handleDelete(item.id)} className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600">删除</button>
+                    </div>
+                  </div>
+                  <ul className="ml-4 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+                    {item.links?.map((l,idx)=><li key={idx} className="truncate">{l.name} - <span className="text-blue-500">{l.url}</span></li>)}
+                  </ul>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+    );
+};
+
+// 🔹 用户的自定义导航面板 - 使用 API 替换 Firestore
+const UserNavPanel = ({ userId, navData, fetchData }) => {
+    const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
+    const [editId, setEditId] = useState(null);
+    const [editData, setEditData] = useState({});
 
     const handleAddCategory = async () => {
       try {
         if (!newCategory.category) return alert('请输入分类名称');
         const linksWithIcon = newCategory.links.map(link => ({...link, icon: link.icon || '' }));
-        await addDoc(navCollection, {...newCategory, links: linksWithIcon});
+        await apiFetch(API_ENDPOINTS.userNav, 'POST', {...newCategory, links: linksWithIcon, userId});
+        
         setNewCategory({ category: '', order: 0, links: [] });
         fetchData(); 
       } catch (error) {
@@ -632,8 +669,8 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
       try {
         if (!editData.category) return alert('分类名称不能为空');
         const linksWithIcon = editData.links.map(link => ({...link, icon: editData.icon || '' }));
-        // ⭐️ 修复：同样在用户面板使用 setDoc + merge
-        await setDoc(doc(db, getUserNavPath(userId), editId), {...editData, links: linksWithIcon}, { merge: true }); 
+        await apiFetch(`${API_ENDPOINTS.userNav}/${editId}`, 'PUT', {...editData, links: linksWithIcon, userId}); 
+        
         setEditId(null); 
         fetchData();
       } catch (error) {
@@ -645,7 +682,7 @@ const UserNavPanel = ({ db, userId, navData, fetchData }) => {
     const handleDelete = async (id) => { 
       if(window.confirm(`确认删除分类: ${navData.find(d => d.id === id)?.category} 吗?`)) {
           try {
-              await deleteDoc(doc(db, getUserNavPath(userId), id)); 
+              await apiFetch(`${API_ENDPOINTS.userNav}/${id}`, 'DELETE');
               fetchData();
           } catch (error) {
               alert("删除失败：" + error.message);
@@ -752,32 +789,22 @@ const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => {
     );
 };
 
-// 🔹 辅助组件：网站运行时间计时器
+// 🔹 辅助组件：网站运行时间计时器 (略)
 const SiteRuntime = () => {
     const [timeStr, setTimeStr] = useState('加载中...');
 
     useEffect(() => {
-        // ⭐️ 请在此修改建站日期 (格式: YYYY-MM-DD)
         const START_DATE = '2024-01-01'; 
-        
         const updateTime = () => {
             const start = new Date(START_DATE);
             const now = new Date();
             const diff = now - start;
-
-            if (diff < 0) {
-                setTimeStr('筹备中...');
-                return;
-            }
-
+            if (diff < 0) { setTimeStr('筹备中...'); return; }
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            
-            // 如果只需要显示天数：
             setTimeStr(`${days} 天`);
         };
-
-        updateTime(); // 立即执行一次
-        const timer = setInterval(updateTime, 1000 * 60); // 每分钟更新一次即可
+        updateTime(); 
+        const timer = setInterval(updateTime, 1000 * 60); 
         return () => clearInterval(timer);
     }, []);
 
@@ -788,7 +815,7 @@ const SiteRuntime = () => {
     );
 };
 
-// 🔹 页脚组件 
+// 🔹 页脚组件 (略)
 const Footer = ({ setCurrentPage }) => {
   const currentYear = new Date().getFullYear();
   
@@ -812,7 +839,6 @@ const Footer = ({ setCurrentPage }) => {
             <p className="text-sm text-gray-500 mt-1">
               © {currentYear} 极速导航网. 保留所有权利.
             </p>
-            {/* ⭐️ 新增：稳定运行时间显示 */}
             <p className="text-xs text-gray-400 mt-1 flex items-center justify-center">
                <Clock className="w-3 h-3 mr-1"/> 本站已稳定运行 <SiteRuntime />
             </p>
@@ -845,7 +871,7 @@ const Footer = ({ setCurrentPage }) => {
   );
 };
 
-// 🔹 关于本站页面组件
+// 🔹 关于本站页面组件 (略)
 const AboutPage = () => (
     <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
@@ -875,7 +901,7 @@ const AboutPage = () => (
 );
 
 
-// 🔹 免责声明页面组件 
+// 🔹 免责声明页面组件 (略)
 const DisclaimerPage = () => (
     <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
         <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2>
@@ -903,7 +929,7 @@ const DisclaimerPage = () => (
     </div>
 );
 
-// 🔹 外部搜索引擎配置
+// 🔹 外部搜索引擎配置 (略)
 const externalEngines = [
   { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
   { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
@@ -1059,18 +1085,17 @@ const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, se
 
 // 🔹 主应用 (App 组件)
 export default function App() {
-  const [firebaseApp, setFirebaseApp] = useState(null);
-  const [auth, setAuth] = useState(null);
-  const [db, setDb] = useState(null);
   
-  const [userId, setUserId] = useState(null);
-  const [userEmail, setUserEmail] = useState(''); 
-  const [userIsAnonymous, setUserIsAnonymous] = useState(true); 
+  // ⭐️ 新增：使用本地存储状态
+  const initialAuthState = getStoredAuthState();
+  const [userId, setUserId] = useState(initialAuthState.uid);
+  const [userEmail, setUserEmail] = useState(initialAuthState.email); 
+  const [userIsAnonymous, setUserIsAnonymous] = useState(initialAuthState.isAnonymous); 
   
   const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
-  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(true); // 始终假设 API 连接成功
   const [isEditing, setIsEditing] = useState(false); 
   
   const [showLogin, setShowLogin] = useState(false);
@@ -1082,91 +1107,69 @@ export default function App() {
   const [changePasswordError, setChangePasswordError] = useState(''); 
   const [changePasswordSuccess, setChangePasswordSuccess] = useState(''); 
 
-  useEffect(()=>{
-    const firebaseConfig = {
-      apiKey: "AIzaSyAlkYbLP4jW1P-XRJtCvC6id8GlIxxY8m4",
-      authDomain: "wangzhandaohang.firebaseapp.com",
-      projectId: "wangzhandaohang",
-      storageBucket: "wangzhandaohang.firebasestorage.app",
-      messagingSenderId: "169263636408",
-      appId: "1:169263636408:web:ee3608652b2872a539b94d",
+  // 🚫 移除 Firebase 初始化 useEffect
+  useEffect(() => {
+    // ⭐️ 模拟认证状态检查（使用本地存储的 Token）
+    const checkAuthStatus = async () => {
+        const { uid, email } = getStoredAuthState();
+        
+        if (uid) {
+            setUserId(uid);
+            setUserEmail(email);
+            setUserIsAnonymous(false);
+        } else {
+            setUserId('anonymous');
+            setUserEmail('');
+            setUserIsAnonymous(true);
+        }
+        setCurrentPage('home');
+        setIsEditing(false);
     };
-    const app = initializeApp(firebaseConfig);
-    const _auth = getAuth(app);
-    const _db = getFirestore(app);
-    setFirebaseApp(app); setAuth(_auth); setDb(_db);
 
-    const unsub = onAuthStateChanged(_auth, user=>{
-      if(user) {
-        setUserId(user.uid);
-        setUserEmail(user.email || '匿名用户');
-        setUserIsAnonymous(user.isAnonymous);
-        setCurrentPage('home'); 
-        setIsEditing(false); 
-      } else { 
-        signInAnonymously(_auth).catch(console.error); 
-        setUserId('anonymous');
-        setUserEmail('');
-        setUserIsAnonymous(true);
-        setCurrentPage('home'); 
-        setIsEditing(false); 
-      }
-    });
-    return unsub;
-  },[]);
+    checkAuthStatus();
+  }, []);
 
   const isAdmin = userId === ADMIN_USER_ID;
   const isUser = userId && userId !== 'anonymous' && !isAdmin; 
 
-  useEffect(()=>{
-    if(!db || !userId) {
-        if (!db) {
+  // ⭐️ 数据获取函数 (API 驱动)
+  const fetchData = async ()=>{
+    // 确定目标 API 路径
+    const targetUrl = (isUser || isAdmin) && userId !== 'anonymous' 
+        ? `${API_ENDPOINTS.userNav}?userId=${userId}` // 用户的自定义数据
+        : API_ENDPOINTS.publicNav; // 公共数据
+
+    try {
+        const data = await apiFetch(targetUrl, 'GET');
+
+        if (!Array.isArray(data)) {
+            throw new Error("API返回的数据格式不正确。");
+        }
+        
+        data.sort((a,b)=>(a.order||0)-(b.order||0));
+
+        // 如果用户自定义数据为空，则回退到硬编码的默认数据
+        if (data.length === 0 && (isUser || isAdmin)) {
+            setNavData(DEFAULT_NAV_DATA); 
+        } else if (data.length > 0) { 
+            setNavData(data);
+        } else {
             setNavData(DEFAULT_NAV_DATA);
         }
-        return;
-    }
-    
-    const targetPath = (isUser || isAdmin) && userId !== 'anonymous' 
-        ? getUserNavPath(userId) 
-        : PUBLIC_NAV_PATH;       
-        
-    const navCol = collection(db, targetPath); 
-    
-    const unsub = onSnapshot(navCol, snapshot=>{
-      const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
-      data.sort((a,b)=>(a.order||0)-(b.order||0));
-      
-      setIsFirebaseConnected(true); 
-      if (data.length === 0 && (isUser || isAdmin)) {
-          setNavData(DEFAULT_NAV_DATA); 
-      } else if (data.length > 0) { 
-          setNavData(data);
-      } else if (!isFirebaseConnected) {
-          setNavData(DEFAULT_NAV_DATA);
-      }
-      
-    }, 
-    (error) => {
-        console.warn(`Firebase fetch failed for ${isUser ? 'user' : 'public'} data. Using internal fallback.`, error.message);
+        setIsFirebaseConnected(true);
+    } catch (error) {
+        console.warn(`Data fetch failed from API. Using internal fallback.`, error.message);
         setIsFirebaseConnected(false); 
         setNavData(DEFAULT_NAV_DATA);
-    });
-    return unsub;
-},[db, userId, isAdmin, isUser]); 
-
-  const fetchData = async ()=>{
-    if(!db || !userId) return;
-    const targetPath = isAdmin ? PUBLIC_NAV_PATH : getUserNavPath(userId);
-    const navCol = collection(db, targetPath);
-    try {
-        const snapshot = await getDocs(navCol);
-        const data = snapshot.docs.map(d=>({id:d.id,...d.data()}));
-        data.sort((a,b)=>(a.order||0)-(b.order||0));
-        setNavData(data);
-    } catch (error) {
-        console.error("Data fetch failed:", error);
     }
   };
+
+  // ⭐️ 数据获取 useEffect 改造
+  useEffect(()=>{
+    fetchData();
+  },[userId, isAdmin, isUser]); // 依赖于 userId 等状态
+
+  // ⭐️ 认证函数改造：使用 API 替换 Firebase Auth
 
   const handleRegister = async (email, password, customError) => {
     if (customError) {
@@ -1175,7 +1178,14 @@ export default function App() {
     }
     setRegisterError('');
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const result = await apiFetch(API_ENDPOINTS.register, 'POST', { email, password });
+        
+        // 假设 API 成功返回 token, uid, email
+        setStoredAuthState(result);
+        setUserId(result.uid);
+        setUserEmail(result.email);
+        setUserIsAnonymous(false);
+        
         setShowRegister(false);
         alert('注册成功！已自动登录。'); 
     } catch(e) { 
@@ -1186,7 +1196,14 @@ export default function App() {
   const handleLogin = async (email,password)=>{
     setLoginError('');
     try {
-      await signInWithEmailAndPassword(auth,email,password);
+      const result = await apiFetch(API_ENDPOINTS.login, 'POST', { email, password });
+      
+      // 假设 API 成功返回 token, uid, email
+      setStoredAuthState(result);
+      setUserId(result.uid);
+      setUserEmail(result.email);
+      setUserIsAnonymous(false);
+      
       setShowLogin(false); 
     } catch(e){ 
       setLoginError(e.message); 
@@ -1199,7 +1216,8 @@ export default function App() {
           return;
       }
       try {
-          await sendPasswordResetEmail(auth, email);
+          await apiFetch(API_ENDPOINTS.resetPassword, 'POST', { email });
+          
           alert(`密码重置链接已发送到邮箱: ${email}。请检查您的收件箱和垃圾邮件。`);
           setShowLogin(false);
       } catch (e) {
@@ -1216,28 +1234,27 @@ export default function App() {
           return;
       }
       
-      const user = auth.currentUser;
-      if (!user) {
-          setChangePasswordError('用户未登录。');
-          return;
-      }
-
       try {
-          await updatePassword(user, newPassword);
+          await apiFetch(API_ENDPOINTS.updatePassword, 'POST', { newPassword });
+          
           setChangePasswordSuccess('密码修改成功！您可能需要重新登录。');
       } catch (e) {
-          if (e.code === 'auth/requires-recent-login') {
-            setChangePasswordError('出于安全考虑，请先退出并重新登录，然后再尝试修改密码。');
-          } else {
-            setChangePasswordError(e.message);
-          }
+          setChangePasswordError(e.message);
       }
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    try {
+        await apiFetch(API_ENDPOINTS.logout, 'POST');
+    } catch(e) {
+        console.error("Logout API failed (ignoring):", e);
+    }
+    
+    // 清除本地状态
+    setStoredAuthState({ token: null, uid: null, email: null });
     setUserId('anonymous');
     setUserEmail('');
+    setUserIsAnonymous(true);
     setIsEditing(false); 
   };
 
@@ -1276,14 +1293,13 @@ export default function App() {
         if (isAdmin) {
             content = (
                 <ErrorBoundary>
-                    <AdminPanel db={db} navData={navData} fetchData={fetchData} />
+                    <AdminPanel navData={navData} fetchData={fetchData} />
                 </ErrorBoundary>
             );
         } else { 
             content = (
                 <ErrorBoundary>
                     <UserNavPanel 
-                        db={db} 
                         userId={userId} 
                         navData={navData} 
                         fetchData={fetchData} 
