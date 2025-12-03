@@ -637,18 +637,37 @@ const Footer = ({ setCurrentPage }) => {
               </a>
             ))}
             <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+              
+              {/* ⭐️ 修正：Github 链接已恢复 ⭐️ */}
+              <a 
+                href="https://github.com/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" 
+                title="Github"
+              >
                 <Github className="w-5 h-5" />
               </a>
-              {/* ⭐️ 修改：页脚第二个图标的链接地址、图标和标题 ⭐️ */}
+              
+              {/* ⭐️ 恢复：新增的外部链接 ⭐️ */}
               <a 
                 href="https://adcwwvux.eu-central-1.clawcloudrun.com/" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-gray-400 hover:text-blue-500 transition-colors" 
-                title="外部链接"
+                className="text-gray-400 hover:text-green-500 transition-colors" 
+                title="其他服务"
               >
                 <ExternalLink className="w-5 h-5" />
+              </a>
+
+              <a 
+                href="mailto:115382613@qq.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-gray-400 hover:text-blue-500 transition-colors" 
+                title="Email"
+              >
+                <Mail className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -705,8 +724,15 @@ const DisclaimerPage = () => (
             <p>
                 用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
             </p>
+            
+            {/* ⭐️ 新增：图标和知识产权声明 ⭐️ */}
+            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">4. 图标和知识产权声明</h3>
+            <p>
+                本站链接旁显示的网站图标（Favicon）主要通过程序自动从网站源地址获取，或通过第三方服务（如 DuckDuckGo Icons）进行回退显示。**本站不对所有图标的准确性、时效性或合法版权负责。** 若您发现任何图标涉嫌侵犯了您的知识产权，请立即通过邮箱 <a href="mailto:115382613@qq.com" className="text-blue-500 dark:text-blue-400 hover:underline">115382613@qq.com</a> 联系我们，我们将在核实后尽快移除相关图标。
+            </p>
+            
             <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
-                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
+                使用本网站即表示您已阅读、理解并同意本声明的所有内容，本站仅作为技术交流和知识学习，禁止用于商业用途。
             </p>
         </div>
     </div>
