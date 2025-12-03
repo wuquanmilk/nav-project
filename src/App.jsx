@@ -24,9 +24,10 @@ import {
 } from 'firebase/firestore';
 // 导入需要的图标
 import { 
-  ExternalLink, Moon, Sun, LogIn, X, Github, Mail, Globe, Search, User, UserPlus, Lock, CheckCircle, AlertTriangle,
+  ExternalLink, LogIn, X, Github, Mail, Globe, Search, User, UserPlus, Lock, CheckCircle, AlertTriangle,
   Cloud, Database, Bot, Play, Camera, Network, Server, ShoppingCart, Wand, Monitor, Wrench, Code
 } from 'lucide-react'; 
+// ⭐️ 移除：不再需要 Moon 和 Sun 图标
 
 // =========================================================================
 // ⭐️ 稳健性增强 1: ErrorBoundary 组件 (集成到此文件) ⭐️
@@ -806,8 +807,9 @@ const Footer = ({ setCurrentPage }) => {
     { name: '免责声明', action: () => setCurrentPage('disclaimer') },
   ];
 
+  // ⭐️ 样式修改：移除 dark 类，保持背景色不变
   return (
-    <footer className="mt-20 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-50 backdrop-blur-sm">
+    <footer className="mt-20 py-8 border-t border-gray-200 bg-white bg-opacity-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 text-center">
         <div className="flex flex-col items-center space-y-4"> 
           
@@ -818,7 +820,7 @@ const Footer = ({ setCurrentPage }) => {
             >
               第一象限
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               © {currentYear} 极速导航网. 保留所有权利.
             </p>
           </div>
@@ -829,13 +831,14 @@ const Footer = ({ setCurrentPage }) => {
                 key={idx}
                 href="#"
                 onClick={(e) => { e.preventDefault(); link.action(); }}
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 cursor-pointer"
+                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
               >
                 {link.name}
               </a>
             ))}
-            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 dark:border-gray-700 ml-2">
-              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors" title="Github">
+            {/* ⭐️ 样式修改：移除 dark 类 */}
+            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
+              <a href="#" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
                 <Github className="w-5 h-5" />
               </a>
               <a href="mailto:115382613@qq.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Email">
@@ -851,25 +854,26 @@ const Footer = ({ setCurrentPage }) => {
 
 // 🔹 关于本站页面组件 (保持不变)
 const AboutPage = () => (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
-        <div className="space-y-4 text-gray-700 dark:text-gray-300">
-            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【站点功能】</h3>
+    // ⭐️ 样式修改：移除 dark 类
+    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
+        <div className="space-y-4 text-gray-700">
+            <h3 className="text-xl font-semibold text-blue-600">【站点功能】</h3>
             <p>
                 本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
             </p>
-            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【创设初衷：拒绝广告】</h3>
+            <h3 className="text-xl font-semibold text-blue-600">【创设初衷：拒绝广告】</h3>
             <p>
                 在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
             </p>
-            <h3 className="text-xl font-semibold text-blue-600 dark:text-blue-400">【作者】</h3>
+            <h3 className="text-xl font-semibold text-blue-600">【作者】</h3>
             <p>
-                由 <span className="font-bold text-purple-600 dark:text-purple-400">第一象限</span> 独立设计与开发。
+                由 <span className="font-bold text-purple-600">第一象限</span> 独立设计与开发。
                 <br/> 
                 联系邮箱: 
                 <a 
                     href="mailto:115382613@qq.com" 
-                    className="text-blue-500 dark:text-blue-400 hover:underline ml-1"
+                    className="text-blue-500 hover:underline ml-1"
                 >
                     115382613@qq.com
                 </a>
@@ -881,22 +885,23 @@ const AboutPage = () => (
 
 // 🔹 免责声明页面组件 (保持不变)
 const DisclaimerPage = () => (
-    <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white border-b pb-4 mb-4">免责声明</h2>
-        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">1. 内容准确性</h3>
+    // ⭐️ 样式修改：移除 dark 类
+    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
+        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2>
+        <div className="space-y-4 text-sm text-gray-700">
+            <h3 className="text-lg font-semibold text-blue-600">1. 内容准确性</h3>
             <p>
                 本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
             </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">2. 外部链接责任</h3>
+            <h3 className="text-lg font-semibold text-blue-600">2. 外部链接责任</h3>
             <p>
                 本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
             </p>
-            <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">3. 法律法规遵守</h3>
+            <h3 className="text-lg font-semibold text-blue-600">3. 法律法规遵守</h3>
             <p>
                 用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
             </p>
-            <p className="pt-4 italic text-xs text-gray-500 dark:text-gray-400">
+            <p className="pt-4 italic text-xs text-gray-500">
                 使用本网站即表示您已阅读、理解并同意本声明的所有内容。
             </p>
         </div>
@@ -924,18 +929,19 @@ const handleExternalSearch = (engineUrl, query) => {
 // 🔹 搜索输入框组件 (保持不变)
 const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
     <div className="relative">
+        {/* ⭐️ 样式修改：移除 dark 类 */}
         <input 
             type="text" 
             placeholder="搜索链接名称、描述或网址..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 dark:border-gray-600 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all shadow-md"
+            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 bg-gray-700 text-white transition-all shadow-md"
         />
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500 dark:text-blue-400"/>
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500"/>
         {searchTerm && (
             <button 
                 onClick={() => setSearchTerm('')} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-white"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700"
                 title="清空站内搜索"
             >
                 <X className="w-5 h-5"/>
@@ -951,13 +957,14 @@ const ExternalSearchButton = ({ engine, searchTerm }) => {
     const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
 
     return (
+        // ⭐️ 样式修改：移除 dark 类
         <button
             onClick={handleSearch}
             title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-            className={`p-2.5 rounded-full border border-gray-300 dark:border-gray-600 transition-shadow bg-white dark:bg-gray-800 hover:shadow-lg hover:scale-105 flex items-center justify-center`}
+            className={`p-2.5 rounded-full border border-gray-300 transition-shadow bg-white hover:shadow-lg hover:scale-105 flex items-center justify-center`}
         >
             {hasError || !imageUrl ? (
-                <Search className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                <Search className="w-6 h-6 text-gray-500" />
             ) : (
                 <img 
                     src={imageUrl} 
@@ -1000,12 +1007,13 @@ const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, set
     );
 });
 
-// 🔹 右下角浮动按钮组件 (新增 isEditing 和 setIsEditing 状态)
-const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => {
+// 🔹 右下角浮动按钮组件 
+// ⭐️ 核心修改：移除 isDark/setIsDark 属性和所有主题切换逻辑 ⭐️
+const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => {
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
             
-            {/* 3. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) */}
+            {/* 1. 编辑/浏览模式切换按钮 (仅登录用户在主页可见) */}
             {(isAdmin || !userIsAnonymous) && currentPage === 'home' && (
                 <button 
                     onClick={() => setIsEditing(!isEditing)} 
@@ -1018,14 +1026,7 @@ const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmai
                 </button>
             )}
 
-            {/* 1. 主题切换按钮 */}
-            <button 
-                onClick={()=>setIsDark(!isDark)} 
-                className="p-3 rounded-full shadow-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                title="切换主题"
-            >
-                {isDark?<Sun className="w-6 h-6"/>:<Moon className="w-6 h-6"/>}
-            </button>
+            {/* ⭐️ 移除：主题切换按钮 (原代码块 1) ⭐️ */}
             
             {/* 2. 登录/注册/退出 按钮 */}
             {userIsAnonymous ? (
@@ -1050,7 +1051,7 @@ const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmai
               // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
               <>
                 <button
-                    // ⭐️ 核心修改：如果当前在用户资料页，点击则返回主页
+                    // 核心修改：如果当前在用户资料页，点击则返回主页
                     onClick={() => { 
                         if (currentPage === 'user') {
                             setCurrentPage('home'); // 如果在用户页，返回主页
@@ -1092,7 +1093,7 @@ export default function App() {
   
   // 数据和UI状态
   const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
-  const [isDark, setIsDark] = useState(false);
+  // ⭐️ 移除：不再需要 isDark 状态
   const [currentPage, setCurrentPage] = useState('home'); 
   const [searchTerm, setSearchTerm] = useState(''); 
   const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
@@ -1363,7 +1364,8 @@ export default function App() {
   }
 
   return (
-    <div className={`flex flex-col min-h-screen ${isDark?'dark bg-gray-900 text-white':'bg-gray-50 text-gray-900'}`}>
+    // ⭐️ 样式修改：移除根元素上的 isDark 状态相关类名，默认使用 light 模式的样式
+    <div className={`flex flex-col min-h-screen bg-gray-50 text-gray-900`}>
       <DebugBar />
       
       {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} onForgotPassword={handleForgotPassword}/>}
@@ -1377,10 +1379,8 @@ export default function App() {
         />
       )}
       
-      {/* 浮动按钮组件 - 传入新的 isEditing 状态 */}
+      {/* 浮动按钮组件 - 移除主题切换相关的 Props */}
       <FloatingButtons 
-        isDark={isDark} 
-        setIsDark={setIsDark}
         userIsAnonymous={userIsAnonymous}
         isAdmin={isAdmin}
         userEmail={userEmail}
@@ -1388,9 +1388,9 @@ export default function App() {
         setShowRegister={setShowRegister}
         setShowLogin={setShowLogin}
         setCurrentPage={setCurrentPage}
-        currentPage={currentPage} // ⭐️ NEW
-        isEditing={isEditing} // ⭐️ NEW
-        setIsEditing={setIsEditing} // ⭐️ NEW
+        currentPage={currentPage}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
       />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
