@@ -801,6 +801,62 @@ const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, set
     );
 });
 
+// 🔹 右下角浮动按钮组件 (新增)
+const FloatingButtons = ({ isDark, setIsDark, userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage }) => {
+    return (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
+            {/* 1. 主题切换按钮 */}
+            <button 
+                onClick={()=>setIsDark(!isDark)} 
+                className="p-3 rounded-full shadow-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                title="切换主题"
+            >
+                {isDark?<Sun className="w-6 h-6"/>:<Moon className="w-6 h-6"/>}
+            </button>
+            
+            {/* 2. 登录/注册/退出 按钮 */}
+            {userIsAnonymous ? (
+              // 未登录状态 (匿名用户)：显示注册和登录按钮
+              <>
+                <button 
+                    onClick={() => { setShowRegister(true); setShowLogin(false); }} 
+                    className="p-3 rounded-full shadow-xl bg-green-500 text-white hover:bg-green-600 transition-all"
+                    title="用户注册"
+                >
+                    <UserPlus className="w-6 h-6"/> 
+                </button>
+                <button 
+                    onClick={() => { setShowLogin(true); setShowRegister(false); }} 
+                    className="p-3 rounded-full shadow-xl bg-blue-500 text-white hover:bg-blue-600 transition-all"
+                    title="用户/管理员登录"
+                >
+                    <User className="w-6 h-6"/> 
+                </button>
+              </>
+            ) : (
+              // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
+              <>
+                <button
+                    onClick={() => setCurrentPage('user')} 
+                    className={`p-3 rounded-full shadow-xl text-white transition-all 
+                               ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    title={isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`}
+                >
+                    <User className="w-6 h-6"/> 
+                </button>
+                <button 
+                    onClick={handleLogout} 
+                    className="p-3 rounded-full shadow-xl bg-red-500 text-white hover:bg-red-600 transition-all"
+                    title="退出登录"
+                >
+                    <LogIn className="w-6 h-6 rotate-180"/> 
+                </button>
+              </>
+            )}
+        </div>
+    );
+};
+
 
 // 🔹 主应用 (App 组件)
 export default function App() {
@@ -1032,6 +1088,19 @@ export default function App() {
         />
       )}
       
+      {/* ⭐️ 新增：浮动按钮组件 ⭐️ */}
+      <FloatingButtons 
+        isDark={isDark} 
+        setIsDark={setIsDark}
+        userIsAnonymous={userIsAnonymous}
+        isAdmin={isAdmin}
+        userEmail={userEmail}
+        handleLogout={handleLogout}
+        setShowRegister={setShowRegister}
+        setShowLogin={setShowLogin}
+        setCurrentPage={setCurrentPage}
+      />
+      
       <div className="container mx-auto px-4 py-8 flex-grow">
         
         <header className="mb-12 relative">
@@ -1042,56 +1111,7 @@ export default function App() {
                 极速导航网
             </h1>
             
-            <div className="flex flex-col gap-2 absolute top-0 right-0">
-                {/* 1. 主题切换按钮 */}
-                <button 
-                    onClick={()=>setIsDark(!isDark)} 
-                    className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                    title="切换主题"
-                >
-                    {isDark?<Sun className="w-5 h-5"/>:<Moon className="w-5 h-5"/>}
-                </button>
-                
-                {/* 2. 登录/注册/退出 按钮 */}
-                {userIsAnonymous ? (
-                  // 未登录状态 (匿名用户)：显示注册和登录按钮
-                  <div className="flex flex-col gap-2">
-                    <button 
-                        onClick={() => { setShowRegister(true); setLoginError(''); }} 
-                        className="p-3 rounded-full shadow-lg bg-green-500 text-white hover:bg-green-600 transition-all"
-                        title="用户注册"
-                    >
-                        <UserPlus className="w-6 h-6"/> 
-                    </button>
-                    <button 
-                        onClick={() => { setShowLogin(true); setLoginError(''); }} 
-                        className="p-3 rounded-full shadow-lg bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                        title="用户/管理员登录"
-                    >
-                        <User className="w-6 h-6"/> 
-                    </button>
-                  </div>
-                ) : (
-                  // 已登录状态 (普通用户或管理员)：显示个人中心和退出按钮
-                  <div className="flex flex-col gap-2">
-                    <button
-                        onClick={() => setCurrentPage('user')} 
-                        className={`p-3 rounded-full shadow-lg text-white transition-all 
-                                   ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                        title={isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`}
-                    >
-                        <User className="w-6 h-6"/> 
-                    </button>
-                    <button 
-                        onClick={handleLogout} 
-                        className="p-3 rounded-full shadow-lg bg-red-500 text-white hover:bg-red-600 transition-all"
-                        title="退出登录"
-                    >
-                        <LogIn className="w-6 h-6 rotate-180"/> 
-                    </button>
-                  </div>
-                )}
-            </div>
+            {/* ⭐️ 移除：原本顶部的按钮容器，现在所有按钮都移到 FloatingButtons 组件中 */}
         </header>
         
         <SearchLayout 
