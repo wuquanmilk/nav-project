@@ -1,10 +1,10 @@
 {
-	"entry": "./dist",
-	"name": "navapp",
-	"splash":"./src/assets/react.svg",
-	"output":"./",
-	"log":true,
-	"registry": "github",
-	"logo": "./src/assets/react.svg",
-	"nativePermission":["CAMERA","LOCATION"]
+	"entry": "./dist", // h5项目打包入口
+	"name": "newApp", // app包名
+	"splash": "./public/vite.svg", // app splash 启动页logo
+	"output": "./", // 打包完成后app 输出位置
+	"log": false, // 是否开启完整打包日志
+	"registry": "github", // github||gitee  资源镜像下载的地址，如因代理问题可以配置为gitee
+	"logo": "./src/assets/splash.svg", // app 在桌面显示的logo
+	"nativePermission": ["CAMERA", "LOCATION"] // 原生平台能力
 }
