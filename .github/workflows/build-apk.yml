@@ -57,5 +57,5 @@ jobs:
           name: nav-app
           # 最终修正路径：使用通配符递归查找 apk/ 目录下的所有 .apk 文件
           # 运行后根据 Find APK File Path 步骤的输出来修正下面的 path
-          path: 'apk/**/*.apk'
+          path: 'apk/*.apk'
           retention-days: 5
