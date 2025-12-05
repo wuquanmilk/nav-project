@@ -1,0 +1,52 @@
+name: Build APK with h5pack
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:  # 允许你手动运行
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Install Node.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # 3. Cache npm dependencies
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      # 4. Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # 5. Build your H5 project (生成 dist/)
+      - name: Build Web
+        run: npm run build
+
+      # 6. Run h5pack to build APK
+      - name: Build APK
+        run: npm run compress
+
+      # 7. Upload APK as GitHub Artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-app
+          path: |
+            apk/*.apk
+            *.apk
+            **/*.apk

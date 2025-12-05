@@ -1,0 +1,9 @@
+{
+  "entry": "./dist",
+  "name": "navapp",
+  "splash": "./public/logo.png",
+  "output": "./apk",
+  "log": true,
+  "registry": "github",
+  "logo": "./public/logo.png"
+}
