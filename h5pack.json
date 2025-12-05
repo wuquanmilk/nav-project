@@ -5,6 +5,5 @@
   "output": "D:/nav-project/apk",
   "log": true,
   "registry": "github",
-  "logo": "./public/logo/logo.png",
-  "useNpm": true
+   "useNpm": true
 }
