@@ -3,62 +3,37 @@ name: Build APK with h5pack
 on:
   push:
     branches: ["main"]
-  workflow_dispatch:  # 允许你手动运行
+  workflow_dispatch:
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # 2. Install Node.js
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      # 3. Cache npm dependencies
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-
-      # 4. Install dependencies
-      - name: Install Dependencies
-        run: npm install
-
-      # 5. Build your H5 project (生成 dist/)
-      - name: Build Web
-        run: npm run build
+      # ... (步骤 1 - 5 保持不变)
 
       # 6. Run h5pack to build APK
       - name: Build APK
         run: npm run compress
 
-      # 🔍 **新增诊断步骤：查找 APK 文件路径**
-      #    此步骤将打印所有找到的 .apk 文件的完整路径
+      # 🔍 新增诊断步骤：查找 APK 文件路径 (非常重要!)
       - name: Find APK File Path (Diagnosis)
         run: |
           echo "--- 正在查找所有 .apk 文件 ---"
-          # 使用 find 命令从当前目录 '.' 开始递归查找所有以 .apk 结尾的文件
+          # 查找并打印所有找到的 .apk 文件的完整路径
           find . -name "*.apk"
           echo "-------------------------------"
 
       # 7. Upload APK as GitHub Artifact
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: nav-app
-          # 最终修正路径：使用通配符递归查找 apk/ 目录下的所有 .apk 文件
-          # 运行后根据 Find APK File Path 步骤的输出来修正下面的 path
+          # 🚀 优化后的路径：使用通配符匹配该目录下的所有 .apk 文件
+          # 这样可以处理文件名可能存在的细微变化 (例如：llbug-v1.2.apk)
+          path: 'nav-project/build/outputs/apk/debug/*.apk'
+          
+          # **注意:** 如果您的 APK 文件不在子文件夹中，而是直接在项目根目录的某个已知文件夹（例如 dist/）中，请相应修改此路径。
+          # 比如：path: 'dist/*.apk'
 
-          path: 'nav-project/build/outputs/apk/debug/llbug.apk'
-
-         
           retention-days: 5
