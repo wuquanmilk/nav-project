@@ -57,5 +57,9 @@ jobs:
           name: nav-app
           # 最终修正路径：使用通配符递归查找 apk/ 目录下的所有 .apk 文件
           # 运行后根据 Find APK File Path 步骤的输出来修正下面的 path
+<<<<<<< HEAD
           path: 'nav-project/build/outputs/apk/debug/llbug.apk'
+=======
+         
+>>>>>>> e4dcd9ab4c9242315f0fce419b93731143038727
           retention-days: 5
