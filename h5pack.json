@@ -1,9 +1,10 @@
 {
-  "entry": "./dist",
-  "name": "navapp",
-  "splash": "./public/splash/splash.png", 
-  "output": "D:/nav-project/apk",
-  "log": true,
-  "registry": "github",
-   "useNpm": true
+	"entry": "./dist",
+	"name": "navapp",
+	"splash":"./src/assets/react.svg",
+	"output":"./",
+	"log":true,
+	"registry": "github",
+	"logo": "./src/assets/react.svg",
+	"nativePermission":["CAMERA","LOCATION"]
 }
