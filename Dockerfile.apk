@@ -1,0 +1,38 @@
+FROM eclipse-temurin:8-jdk
+
+
+# 安装必要工具
+RUN apt-get update && apt-get install -y \
+    curl git unzip wget nodejs npm \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 yarn
+RUN npm install -g yarn
+
+# 安装 Android SDK
+ENV ANDROID_SDK_ROOT=/sdk
+RUN mkdir -p /sdk && \
+    cd /sdk && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip -O tools.zip && \
+    unzip tools.zip && \
+    mkdir -p /sdk/cmdline-tools && \
+    mv cmdline-tools /sdk/cmdline-tools/latest
+
+ENV PATH="${PATH}:/sdk/cmdline-tools/latest/bin:/sdk/platform-tools"
+
+# 接受 licenses
+RUN yes | sdkmanager --licenses
+
+# 安装 Android 构建工具
+RUN sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+
+# 创建项目目录
+WORKDIR /app
+
+# 复制项目
+COPY . .
+
+# 安装依赖
+RUN npm install
+
+CMD ["npm", "run", "compress"]
