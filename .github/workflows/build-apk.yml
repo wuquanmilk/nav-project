@@ -1,55 +1,66 @@
 name: Build APK with h5pack
 
 on:
-push:
-branches: ["main"]
-workflow_dispatch:
+  # 触发条件：推送到 main 分支时自动运行
+  push:
+    branches: ["main"]
+  # 允许手动在 GitHub 界面上触发运行
+  workflow_dispatch:
 
 jobs:
-build-apk:
-runs-on: ubuntu-latest
+  build-apk:
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 运行环境
 
-steps:
-  - name: Checkout Code
-    uses: actions/checkout@v4
+    steps:
+      # 1. Checkout repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  - name: Setup Node
-    uses: actions/setup-node@v4
-    with:
-      node-version: "20"
+      # 2. Install Node.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20" # 确保使用您项目所需的 Node.js 版本
 
-  # 修正了缩进以使其与其它步骤对齐
-  - name: Install System Dependencies for Iconkits
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y libfontconfig libicu67 libxi6 libxrender1 libxtst6
-      
-  - name: Cache Node Modules
-    uses: actions/cache@v3
-    with:
-      path: ~/.npm
-      key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
-      restore-keys: |
-        ${{ runner.os }}-npm-
+      # 3. Cache npm dependencies (提高构建速度)
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          # 使用 package-lock.json 文件内容作为缓存 key
+          key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+      # 4. Install dependencies
+      - name: Install Dependencies
+        run: npm install
 
-  - name: Install Dependencies
-    run: npm install
+      # 5. Build your H5 project (生成 dist/ 或其他静态文件)
+      - name: Build Web Project
+        run: npm run build
 
-  - name: Build Web Project
-    run: npm run build
+      # 6. Run h5pack to build APK
+      - name: Build APK (npm run compress)
+        run: npm run compress
 
-  - name: Build APK (npm run compress)
-    run: npm run compress
+      # 🔍 诊断步骤：查找 APK 文件路径 (运行后请检查此步骤的输出)
+      - name: Find APK File Path (Diagnosis)
+        run: |
+          echo "--- 正在查找所有 .apk 文件 ---"
+          # 使用 find 命令从当前目录 '.' 开始递归查找所有以 .apk 结尾的文件
+          # 检查此输出以确认 APK 的实际生成位置！
+          find . -name "*.apk"
+          echo "-------------------------------"
+      # 7. Upload APK as GitHub Artifact
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nav-app-apk
+          # 🚀 健壮的路径修正：
+          # 使用 `**/` 递归匹配项目中的所有目录
+          # 确保能找到类似 'build/outputs/apk/debug/' 这样的路径，并上传其中的所有 .apk 文件
+          path: '**/*debug*.apk' 
+          # 另一种更精确的路径 (如果上面的通用路径有问题，请尝试这个)：
+          # path: '**/build/outputs/apk/debug/*.apk'
 
-  - name: Find APK File Path (Diagnosis)
-    run: |
-      echo "--- 正在查找所有 .apk 文件 ---"
-      find . -name "*.apk"
-      echo "-------------------------------"
-
-  - name: Upload APK Artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: nav-app-apk
-      path: '**/*debug*.apk'
-      retention-days: 5
+          retention-days: 5 # 产物保留天数
