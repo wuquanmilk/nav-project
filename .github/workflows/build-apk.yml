@@ -46,7 +46,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nav-app
-          path: |
-            apk/*.apk
-            *.apk
-            **/*.apk
+          # 最终修正路径：使用通配符递归查找 apk/ 目录下的所有 .apk 文件
+          path: 'apk/**/*.apk'
+          retention-days: 5
