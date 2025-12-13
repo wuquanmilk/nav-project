@@ -22,7 +22,7 @@ import {
 // ⭐️ 核心配置和 Workers 代理工具
 // =========================================================================
 
-// 🚨 占位符 1: 您的 Workers 代理域名 (请核对！)
+// 🚨 【核心修正 1：恢复 Workers 域名】占位符 1: 您的 Workers 代理域名 (请核对！)
 const PROXY_BASE_URL = 'https://hangzhouquanshu.dpdns.org'; 
 // 您的 Firebase Admin UID (请核对！)
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2'; 
@@ -32,8 +32,13 @@ const APP_ID = 'default-app-id';
 const PUBLIC_NAV_PATH_SEGMENT = `artifacts/${APP_ID}/public/data/navData`;
 const getUserNavPath = (uid) => `users/${uid}/navData`; 
 
-// Workers 代理工具函数
-const getProxyUrl = (pathSegment) => `${PROXY_BASE_URL}/${pathSegment}`;
+// 🚨 【核心修正 2：恢复 Workers 代理工具函数】
+const getProxyUrl = (pathSegment) => {
+    // 清理路径：移除开头的斜杠，避免双斜杠错误 (例如: /artifacts/...)
+    const cleanPathSegment = pathSegment.startsWith('/') ? pathSegment.substring(1) : pathSegment;
+    // 返回 Workers 代理 + 路径。Workers 将在后端处理 API Key 和 CORS。
+    return `${PROXY_BASE_URL}/${cleanPathSegment}`;
+};
 
 // 您的 Firebase 配置 (使用您提供的硬编码值)
 const firebaseConfig = {
@@ -104,6 +109,7 @@ const getAuthHeaders = async (auth) => {
     const user = auth.currentUser;
     if (user) {
         const token = await user.getIdToken();
+        // Workers 代理要求携带 Bearer Token 进行身份验证
         return {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -570,8 +576,8 @@ const UserNavPanel = ({ userId, navData, handleAddLink, handleUpdateLink, handle
                   <>
                     <input className="border p-1 mb-2 rounded w-full dark:bg-gray-600 dark:border-gray-500" value={editData.category} onChange={e=>setEditData({...editData, category:e.target.value})}/>
                     <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-gray-600 dark:text-gray-300">排序:</span>
-                        <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
+                      <span className="text-gray-600 dark:text-gray-300">排序:</span>
+                      <input type="number" className="border p-1 rounded w-20 dark:bg-gray-600 dark:border-gray-500" value={editData.order} onChange={e=>setEditData({...editData, order:Number(e.target.value)})}/>
                     </div>
                     <LinkForm links={editData.links} setLinks={(links)=>setEditData({...editData, links})}/>
                     <div className="flex space-x-2 mt-3">
@@ -599,432 +605,238 @@ const UserNavPanel = ({ userId, navData, handleAddLink, handleUpdateLink, handle
     );
 };
 
-
-// 🔹 辅助组件：网站运行时间计时器
-const SiteRuntime = () => {
-    const [timeStr, setTimeStr] = useState('加载中...');
-
-    useEffect(() => {
-        // 🚨 占位符 3: 请在此修改建站日期 (格式: YYYY-MM-DD)
+// 🔹 辅助组件：网站运行时间计时器 
+const SiteRuntime = () => { 
+    const [timeStr, setTimeStr] = useState('加载中...'); 
+    useEffect(() => { 
+        // 🚨 占位符 3: 请在此修改建站日期 (格式: YYYY-MM-DD) 
         const START_DATE = '2024-01-01'; 
-        
-        const updateTime = () => {
-            const start = new Date(START_DATE);
-            const now = new Date();
-            const diff = now - start;
-
-            if (diff < 0) {
-                setTimeStr('筹备中...');
-                return;
-            }
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            
-            setTimeStr(`${days} 天`);
-        };
-
+        const updateTime = () => { 
+            const startTime = new Date(START_DATE).getTime(); 
+            const nowTime = new Date().getTime(); 
+            const diff = nowTime - startTime; 
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24)); 
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); 
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)); 
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000); 
+            setTimeStr(`${days}天 ${String(hours).padStart(2, '0')}小时 ${String(minutes).padStart(2, '0')}分 ${String(seconds).padStart(2, '0')}秒`); 
+        }; 
         updateTime(); 
-        const timer = setInterval(updateTime, 1000 * 60); 
-        return () => clearInterval(timer);
-    }, []);
-
-    return (
-        <span className="font-mono font-medium text-blue-600 ml-1">
-            {timeStr}
-        </span>
-    );
+        const timer = setInterval(updateTime, 1000); 
+        return () => clearInterval(timer); 
+    },[]); 
+    return ( 
+        <div className="text-sm text-gray-500 dark:text-gray-400"> 
+            已稳定运行: <span className="font-mono text-gray-700 dark:text-gray-200">{timeStr}</span> 
+        </div> 
+    ); 
 };
 
-// 🔹 (其他辅助组件... )
-const DebugBar = () => null;
-const UserPanel = ({ userEmail, setShowChangePassword, setCurrentPage }) => { /* ... (保留您的 UserPanel 组件) ... */ 
-    return (
-        <div className="mt-6 p-6 border rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-w-xl mx-auto min-h-[60vh]">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center">
-                <User className="w-6 h-6 mr-3 text-blue-500"/>我的账户
-            </h3>
-            
-            <div className="space-y-4">
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">当前登录邮箱:</p>
-                    <p className="text-lg font-medium text-gray-900 dark:text-white break-all">{userEmail}</p>
-                </div>
 
-                <div className="pt-4 border-t dark:border-gray-700">
-                    <p className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">安全设置</p>
-                    <button 
-                        onClick={() => setShowChangePassword(true)} 
-                        className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-                    >
-                        <Lock className="w-5 h-5"/>
-                        <span>修改密码</span>
-                    </button>
-                    <button
-                        onClick={() => setCurrentPage('home')}
-                        className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors mt-3"
-                    >
-                        <Globe className="w-5 h-5"/>
-                        <span>返回导航主页</span>
-                    </button>
-                </div>
-            </div>
-            
-        </div>
-    );
-};
-const AboutPage = () => (
-    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于第一象限 极速导航网</h2>
-        <div className="space-y-4 text-gray-700">
-            <h3 className="text-xl font-semibold text-blue-600">【站点功能】</h3>
-            <p>
-                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。
-            </p>
-            <h3 className="text-xl font-semibold text-blue-600">【创设初衷：拒绝广告】</h3>
-            <p>
-                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。
-            </p>
-            <h3 className="text-xl font-semibold text-blue-600">【作者】</h3>
-            <p>
-                由 <span className="font-bold text-purple-600">第一象限</span> 独立设计与开发。
-                <br/> 
-                联系邮箱: 
-                <a 
-                    href="mailto:115382613@qq.com" 
-                    className="text-blue-500 hover:underline ml-1"
-                >
-                    115382613@qq.com
-                </a>
-            </p>
-        </div>
-    </div>
-);
-const DisclaimerPage = () => (
-    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]">
-        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2>
-        <div className="space-y-4 text-sm text-gray-700">
-            <h3 className="text-lg font-semibold text-blue-600">1. 内容准确性</h3>
-            <p>
-                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600">2. 外部链接责任</h3>
-            <p>
-                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600">3. 法律法规遵守</h3>
-            <p>
-                用户在使用本站服务时，须承诺遵守当地所有适用的法律法规。任何用户利用本站从事违反法律法规的行为，均与本站无关，本站不承担任何法律责任。
-            </p>
-            <h3 className="text-lg font-semibold text-blue-600">4. 图标与版权声明</h3>
-            <p>
-                本站网址图标有些因为网络原因、技术缺陷，可能导致图标显示不准确。如果涉及侵权，请联系作者删除。作者邮箱：<span className="font-bold">115382613@qq.com</span>
-            </p>
-            <p className="pt-4 italic text-xs text-gray-500">
-                使用本网站即表示您已阅读、理解并同意本声明的所有内容。
-            </p>
-        </div>
-    </div>
-);
-const externalEngines = [
-  { name: '百度', url: 'https://www.baidu.com/s?wd=', icon: 'https://www.baidu.com/favicon.ico' }, 
-  { name: '谷歌', url: 'https://www.google.com/search?q=', icon: 'https://icons.duckduckgo.com/ip3/google.com.ico' }, 
-  { name: '必应', url: 'https://www.bing.com/search?q=', icon: 'https://www.bing.com/sa/simg/favicon-2x.ico' },
-];
-const handleExternalSearch = (engineUrl, query) => {
-  if (query) {
-    window.open(engineUrl + encodeURIComponent(query), '_blank');
-  } else {
-    const baseDomain = new URL(engineUrl.split('?')[0]).origin;
-    window.open(baseDomain, '_blank');
-  }
-};
-const SearchInput = React.memo(({ searchTerm, setSearchTerm }) => (
+// 🔹 辅助组件：顶部搜索框
+const SearchInput = ({ searchTerm, setSearchTerm }) => (
     <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input 
             type="text" 
-            placeholder="搜索链接名称、描述或网址..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full py-3 pl-12 pr-4 text-lg border-2 border-blue-300 rounded-full focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 bg-gray-700 text-white transition-all shadow-md"
+            placeholder="搜索链接名称、描述或 URL..." 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full text-lg dark:bg-gray-700 dark:text-white focus:ring-blue-500 focus:border-blue-500 shadow-lg transition-shadow"
         />
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-blue-500"/>
-        {searchTerm && (
-            <button 
-                onClick={() => setSearchTerm('')} 
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-gray-500 hover:text-gray-700"
-                title="清空站内搜索"
-            >
-                <X className="w-5 h-5"/>
-            </button>
-        )}
     </div>
-));
-const ExternalSearchButton = ({ engine, searchTerm }) => {
-    const [hasError, setHasError] = useState(false);
-    const imageUrl = engine.icon; 
-    const handleSearch = () => handleExternalSearch(engine.url, searchTerm);
+);
+
+// 🔹 辅助组件：外部搜索引擎按钮
+const ExternalSearchButtons = ({ className, searchTerm }) => {
+    const searchEngines = [
+        { name: 'Google', url: 'https://www.google.com/search?q=' },
+        { name: 'Baidu', url: 'https://www.baidu.com/s?wd=' },
+        { name: 'Bing', url: 'https://www.bing.com/search?q=' },
+    ];
 
     return (
-        <button
-            onClick={handleSearch}
-            title={`使用 ${engine.name} 搜索: ${searchTerm || '（无关键词）'}`}
-            className={`p-2.5 rounded-full border border-gray-300 transition-shadow bg-white hover:shadow-lg hover:scale-105 flex items-center justify-center`}
-        >
-            {hasError || !imageUrl ? (
-                <Search className="w-6 h-6 text-gray-500" />
-            ) : (
-                <img 
-                    src={imageUrl} 
-                    alt={engine.name} 
-                    className="w-6 h-6 rounded-full object-contain"
-                    onError={() => setHasError(true)} 
-                    loading="lazy"
-                />
-            )}
-        </button>
-    );
-};
-const ExternalSearchButtons = React.memo(({ className, searchTerm }) => (
-    <div className={className}>
-        {externalEngines.map(engine => (
-            <ExternalSearchButton 
-                key={engine.name} 
-                engine={engine} 
-                searchTerm={searchTerm} 
-            />
-        ))}
-    </div>
-));
-const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm, isEditing }) => {
-    if (isAdmin || isUser || currentPage !== 'home' || isEditing) return null; 
-
-    return (
-        <div className="mb-8 max-w-2xl mx-auto">
-            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-            <ExternalSearchButtons 
-                className="flex justify-center space-x-4 mt-4" 
-                searchTerm={searchTerm} 
-            />
-        </div>
-    );
-});
-const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => {
-    return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3">
-            
-            {(isAdmin || !userIsAnonymous) && currentPage === 'home' && (
-                <button 
-                    onClick={() => setIsEditing(!isEditing)} 
-                    className={`p-3 rounded-full shadow-xl text-white transition-all 
-                                ${isEditing ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
-                    title={isEditing ? "退出编辑模式 (切换到浏览主页)" : "进入编辑模式"}
+        <div className={className}>
+            {searchEngines.map(engine => (
+                <a 
+                    key={engine.name}
+                    href={engine.url + encodeURIComponent(searchTerm)} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-sm px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full hover:bg-blue-500 hover:text-white transition-colors shadow-md"
                 >
-                    {isEditing ? <Wrench className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>}
-                </button>
-            )}
-
-            {userIsAnonymous ? (
-              <>
-                <button 
-                    onClick={() => { setShowRegister(true); setShowLogin(false); }} 
-                    className="p-3 rounded-full shadow-xl bg-green-500 text-white hover:bg-green-600 transition-all"
-                    title="用户注册"
-                >
-                    <UserPlus className="w-6 h-6"/> 
-                </button>
-                <button 
-                    onClick={() => { setShowLogin(true); setShowRegister(false); }} 
-                    className="p-3 rounded-full shadow-xl bg-blue-500 text-white hover:bg-blue-600 transition-all"
-                    title="用户/管理员登录"
-                >
-                    <User className="w-6 h-6"/> 
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                    onClick={() => { 
-                        if (currentPage === 'user') {
-                            setCurrentPage('home'); 
-                        } else {
-                            setCurrentPage('user'); 
-                            setIsEditing(false);    
-                        }
-                    }} 
-                    className={`p-3 rounded-full shadow-xl text-white transition-all 
-                               ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`}
-                    title={currentPage === 'user' ? `返回导航主页` : (isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`)}
-                >
-                    <User className="w-6 h-6"/> 
-                </button>
-                <button 
-                    onClick={handleLogout} 
-                    className="p-3 rounded-full shadow-xl bg-red-500 text-white hover:bg-red-600 transition-all"
-                    title="退出登录"
-                >
-                    <LogIn className="w-6 h-6 rotate-180"/> 
-                </button>
-              </>
-            )}
-        </div>
-    );
-};
-const Footer = ({ setCurrentPage }) => {
-  const currentYear = new Date().getFullYear();
-  
-  const footerLinks = [
-    { name: '关于本站', action: () => setCurrentPage('about') },
-    { name: '免责声明', action: () => setCurrentPage('disclaimer') },
-  ];
-
-  return (
-    <footer className="mt-20 py-8 border-t border-gray-200 bg-white bg-opacity-50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 text-center">
-        <div className="flex flex-col items-center space-y-4"> 
-          
-          <div className="text-center">
-            <h3 
-              className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 cursor-pointer inline-block" 
-              onClick={() => setCurrentPage('home')}
-            >
-              第一象限
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              © {currentYear} 极速导航网. 保留所有权利.
-            </p>
-            <p className="text-xs text-gray-400 mt-1 flex items-center justify-center">
-               <Clock className="w-3 h-3 mr-1"/> 本站已稳定运行 <SiteRuntime />
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-6">
-            {footerLinks.map((link, idx) => (
-              <a 
-                key={idx}
-                href="#"
-                onClick={(e) => { e.preventDefault(); link.action(); }}
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
-              >
-                {link.name}
-              </a>
+                    {engine.name} 搜索 "{searchTerm}"
+                </a>
             ))}
-            
-            <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
-              <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
-                <Github className="w-5 h-5" />
-              </a>
-              <a href="https://adcwwvux.eu-central-1.clawcloudrun.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Claw Cloud Run">
-                <Globe className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
-const LoginModal = ({ onClose, onLogin, error, onForgotPassword }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const handleSubmit = (e) => { e.preventDefault(); onLogin(email, password); };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>用户/管理员登录</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-          {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg dark:bg-red-800 dark:text-red-200">{error}</div>}
-          <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
-          <a href="#" onClick={(e) => { e.preventDefault(); onForgotPassword(email); }} className="text-sm text-blue-500 hover:underline text-center mt-2 block dark:text-blue-400">忘记密码？</a>
-        </form>
-      </div>
-    </div>
-  );
-};
-const RegisterModal = ({ onClose, onRegister, error }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        try {
-             if (password.length < 6) {
-                throw new Error("密码长度不能少于 6 位。");
-            }
-            if (password !== confirmPassword) {
-                throw new Error("两次输入的密码不一致。");
-            }
-            onRegister(email, password); 
-        } catch (e) {
-            onRegister(null, null, e.message); 
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><UserPlus className="w-6 h-6 mr-3 text-green-500"/>用户注册</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-                    <input type="password" placeholder="密码 (至少6位)" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-                    <input type="password" placeholder="确认密码" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-                    {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg dark:bg-red-800 dark:text-red-200">{error}</div>}
-                    <button type="submit" className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg">注册</button>
-                </form>
-            </div>
         </div>
     );
 };
-const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => {
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
 
+// 🔹 辅助组件：底部页脚
+const Footer = ({ setCurrentPage }) => {
+    const navLinks = [
+        { name: '关于本站', page: 'about' },
+        { name: '免责声明', page: 'disclaimer' },
+    ];
+    
+    return (
+        <footer className="bg-white dark:bg-gray-800 mt-12 border-t border-gray-200 dark:border-gray-700 py-6">
+            <div className="container mx-auto px-4">
+                <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <SiteRuntime />
+                    <div className="flex space-x-4">
+                        {navLinks.map(link => (
+                            <button key={link.name} onClick={() => setCurrentPage(link.page)} className="text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors text-sm">
+                                {link.name}
+                            </button>
+                        ))}
+                        <div className="flex items-center space-x-4 pl-4 border-l border-gray-300 ml-2">
+                            <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-800 transition-colors" title="Github">
+                                <Github className="w-5 h-5" />
+                            </a>
+                            <a href="https://adcwwvux.eu-central-1.clawcloudrun.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors" title="Claw Cloud Run">
+                                <Globe className="w-5 h-5" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+// 🔹 辅助组件：登录弹窗
+const LoginModal = ({ onClose, onLogin, error, onForgotPassword }) => { 
+    const [email, setEmail] = useState(''); 
+    const [password, setPassword] = useState(''); 
+    const handleSubmit = (e) => { 
+        e.preventDefault(); 
+        onLogin(email, password); 
+    }; 
+    return ( 
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4"> 
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative"> 
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button> 
+                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><LogIn className="w-6 h-6 mr-3 text-blue-500"/>用户/管理员登录</h2> 
+                <form onSubmit={handleSubmit} className="space-y-4"> 
+                    <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    <input type="password" placeholder="密码" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg dark:bg-red-800 dark:text-red-200">{error}</div>} 
+                    <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
+                </form> 
+                <div className="mt-4 text-center">
+                    <button onClick={onForgotPassword} className="text-sm text-blue-500 hover:text-blue-700">忘记密码？</button>
+                </div>
+            </div> 
+        </div> 
+    ); 
+};
+
+// 🔹 辅助组件：注册弹窗
+const RegisterModal = ({ onClose, onRegister, error }) => { 
+    const [email, setEmail] = useState(''); 
+    const [password, setPassword] = useState(''); 
+    const [confirmPassword, setConfirmPassword] = useState(''); 
+    const handleSubmit = (e) => { 
+        e.preventDefault(); 
+        if (password.length < 6) { 
+            alert("密码长度不能少于 6 位。"); 
+            return; 
+        } 
+        if (password !== confirmPassword) { 
+            alert("两次输入的密码不一致。"); 
+            return; 
+        } 
+        onRegister(email, password); 
+    }; 
+    return ( 
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4"> 
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative"> 
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button> 
+                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><UserPlus className="w-6 h-6 mr-3 text-green-500"/>用户注册</h2> 
+                <form onSubmit={handleSubmit} className="space-y-4"> 
+                    <input type="email" placeholder="邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    <input type="password" placeholder="密码 (至少6位)" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    <input type="password" placeholder="确认密码" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    {error && <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg dark:bg-red-800 dark:text-red-200">{error}</div>} 
+                    <button type="submit" className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg">注册</button> 
+                </form> 
+            </div> 
+        </div> 
+    ); 
+};
+
+// 🔹 辅助组件：修改密码弹窗
+const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => { 
+    const [newPassword, setNewPassword] = useState(''); 
+    const [confirmPassword, setConfirmPassword] = useState(''); 
+    const handleSubmit = (e) => { 
+        e.preventDefault(); 
+        try { 
+            if (newPassword.length < 6) { 
+                throw new Error("密码长度不能少于 6 位。"); 
+            } 
+            if (newPassword !== confirmPassword) { 
+                throw new Error("两次输入的密码不一致。"); 
+            } 
+            onChangePassword(newPassword); 
+            setNewPassword(''); 
+            setConfirmPassword(''); 
+        } catch (e) { 
+            onChangePassword(null, e.message); 
+        } 
+    }; 
+    return ( 
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4"> 
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative"> 
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button> 
+                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><Lock className="w-6 h-6 mr-3 text-blue-500"/>修改密码</h2> 
+                {success && ( 
+                    <div className="text-sm p-3 bg-green-100 text-green-700 rounded-lg flex items-center mb-4 dark:bg-green-800 dark:text-green-200"> 
+                        <CheckCircle className="w-5 h-5 mr-2"/> {success} 
+                    </div> 
+                )} 
+                <form onSubmit={handleSubmit} className="space-y-4"> 
+                    <input type="password" placeholder="新密码 (至少6位)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    <input type="password" placeholder="确认新密码" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/> 
+                    {error && ( 
+                        <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg flex items-center mb-4 dark:bg-red-800 dark:text-red-200"> 
+                            <AlertTriangle className="w-5 h-5 mr-2"/> {error} 
+                        </div> 
+                    )} 
+                    <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">确认修改</button> 
+                </form> 
+            </div> 
+        </div> 
+    ); 
+};
+
+// 🔹 辅助组件：发送重置密码邮件弹窗
+const ForgotPasswordModal = ({ onClose, onSendResetEmail, error, success }) => {
+    const [email, setEmail] = useState('');
     const handleSubmit = (e) => {
         e.preventDefault();
-        try {
-            if (newPassword.length < 6) {
-                throw new Error("密码长度不能少于 6 位。");
-            }
-            if (newPassword !== confirmPassword) {
-                throw new Error("两次输入的密码不一致。");
-            }
-            onChangePassword(newPassword);
-            setNewPassword('');
-            setConfirmPassword('');
-        } catch (e) {
-            onChangePassword(null, e.message); 
-        }
+        onSendResetEmail(email);
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999] p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 relative">
                 <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-6 h-6"/></button>
-                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><Lock className="w-6 h-6 mr-3 text-blue-500"/>修改密码</h2>
-                
+                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100 flex items-center"><Mail className="w-6 h-6 mr-3 text-yellow-500"/>重置密码</h2>
                 {success && (
                     <div className="text-sm p-3 bg-green-100 text-green-700 rounded-lg flex items-center mb-4 dark:bg-green-800 dark:text-green-200">
                         <CheckCircle className="w-5 h-5 mr-2"/> {success}
                     </div>
                 )}
-
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="password" placeholder="新密码 (至少6位)" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-                    <input type="password" placeholder="确认新密码" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
-                    
+                    <input type="email" placeholder="输入您的注册邮箱" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" required/>
                     {error && (
-                        <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg flex items-center dark:bg-red-800 dark:text-red-200">
+                        <div className="text-sm p-3 bg-red-100 text-red-700 rounded-lg flex items-center mb-4 dark:bg-red-800 dark:text-red-200">
                             <AlertTriangle className="w-5 h-5 mr-2"/> {error}
                         </div>
                     )}
-                    
-                    <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">确认修改</button>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center">注意：为安全起见，修改密码后您可能需要重新登录。</p>
+                    <button type="submit" className="w-full py-2 px-4 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg">发送重置邮件</button>
                 </form>
             </div>
         </div>
@@ -1032,302 +844,382 @@ const ChangePasswordModal = ({ onClose, onChangePassword, error, success }) => {
 };
 
 
-// =========================================================================
-// ⭐️ App 组件 ( Workers 代理核心逻辑 )
-// =========================================================================
+// 🔹 辅助组件：关于页面
+const AboutPage = () => ( 
+    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]"> 
+        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">关于第一象限 极速导航网</h2> 
+        <div className="space-y-4 text-gray-700"> 
+            <h3 className="text-xl font-semibold text-blue-600">【站点功能】</h3> 
+            <p> 
+                本站致力于提供一个**简洁、快速、纯粹**的网址导航服务。我们精心筛选了常用、高效和高质量的网站链接，并将它们按类别清晰展示，旨在成为您日常网络冲浪的起点站。 
+            </p> 
+            <h3 className="text-xl font-semibold text-blue-600">【创设初衷：拒绝广告】</h3> 
+            <p> 
+                在信息爆炸的时代，许多导航网站充斥着干扰性的广告和推广内容，严重影响了用户体验和访问速度。**第一象限** 创建本站的初衷正是为了提供一个**零广告、零干扰**的净土。我们承诺，本站将永久保持简洁干净，只专注于网址导航这一核心功能。 
+            </p> 
+            <h3 className="text-xl font-semibold text-blue-600">【作者】</h3> 
+            <p> 
+                由 <span className="font-bold text-purple-600">第一象限</span> 独立设计与开发。 <br/> 
+                联系邮箱: <a href="mailto:115382613@qq.com" className="text-blue-500 hover:underline ml-1" > 115382613@qq.com </a> 
+            </p> 
+        </div> 
+    </div> 
+); 
 
-export default function App() {
+// 🔹 辅助组件：免责声明页面
+const DisclaimerPage = () => ( 
+    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-4xl mx-auto space-y-6 min-h-[60vh]"> 
+        <h2 className="text-3xl font-bold text-gray-900 border-b pb-4 mb-4">免责声明</h2> 
+        <div className="space-y-4 text-sm text-gray-700"> 
+            <h3 className="text-lg font-semibold text-blue-600">1. 内容准确性</h3> 
+            <p> 
+                本网站（第一象限 极速导航网）所提供的所有链接信息均来源于互联网公开信息或用户提交。本站会尽力确保信息的准确性和时效性，但不对信息的完整性、准确性、时效性或可靠性作任何形式的明示或暗示的担保。 
+            </p> 
+            <h3 className="text-lg font-semibold text-blue-600">2. 外部链接责任</h3> 
+            <p> 
+                本站提供的所有外部网站链接（包括但不限于导航网站、资源链接等）仅为方便用户访问而设置。本站对任何链接到的第三方网站的内容、政策、产品或服务不承担任何法律责任。用户点击并访问外部链接时，即表示自行承担由此产生的一切风险。 
+            </p> 
+            <h3 className="text-lg font-semibold text-blue-600">3. 版权与知识产权</h3>
+            <p>
+                本站及其内容（包括但不限于排版、代码结构、原创文字）的知识产权归作者所有。本站收录的所有外部链接的知识产权归原网站所有。如任何第三方网站的内容涉嫌侵犯您的知识产权，请及时联系我们，我们将尽快进行处理。
+            </p>
+            <h3 className="text-lg font-semibold text-blue-600">4. 网站运营</h3>
+            <p>
+                本站将尽力保证服务的持续性和稳定性，但不对因不可抗力、技术故障或维护升级导致的暂时性服务中断承担责任。本站保留在任何时间修改、暂停或永久终止部分或全部服务的权利。
+            </p>
+        </div> 
+    </div> 
+); 
+
+// 🔹 辅助组件：页面布局控制
+const SearchLayout = React.memo(({ isAdmin, isUser, currentPage, searchTerm, setSearchTerm, isEditing }) => { 
+    if (isAdmin || isUser || currentPage !== 'home' || isEditing) return null; 
+    return ( 
+        <div className="mb-8 max-w-2xl mx-auto"> 
+            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} /> 
+            <ExternalSearchButtons className="flex justify-center space-x-4 mt-4" searchTerm={searchTerm} /> 
+        </div> 
+    ); 
+});
+
+// 🔹 辅助组件：浮动按钮
+const FloatingButtons = ({ userIsAnonymous, isAdmin, userEmail, handleLogout, setShowRegister, setShowLogin, setCurrentPage, currentPage, isEditing, setIsEditing }) => { 
+    return ( 
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-3"> 
+            {(isAdmin || !userIsAnonymous) && currentPage === 'home' && ( 
+                <button onClick={() => setIsEditing(!isEditing)} className={`p-3 rounded-full shadow-xl text-white transition-all ${isEditing ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`} title={isEditing ? "退出编辑模式 (切换到浏览主页)" : "进入编辑模式"} > 
+                    {isEditing ? <Wrench className="w-6 h-6"/> : <Wrench className="w-6 h-6"/>} 
+                </button> 
+            )} 
+            {userIsAnonymous ? ( 
+                <> 
+                    <button onClick={() => { setShowRegister(true); setShowLogin(false); }} className="p-3 rounded-full shadow-xl bg-green-500 text-white hover:bg-green-600 transition-all" title="用户注册" > 
+                        <UserPlus className="w-6 h-6"/> 
+                    </button> 
+                    <button onClick={() => { setShowLogin(true); setShowRegister(false); }} className="p-3 rounded-full shadow-xl bg-blue-500 text-white hover:bg-blue-600 transition-all" title="用户/管理员登录" > 
+                        <User className="w-6 h-6"/> 
+                    </button> 
+                </> 
+            ) : ( 
+                <> 
+                    <button onClick={() => { if (currentPage === 'user') { setCurrentPage('home'); } else { setCurrentPage('user'); setIsEditing(false); } }} className={`p-3 rounded-full shadow-xl text-white transition-all ${isAdmin ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'}`} title={currentPage === 'user' ? `返回导航主页` : (isAdmin ? `管理员: ${userEmail}` : `用户中心: ${userEmail}`)} > 
+                        {currentPage === 'user' ? <Globe className="w-6 h-6"/> : <User className="w-6 h-6"/>}
+                    </button>
+                    <button onClick={handleLogout} className="p-3 rounded-full shadow-xl bg-gray-500 text-white hover:bg-gray-600 transition-all" title="退出登录" > 
+                        <LogIn className="w-6 h-6 transform rotate-180"/> 
+                    </button> 
+                </> 
+            )} 
+        </div> 
+    ); 
+};
+
+
+// ⭐️ 主应用组件
+const App = () => {
+  // =========================================================================
+  // 1. State 管理
+  // =========================================================================
   const [firebaseApp, setFirebaseApp] = useState(null);
   const [auth, setAuth] = useState(null);
-  // ⚠️ 删除了 db 状态，因为不再使用 Firestore SDK
+  const [userId, setUserId] = useState('anonymous');
+  const [userEmail, setUserEmail] = useState('');
+  const [userIsAnonymous, setUserIsAnonymous] = useState(true);
   
-  const [userId, setUserId] = useState(null);
-  const [userEmail, setUserEmail] = useState(''); 
-  const [userIsAnonymous, setUserIsAnonymous] = useState(true); 
+  const [navData, setNavData] = useState([]);
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(true); 
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // 用于触发数据刷新
   
-  const [navData, setNavData] = useState(DEFAULT_NAV_DATA); 
-  const [currentPage, setCurrentPage] = useState('home'); 
-  const [searchTerm, setSearchTerm] = useState(''); 
-  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); 
+  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'user', 'about', 'disclaimer'
+  const [isEditing, setIsEditing] = useState(false); // 是否处于编辑模式 (Admin/User)
   
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // 模态框状态
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false); 
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   
+  // 错误和成功消息状态
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
-  const [changePasswordError, setChangePasswordError] = useState(''); 
-  const [changePasswordSuccess, setChangePasswordSuccess] = useState(''); 
-
-  // ⭐️ 新增状态：手动触发数据刷新 (替代 onSnapshot)
-  const [refreshTrigger, setRefreshTrigger] = useState(0); 
-
-  // 1. 初始化 Firebase App 和 Auth (保持不变)
-  useEffect(()=>{
+  const [changePasswordError, setChangePasswordError] = useState('');
+  const [changePasswordSuccess, setChangePasswordSuccess] = useState('');
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState('');
+  
+  // =========================================================================
+  // 2. Auth 和 Side Effects
+  // =========================================================================
+  useEffect(() => {
     try {
-        const app = initializeApp(firebaseConfig);
-        const _auth = getAuth(app);
-        setFirebaseApp(app); setAuth(_auth);
+      const app = initializeApp(firebaseConfig);
+      const _auth = getAuth(app);
+      setFirebaseApp(app);
+      setAuth(_auth);
 
-        // 尝试匿名登录或保持用户会话
-        const unsub = onAuthStateChanged(_auth, user=>{
-            if(user) {
-                setUserId(user.uid);
-                setUserEmail(user.email || '匿名用户');
-                setUserIsAnonymous(user.isAnonymous);
-                setCurrentPage('home'); 
-                setIsEditing(false); 
-            } else { 
-                signInAnonymously(_auth).catch(console.error); 
-                setUserId('anonymous');
-                setUserEmail('');
-                setUserIsAnonymous(true);
-                setCurrentPage('home'); 
-                setIsEditing(false); 
-            }
-        });
-        return unsub;
+      // 尝试匿名登录或保持用户会话
+      const unsub = onAuthStateChanged(_auth, user=>{
+        if(user) {
+          setUserId(user.uid);
+          setUserEmail(user.email || '匿名用户');
+          setUserIsAnonymous(user.isAnonymous);
+          setCurrentPage('home');
+          setIsEditing(false);
+        } else {
+          signInAnonymously(_auth).catch(console.error);
+          setUserId('anonymous');
+          setUserEmail('');
+          setUserIsAnonymous(true);
+          setCurrentPage('home');
+          setIsEditing(false);
+        }
+      });
+      return unsub;
     } catch (e) {
-        console.error("Firebase Auth initialization failed:", e);
+      console.error("Firebase Auth initialization failed:", e);
     }
   },[]);
 
   const isAdmin = userId === ADMIN_USER_ID;
-  const isUser = userId && userId !== 'anonymous' && !isAdmin; 
+  const isUser = userId && userId !== 'anonymous' && !isAdmin;
 
-  // 2. ⭐️ 核心改动：使用 Fetch API 获取数据 (替换 onSnapshot)
+  // 3. ⭐️ 核心：使用 Fetch API 获取数据 (通过 Workers 代理)
   const fetchData = useCallback(async () => {
     if (!auth || !userId) return;
 
-    const pathSegment = (isUser || isAdmin) && isEditing 
-                        ? getUserNavPath(userId) 
-                        : PUBLIC_NAV_PATH_SEGMENT;
-    let targetUrl = getProxyUrl(pathSegment);
+    // 根据模式确定集合路径
+    const pathSegment = (isUser || isAdmin) && isEditing ? getUserNavPath(userId) : PUBLIC_NAV_PATH_SEGMENT;
+    let targetUrl = getProxyUrl(pathSegment); // 使用 Workers 代理 URL
 
     try {
-        const headers = await getAuthHeaders(auth);
-        const response = await fetch(targetUrl, { headers });
-        
-        if (!response.ok) {
-            throw new Error(`Proxy Fetch failed with status: ${response.status}`);
-        }
-        
-        const restResponse = await response.json();
-        
-        let data = [];
-        if (restResponse.documents) {
-            data = restResponse.documents.map(doc => {
-                const docId = doc.name.split('/').pop();
-                const fields = transformFromRest(doc.fields);
-                return { id: docId, ...fields };
-            });
-        } else {
-            // 如果返回空或非预期格式，使用空数组
-            console.info("Collection is empty or received unexpected format.");
-        }
+      const headers = await getAuthHeaders(auth);
+      // 注意：GET 请求不需要 Authorization 头部即可读取公共数据 (除非安全规则禁止)，
+      // 但对于用户的自定义数据，Bearer Token 是必需的。
+      const response = await fetch(targetUrl, { headers }); 
 
-        data.sort((a, b) => (a.order || 0) - (b.order || 0)); 
-        
-        setIsFirebaseConnected(true);
-        // 如果自定义集合为空，则显示默认数据
-        if (data.length === 0 && ((isUser || isAdmin) && isEditing)) {
-             setNavData(DEFAULT_NAV_DATA);
-        } else {
-             setNavData(data);
-        }
-        
+      if (!response.ok) {
+        throw new Error(`Proxy Fetch failed with status: ${response.status}`);
+      }
+
+      const restResponse = await response.json();
+      let data = [];
+
+      if (restResponse.documents) {
+        data = restResponse.documents.map(doc => {
+          const docNameParts = doc.name.split('/');
+          const docId = docNameParts[docNameParts.length - 1]; // 获取最后一个路径段作为 ID
+          const fields = transformFromRest(doc.fields);
+          return { id: docId, ...fields };
+        });
+      } else {
+        // 如果返回空或非预期格式，使用空数组
+        console.info("Collection is empty or received unexpected format.");
+      }
+
+      data.sort((a, b) => (a.order || 0) - (b.order || 0));
+      setIsFirebaseConnected(true);
+
+      // 如果自定义集合为空，则显示默认数据
+      if (data.length === 0 && ((isUser || isAdmin) && isEditing)) {
+        setNavData(DEFAULT_NAV_DATA);
+      } else {
+        setNavData(data);
+      }
+
     } catch (error) {
-        console.error("Failed to fetch data via proxy:", error);
-        setIsFirebaseConnected(false);
-        setNavData(DEFAULT_NAV_DATA); // 连接失败时使用默认数据
+      console.error("Failed to fetch data via proxy:", error);
+      setIsFirebaseConnected(false);
+      setNavData(DEFAULT_NAV_DATA); // 连接失败时使用默认数据
     }
-  }, [auth, isUser, isAdmin, isEditing, userId]); // 依赖中必须包含所有用于路径判断的 state
+  }, [auth, userId, isUser, isAdmin, isEditing, refreshTrigger]); // 添加 refreshTrigger
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, refreshTrigger]); // 依赖于 fetchData (它会随 isEditing 等变化) 和 refreshTrigger
+  }, [fetchData]);
 
-  // 3. 身份验证函数 (保留您的原始实现)
-  const handleRegister = async (email, password, customError) => {
-    if (customError) {
-        setRegisterError(customError);
-        return;
-    }
-    setRegisterError('');
-    try {
-        await createUserWithEmailAndPassword(auth, email, password);
-        setShowRegister(false);
-        alert('注册成功！已自动登录。'); 
-    } catch(e) { 
-        setRegisterError(e.message); 
-    }
-  };
-  
-  const handleLogin = async (email,password)=>{
+  // =========================================================================
+  // 4. Auth Handlers
+  // =========================================================================
+  const handleLogin = async (email, password) => {
     setLoginError('');
     try {
-      await signInWithEmailAndPassword(auth,email,password);
-      setShowLogin(false); 
-    } catch(e){ 
-      setLoginError(e.message); 
+      await signInWithEmailAndPassword(auth, email, password);
+      setShowLogin(false);
+    } catch (e) {
+      setLoginError(e.message.replace('Firebase:', '').trim() || '登录失败，请检查邮箱和密码。');
     }
   };
 
-  const handleForgotPassword = async (email) => {
-      if (!email) {
-          alert("请输入您的注册邮箱进行密码重置。");
-          return;
-      }
-      try {
-          await sendPasswordResetEmail(auth, email);
-          alert(`密码重置链接已发送到邮箱: ${email}。请检查您的收件箱和垃圾邮件。`);
-          setShowLogin(false);
-      } catch (e) {
-          alert(`重置邮件发送失败: ${e.message}`);
-      }
+  const handleRegister = async (email, password) => {
+    setRegisterError('');
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      setShowRegister(false);
+    } catch (e) {
+      setRegisterError(e.message.replace('Firebase:', '').trim() || '注册失败，请稍后再试。');
+    }
   };
-  
-  const handleChangePassword = async (newPassword, customError) => {
-      setChangePasswordError('');
-      setChangePasswordSuccess('');
 
-      if (customError) {
-          setChangePasswordError(customError);
-          return;
-      }
-      
-      const user = auth.currentUser;
-      if (!user) {
-          setChangePasswordError('用户未登录。');
-          return;
-      }
+  const handleSendPasswordResetEmail = async (email) => {
+    setForgotPasswordError('');
+    setForgotPasswordSuccess('');
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setForgotPasswordSuccess('密码重置邮件已发送至您的邮箱，请查收。');
+    } catch (e) {
+      setForgotPasswordError(e.message.replace('Firebase:', '').trim() || '发送重置邮件失败，请确认邮箱地址。');
+    }
+  };
 
-      try {
-          await updatePassword(user, newPassword);
-          setChangePasswordSuccess('密码修改成功！您可能需要重新登录。');
-      } catch (e) {
-          if (e.code === 'auth/requires-recent-login') {
-            setChangePasswordError('出于安全考虑，请先退出并重新登录，然后再尝试修改密码。');
-          } else {
-            setChangePasswordError(e.message);
-          }
+  const handleChangePassword = async (newPassword, errorMsg) => {
+    setChangePasswordError('');
+    setChangePasswordSuccess('');
+    if (errorMsg) {
+      setChangePasswordError(errorMsg);
+      return;
+    }
+    
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      setChangePasswordSuccess('密码修改成功。下次请使用新密码登录。');
+    } catch (e) {
+      if (e.code === 'auth/requires-recent-login') {
+        setChangePasswordError('出于安全考虑，请先退出并重新登录，然后再尝试修改密码。');
+      } else {
+        setChangePasswordError(e.message);
       }
+    }
   };
 
   const handleLogout = async () => {
     await signOut(auth);
     setUserId('anonymous');
     setUserEmail('');
-    setIsEditing(false); 
+    setIsEditing(false);
   };
 
-
-  // 4. ⭐️ 核心改动：重写 CRUD 操作 (使用 Fetch API)
-  
+  // 5. ⭐️ 核心：CRUD 操作 (通过 Workers 代理)
   const getCurrentCollectionPath = (isUser, isAdmin, isEditing, userId) => {
     // 如果是编辑模式，使用用户的自定义路径；否则使用公共路径
-    return (isUser || isAdmin) && isEditing 
-           ? getUserNavPath(userId) 
-           : PUBLIC_NAV_PATH_SEGMENT;
+    return (isUser || isAdmin) && isEditing ? getUserNavPath(userId) : PUBLIC_NAV_PATH_SEGMENT;
   };
 
   // 1. 新增分类 (POST)
   const handleAddLink = useCallback(async (category, newCategoryData) => {
-      if (!auth || userIsAnonymous) return false;
-      
-      const pathSegment = getCurrentCollectionPath(isUser, isAdmin, isEditing, userId);
-      const targetUrl = getProxyUrl(pathSegment); 
-      
-      try {
-          const headers = await getAuthHeaders(auth);
-          // 注意：Firestore REST API 的 POST/Create 操作不需要文档 ID，它会自动生成
-          const response = await fetch(targetUrl, {
-              method: 'POST', 
-              headers: headers,
-              body: JSON.stringify(transformToRest(newCategoryData))
-          });
-          
-          if (!response.ok) {
-              const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
-              throw new Error(`新增分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
-          }
-          
-          setRefreshTrigger(prev => prev + 1); 
-          return true;
+    if (!auth || userIsAnonymous) return false;
 
-      } catch (error) {
-          alert(`新增分类失败: ${error.message}`);
-          return false;
+    const pathSegment = getCurrentCollectionPath(isUser, isAdmin, isEditing, userId);
+    const targetUrl = getProxyUrl(pathSegment); // 使用 Workers 代理 URL
+
+    try {
+      const headers = await getAuthHeaders(auth);
+      // POST 操作不需要文档 ID，Workers 会将请求转发到 Collection URL
+      const response = await fetch(targetUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(transformToRest(newCategoryData))
+      });
+
+      if (!response.ok) {
+        const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
+        // 捕获 Workers/Google API 返回的详细错误
+        throw new Error(`新增分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
       }
-  }, [auth, userId, isUser, isAdmin, isEditing, userIsAnonymous]);
 
+      setRefreshTrigger(prev => prev + 1); // 成功后触发数据刷新
+      return true;
+
+    } catch (error) {
+      alert(`新增分类失败: ${error.message}`);
+      return false;
+    }
+  }, [auth, userId, isUser, isAdmin, isEditing, userIsAnonymous]);
 
   // 2. 更新分类 (PATCH)
   const handleUpdateLink = useCallback(async (docId, category, updatedCategoryData) => {
-      if (!auth || userIsAnonymous) return false;
+    if (!auth || userIsAnonymous) return false;
 
-      const pathSegment = getCurrentCollectionPath(isUser, isAdmin, isEditing, userId);
-      // PATCH 操作需要指定文档 ID
-      const targetUrl = getProxyUrl(`${pathSegment}/${docId}`);
-      
-      try {
-          const headers = await getAuthHeaders(auth);
-          
-          const response = await fetch(targetUrl, {
-              method: 'PATCH', 
-              headers: headers,
-              body: JSON.stringify(transformToRest(updatedCategoryData)) 
-          });
-          
-          if (!response.ok) {
-              const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
-              throw new Error(`更新分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
-          }
-          
-          setRefreshTrigger(prev => prev + 1); 
-          return true;
+    const pathSegment = getCurrentCollectionPath(isUser, isAdmin, isEditing, userId);
+    // PATCH 操作需要指定文档 ID
+    const targetUrl = getProxyUrl(`${pathSegment}/${docId}`);
 
-      } catch (error) {
-          alert(`更新分类失败: ${error.message}`);
-          return false;
+    try {
+      const headers = await getAuthHeaders(auth);
+      const response = await fetch(targetUrl, {
+        method: 'PATCH',
+        headers: headers,
+        body: JSON.stringify(transformToRest(updatedCategoryData))
+      });
+
+      if (!response.ok) {
+        const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
+        throw new Error(`更新分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
       }
+
+      setRefreshTrigger(prev => prev + 1); // 成功后触发数据刷新
+      return true;
+
+    } catch (error) {
+      alert(`更新分类失败: ${error.message}`);
+      return false;
+    }
   }, [auth, userId, isUser, isAdmin, isEditing, userIsAnonymous]);
 
   // 3. 删除分类 (DELETE)
   const handleDeleteLink = useCallback(async (docId, category) => {
-      if (!auth || userIsAnonymous) return false;
+    if (!auth || userIsAnonymous) return false;
 
-      const pathSegment = getCurrentCollectionPath(isUser, isAdmin, isEditing, userId);
-      const targetUrl = getProxyUrl(`${pathSegment}/${docId}`);
-      
-      try {
-          const headers = await getAuthHeaders(auth);
-          const response = await fetch(targetUrl, {
-              method: 'DELETE',
-              headers: headers,
-          });
-          
-          // 成功删除返回 200 或 204
-          if (response.status !== 200 && response.status !== 204) {
-              const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : {};
-              throw new Error(`删除分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
-          }
-          
-          setRefreshTrigger(prev => prev + 1); 
-          return true;
+    const pathSegment = getCurrentCollectionPath(isUser, isAdmin, isEditing, userId);
+    const targetUrl = getProxyUrl(`${pathSegment}/${docId}`);
 
-      } catch (error) {
-          alert(`删除分类失败: ${error.message}`);
-          return false;
+    try {
+      const headers = await getAuthHeaders(auth);
+      const response = await fetch(targetUrl, {
+        method: 'DELETE',
+        headers: headers,
+      });
+
+      if (!response.ok) {
+        const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
+        throw new Error(`删除分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
       }
+      
+      setRefreshTrigger(prev => prev + 1); // 成功后触发数据刷新
+      return true;
+
+    } catch (error) {
+      alert(`删除分类失败: ${error.message}`);
+      return false;
+    }
   }, [auth, userId, isUser, isAdmin, isEditing, userIsAnonymous]);
 
 
-  // 5. 数据过滤与内容渲染
+  // 6. 数据过滤与内容渲染
   const filteredNavData = useMemo(() => {
     if (!searchTerm) {
-      return navData; 
+      return navData;
     }
 
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
@@ -1338,10 +1230,7 @@ export default function App() {
           const name = link.name?.toLowerCase() || '';
           const description = link.description?.toLowerCase() || '';
           const url = link.url?.toLowerCase() || '';
-
-          return name.includes(lowerCaseSearchTerm) || 
-                 description.includes(lowerCaseSearchTerm) ||
-                 url.includes(lowerCaseSearchTerm);
+          return name.includes(lowerCaseSearchTerm) || description.includes(lowerCaseSearchTerm) || url.includes(lowerCaseSearchTerm);
         });
 
         return {
@@ -1352,64 +1241,99 @@ export default function App() {
       .filter(category => category.links.length > 0);
   }, [navData, searchTerm]);
 
-
-  let content;
-
+  let content; 
   // 根据页面和模式渲染内容
   if (currentPage === 'home') {
     if ((isAdmin || isUser) && isEditing) {
-        if (isAdmin) {
-            content = (
-                <ErrorBoundary>
-                    <AdminPanel 
-                        navData={navData} 
-                        handleAddLink={handleAddLink}
-                        handleUpdateLink={handleUpdateLink}
-                        handleDeleteLink={handleDeleteLink}
-                    />
-                </ErrorBoundary>
-            );
-        } else { 
-            content = (
-                <ErrorBoundary>
-                    <UserNavPanel 
-                        userId={userId} 
-                        navData={navData} 
-                        handleAddLink={handleAddLink}
-                        handleUpdateLink={handleUpdateLink}
-                        handleDeleteLink={handleDeleteLink}
-                    />
-                </ErrorBoundary>
-            );
-        }
-    } else {
-        content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
-    }
-  } else if (currentPage === 'user' && (isUser || isAdmin)) { 
-      content = (
+      if (isAdmin) {
+        content = (
           <ErrorBoundary>
-              <UserPanel 
-                  userEmail={userEmail} 
-                  setShowChangePassword={setShowChangePassword}
-                  setCurrentPage={setCurrentPage} 
-              />
+            <AdminPanel 
+              navData={navData}
+              handleAddLink={handleAddLink}
+              handleUpdateLink={handleUpdateLink}
+              handleDeleteLink={handleDeleteLink}
+              fetchData={fetchData}
+            />
           </ErrorBoundary>
+        );
+      } else {
+        content = (
+          <ErrorBoundary>
+            <UserNavPanel 
+              userId={userId}
+              navData={navData}
+              handleAddLink={handleAddLink}
+              handleUpdateLink={handleUpdateLink}
+              handleDeleteLink={handleDeleteLink}
+            />
+          </ErrorBoundary>
+        );
+      }
+    } else {
+      content = (
+        <ErrorBoundary>
+          <PublicNav navData={filteredNavData} searchTerm={searchTerm}/>
+        </ErrorBoundary>
+      );
+    }
+  } else if (currentPage === 'user') {
+    content = (
+        <ErrorBoundary>
+          <UserNavPanel 
+            userId={userId}
+            navData={navData}
+            handleAddLink={handleAddLink}
+            handleUpdateLink={handleUpdateLink}
+            handleDeleteLink={handleDeleteLink}
+          />
+        </ErrorBoundary>
       );
   } else if (currentPage === 'about') {
-      content = <AboutPage />;
+    content = <AboutPage />;
   } else if (currentPage === 'disclaimer') {
-      content = <DisclaimerPage />;
+    content = <DisclaimerPage />;
   } else {
-      content = <PublicNav navData={filteredNavData} searchTerm={searchTerm} />;
+    content = <div className="text-center py-20 text-gray-500">页面未找到</div>;
   }
-
-  // 返回的 JSX 结构
+  
+  // =========================================================================
+  // 7. 渲染
+  // =========================================================================
   return (
-    <div className={`flex flex-col min-h-screen bg-gray-50 text-gray-900`}>
-      <DebugBar />
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors duration-300 text-gray-900 dark:text-gray-100">
       
-      {showLogin && <LoginModal onClose={()=>setShowLogin(false)} onLogin={handleLogin} error={loginError} onForgotPassword={handleForgotPassword}/>}
-      {showRegister && <RegisterModal onClose={()=>setShowRegister(false)} onRegister={handleRegister} error={registerError} />}
+      {/* ⚠️ 连接状态提示 */}
+      {!isFirebaseConnected && (
+        <div className="bg-red-500 text-white text-center p-2 text-sm font-medium">
+          <AlertTriangle className="w-5 h-5 inline mr-2"/> 警告：无法连接到 Firebase 后端，显示为默认本地数据。写入功能已禁用。
+        </div>
+      )}
+      
+      {/* 模态框 */}
+      {showLogin && (
+        <LoginModal 
+          onClose={() => {setShowLogin(false); setLoginError('');}} 
+          onLogin={handleLogin} 
+          error={loginError}
+          onForgotPassword={() => {setShowLogin(false); setShowForgotPassword(true);}}
+        />
+      )}
+      {showRegister && (
+        <RegisterModal 
+          onClose={() => {setShowRegister(false); setRegisterError('');}} 
+          onRegister={handleRegister} 
+          error={registerError}
+        />
+      )}
+      {showForgotPassword && (
+        <ForgotPasswordModal
+          onClose={() => {setShowForgotPassword(false); setForgotPasswordError(''); setForgotPasswordSuccess('');}}
+          onSendResetEmail={handleSendPasswordResetEmail}
+          error={forgotPasswordError}
+          success={forgotPasswordSuccess}
+        />
+      )}
       {showChangePassword && (
         <ChangePasswordModal 
           onClose={() => {setShowChangePassword(false); setChangePasswordError(''); setChangePasswordSuccess('');}} 
@@ -1459,3 +1383,5 @@ export default function App() {
     </div>
   )
 }
+
+export default App;
