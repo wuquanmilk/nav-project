@@ -306,7 +306,6 @@ const LinkIcon = ({ link }) => {
         try {
             const urlToParse = link.url;
             const urlObj = new URL(urlToParse);
-            // 注意：这里使用 duckduckgo 代理获取 favicon，可能存在 404
             return `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
         } catch {
             return ''; 
@@ -408,7 +407,7 @@ const PublicNav = ({ navData, searchTerm }) => {
 
 // 🔹 管理面板 (AdminPanel - 适配 Workers 代理)
 // ⚠️ 删除了对 db 的依赖，转而使用 App 组件传递进来的 CRUD 函数
-const AdminPanel = ({ navData, handleAddLink, handleUpdateLink, handleDeleteLink }) => {
+const AdminPanel = ({ navData, handleAddLink, handleUpdateLink, handleDeleteLink, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
   const [editData, setEditData] = useState({});
@@ -1117,7 +1116,6 @@ export default function App() {
         const restResponse = await response.json();
         
         let data = [];
-        // ✅ 修正的关键逻辑：确保从 Firestore 响应对象的 'documents' 属性中提取数组
         if (restResponse.documents) {
             data = restResponse.documents.map(doc => {
                 const docId = doc.name.split('/').pop();
@@ -1126,7 +1124,7 @@ export default function App() {
             });
         } else {
             // 如果返回空或非预期格式，使用空数组
-            console.info("Collection is empty or received unexpected format. Returning []");
+            console.info("Collection is empty or received unexpected format.");
         }
 
         data.sort((a, b) => (a.order || 0) - (b.order || 0)); 
