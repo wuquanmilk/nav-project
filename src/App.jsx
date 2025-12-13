@@ -22,7 +22,7 @@ import {
 // ⭐️ 核心配置和 Workers 代理工具
 // =========================================================================
 
-// 🚨 占位符 1: 您的 Workers 代理域名 (请核对！)
+// 🚨 占位符 1: 您的 Workers 代理域名 (已核对)
 const PROXY_BASE_URL = 'https://hangzhouquanshu.dpdns.org'; 
 // 您的 Firebase Admin UID (请核对！)
 const ADMIN_USER_ID = '6UiUdmPna4RJb2hNBoXhx3XCTFN2'; 
@@ -268,7 +268,7 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-// ⬇️ 您代码中定义的其他辅助组件和映射 (已全部提取并保留在代码底部) ⬇️
+// ⬇️ 您代码中定义的其他辅助组件和映射 ⬇️
 const ICON_MAP = {
     'github': Github, 'cloudflare': Cloud, 'supabase': Database, 'chatgpt': Bot, 'gemini': Wand, 
     'deepseek': Bot, '阿里千问': Bot, '腾讯元宝': Bot, '豆包': Bot, '即梦': Wand, '通义万相': Wand,
@@ -406,7 +406,6 @@ const PublicNav = ({ navData, searchTerm }) => {
 };
 
 // 🔹 管理面板 (AdminPanel - 适配 Workers 代理)
-// ⚠️ 删除了对 db 的依赖，转而使用 App 组件传递进来的 CRUD 函数
 const AdminPanel = ({ navData, handleAddLink, handleUpdateLink, handleDeleteLink, fetchData }) => {
   const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
   const [editId, setEditId] = useState(null);
@@ -500,7 +499,6 @@ const AdminPanel = ({ navData, handleAddLink, handleUpdateLink, handleDeleteLink
 };
 
 // 🔹 用户的自定义导航面板 (UserNavPanel - 适配 Workers 代理)
-// ⚠️ 删除了对 db 的依赖，转而使用 App 组件传递进来的 CRUD 函数
 const UserNavPanel = ({ userId, navData, handleAddLink, handleUpdateLink, handleDeleteLink }) => {
     const [newCategory, setNewCategory] = useState({ category: '', order: 0, links: [] });
     const [editId, setEditId] = useState(null);
@@ -748,7 +746,7 @@ const LoginModal = ({ onClose, onLogin, error, onForgotPassword }) => {
                     <button type="submit" className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">登录</button>
                 </form>
                 <div className="mt-4 text-center">
-                    <button onClick={onForgotPassword} className="text-sm text-blue-500 hover:underline">忘记密码?</button>
+                    <button onClick={() => handleForgotPassword(email)} className="text-sm text-blue-500 hover:underline">忘记密码?</button>
                 </div>
             </div>
         </div>
@@ -1085,7 +1083,7 @@ function App() {
   const isAdmin = userId === ADMIN_USER_ID;
   const isUser = userId && userId !== 'anonymous' && !isAdmin;
 
-  // 2. ⭐️ 核心改动：使用 Fetch API 获取数据 (替换 onSnapshot)
+  // 2. ⭐️ 核心改动：使用 Fetch API 获取数据 (替换 onSnapshot) - **已增强健壮性**
   const fetchData = useCallback(async () => {
     if (!auth || !userId) return;
 
@@ -1096,15 +1094,26 @@ function App() {
     try {
       const headers = await getAuthHeaders(auth);
       const response = await fetch(targetUrl, { headers });
+      
+      // 增强日志：打印 Workers 返回的 HTTP 状态码
+      console.log(`[Fetch] GET ${targetUrl} Status: ${response.status}`);
 
       if (!response.ok) {
-        throw new Error(`Proxy Fetch failed with status: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`[Fetch] Response not OK. Body:`, errorText);
+        throw new Error(`Proxy Fetch failed with status: ${response.status}. See console for body.`);
       }
 
       const restResponse = await response.json();
+      
+      // 增强日志：打印 Firestore 返回的 JSON 数据
+      console.log(`[Fetch] Parsed Data:`, restResponse);
+      
       let data = [];
-
-      if (restResponse.documents) {
+      
+      // 健壮性检查：确保 restResponse.documents 存在且是数组
+      // 修复了 TypeError: f.map is not a function 的潜在根源
+      if (restResponse && Array.isArray(restResponse.documents)) {
         data = restResponse.documents.map(doc => {
           // Firestore REST API 文档路径格式: projects/ID/databases/(default)/documents/path/to/collection/docId
           const docNameParts = doc.name.split('/');
@@ -1113,8 +1122,8 @@ function App() {
           return { id: docId, ...fields };
         });
       } else {
-        // 如果返回空或非预期格式，使用空数组
-        console.info("Collection is empty or received unexpected format.");
+        // 如果 Workers 成功返回，但集合为空或格式不符，则 data 仍为 []
+        console.warn("Collection is empty or received unexpected format. Setting empty array.");
       }
 
       // 按 order 字段排序
@@ -1124,7 +1133,6 @@ function App() {
 
       // 如果自定义集合为空，且当前处于编辑模式，则显示默认数据供用户复制
       if (data.length === 0 && ((isUser || isAdmin) && isEditing)) {
-          // 但只有在用户/管理员模式下才显示 DEFAULT_NAV_DATA 提示用户复制
           setNavData(DEFAULT_NAV_DATA); 
       } else {
           setNavData(data);
@@ -1132,14 +1140,15 @@ function App() {
     } catch (error) {
       console.error("Failed to fetch data via proxy:", error);
       setIsFirebaseConnected(false);
-      // 只有在浏览公共数据时，网络失败才回退到硬编码默认数据
+      
+      // 保证在任何网络失败情况下，navData 都是一个数组
       if (!(isUser || isAdmin) || !isEditing) {
           setNavData(DEFAULT_NAV_DATA); 
       } else {
-          setNavData([]); // 用户/管理员数据加载失败，显示空列表
+          setNavData([]); 
       }
     }
-  }, [auth, userId, isUser, isAdmin, isEditing, refreshTrigger]); // 依赖 refreshTrigger 触发刷新
+  }, [auth, userId, isUser, isAdmin, isEditing, refreshTrigger]); 
 
   // 3. 登录状态改变和编辑模式改变时触发数据获取
   useEffect(() => {
@@ -1155,7 +1164,7 @@ function App() {
       await signInWithEmailAndPassword(auth, email, password);
       setShowLogin(false);
     } catch (e) {
-      if (e.code === 'auth/invalid-credential') {
+      if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found') {
         setLoginError('邮箱或密码错误，请检查。');
       } else {
         setLoginError(e.message);
@@ -1255,9 +1264,12 @@ function App() {
         headers: headers,
         body: JSON.stringify(transformToRest(newCategoryData))
       });
+      
+      console.log(`[Fetch] POST ${targetUrl} Status: ${response.status}`);
 
       if (!response.ok) {
         const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
+        console.error(`[Fetch] POST Error Body:`, errorBody);
         throw new Error(`新增分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
       }
 
@@ -1290,9 +1302,12 @@ function App() {
         headers: headers,
         body: JSON.stringify(body)
       });
+      
+      console.log(`[Fetch] PATCH ${targetUrl} Status: ${response.status}`);
 
       if (!response.ok) {
         const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
+        console.error(`[Fetch] PATCH Error Body:`, errorBody);
         throw new Error(`更新分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
       }
 
@@ -1320,8 +1335,11 @@ function App() {
         headers: headers,
       });
 
-      if (!response.ok) {
+      console.log(`[Fetch] DELETE ${targetUrl} Status: ${response.status}`);
+      
+      if (!response.ok && response.status !== 204) { // DELETE 成功通常返回 204 No Content
         const errorBody = response.headers.get('content-type')?.includes('application/json') ? await response.json() : { error: { message: 'Unknown Error' } };
+        console.error(`[Fetch] DELETE Error Body:`, errorBody);
         throw new Error(`删除分类失败: ${response.status} - ${errorBody.error?.message || 'Unknown Error'}`);
       }
       
@@ -1423,7 +1441,7 @@ function App() {
           onClose={() => {setShowLogin(false); setLoginError('');}} 
           onLogin={handleLogin} 
           error={loginError}
-          onForgotPassword={(email) => handleForgotPassword(email)}
+          onForgotPassword={handleForgotPassword}
         />
       )}
       {showRegister && (
